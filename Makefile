@@ -4,7 +4,7 @@ NVCC_COMPILE := nvcc -c -o
 RM_RF := rm -rf
 
 # Library compilation rules.
-NVCC_FLAGS := -x cu -Xcompiler -fPIC -shared -lcublas -Wno-deprecated-gpu-targets
+NVCC_FLAGS := -x cu -Xcompiler -fPIC -shared -lcublas -gencode arch=compute_35,code=sm_35 -rdc=true -lcudadevrt -lcublas_device
 
 # File structure.
 BUILD_DIR := build

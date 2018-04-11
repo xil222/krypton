@@ -174,8 +174,8 @@ __global__ void im2col_gpu_kernel(const int n, const float* data_im,
 }
 
 void im2col_gpu(float *im,
-         int channels, int height, int width,
-         int ksize, int stride, int pad, float *data_col){
+        int channels, int height, int width,
+        int ksize, int stride, int pad, float *data_col){
     // We are going to launch channels * height_col * width_col kernels, each
     // kernel responsible for copying a single-channel grid.
     int height_col = (height + 2 * pad - ksize) / stride + 1;
@@ -241,5 +241,64 @@ __global__ void activate_array_kernel(float *x, int n, ACTIVATION a)
 void activate_array_gpu(float *x, int n, ACTIVATION a)
 {
     activate_array_kernel<<<cuda_gridsize(n), BLOCK>>>(x, n, a);
+    cuda_check_error(cudaPeekAtLastError());
+}
+
+__global__ void batch_conv_dp_child_kernel(int in_c, int in_w, int filter_w, int out_w, int padding, int stride, float * ptr_input, float * ptr_weights, float * ptr_output, int batch, int groups, int m, int k, int n, float * workspace)
+{
+    int i = (blockIdx.x + blockIdx.y*gridDim.x) * blockDim.x + threadIdx.x;
+    if (i < batch){
+        int j;
+        workspace = workspace + i*n*k*sizeof(float);
+        for(j = 0; j < groups; j++){
+            float * im = ptr_input + i * in_c * in_w * in_w;
+            int height_col = (in_w + 2 * padding - filter_w) / stride + 1;
+            int width_col = height_col;
+            int num_kernels = in_c * height_col * width_col;
+            im2col_gpu_kernel<<<(num_kernels+BLOCK-1)/BLOCK,
+                BLOCK>>>(
+                        num_kernels, im, in_w, in_w, filter_w, padding,
+                        stride, height_col,
+                        width_col, workspace);
+
+            float * a = ptr_weights + j*out_w/groups;
+            float * b = workspace;
+            float * c = ptr_output;
+
+            static int init[16] = {0};
+            static cublasHandle_t handle[16];
+            int i;
+            cudaGetDevice(&i);
+            if(!init[i]) {
+                cublasCreate(&handle[i]);
+                init[i] = 1;
+            }
+
+            float ALPHA = 1.0;
+            float BETA = 1.0;
+            cublasStatus_t status = cublasSgemm(handle[i], (0 ? CUBLAS_OP_T : CUBLAS_OP_N),
+                    (0 ? CUBLAS_OP_T : CUBLAS_OP_N), n, m, k, &ALPHA, b, n, a, k, &BETA, c+i*m*n, n);
+        }
+
+    }
+}
+
+__global__ void batch_conv_dp_parent_kernel(int in_c, int in_w, int filter_w, int out_w, int padding, int stride, float * ptr_input, float * ptr_weights, float * ptr_output, int batch, int groups, int m, int k, int n, float * workspace)
+{
+    size_t temp = (batch-1) / BLOCK + 1;
+    size_t x = temp;
+    size_t y = 1;
+    if(x > 65535){
+        x = (size_t)ceil(sqrtf((float)temp));
+        y = (batch-1)/(x*BLOCK) + 1;
+    }
+    dim3 dimGrid(x, y, 1);
+
+    batch_conv_dp_child_kernel<<<dimGrid, BLOCK>>>(in_c, in_w, filter_w, out_w, padding, stride, ptr_input, ptr_weights, ptr_output, groups, batch, m, k, n, workspace);
+}
+
+void batch_conv_dp_parent_gpu(int in_c, int in_w, int filter_w, int out_w, int padding, int stride, float * ptr_input, float * ptr_weights, float * ptr_output, int groups, int batch, int m, int k, int n, float * workspace)
+{
+    batch_conv_dp_parent_kernel<<<1,1>>>(in_c, in_w, filter_w, out_w, padding, stride, ptr_input, ptr_weights, ptr_output, groups, batch, m, k, n, workspace);
     cuda_check_error(cudaPeekAtLastError());
 }
