@@ -1,0 +1,1 @@
+int inc_conv(THCudaTensor *input, THCudaTensor *weights, THCudaTensor *output, int padding, int stride);
