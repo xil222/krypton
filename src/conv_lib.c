@@ -4,23 +4,23 @@
 
 extern THCState *state;
 
-int inc_conv(THCudaTensor *input, THCudaTensor *weights, THCudaTensor *output, int padding, int stride)
+int inc_conv_v1(THCudaTensor *input, THCudaTensor *weights, THCudaTensor *output, int padding, int stride)
 {
-    float* ptr_input    = THCudaTensor_data(NULL, input);
-	float* ptr_weights  = THCudaTensor_data(NULL, weights);
-	float* ptr_output   = THCudaTensor_data(NULL, output);
+    float * ptr_input    = THCudaTensor_data(NULL, input);
+    float * ptr_weights  = THCudaTensor_data(NULL, weights);
+    float * ptr_output   = THCudaTensor_data(NULL, output);
 
     int i,j;
 
     int groups = 1;
     int batch = input->size[0];
 
-    int m = input->size[1]/groups;
+    int m = output->size[1]/groups;
     int k = weights->size[3] * weights->size[2] * weights->size[1]/groups;
     int n = output->size[3] * output->size[2];
 
-    float* workspace;
-    workspace = cuda_make_array(workspace, ((size_t)n)*((size_t)k)*sizeof(float));
+    float * workspace = NULL;
+    workspace  = cuda_make_array(workspace, ((size_t)n)*((size_t)k)*sizeof(float));
 
     for(i = 0; i < batch; i++){
         for(j = 0; j < groups; j++){
