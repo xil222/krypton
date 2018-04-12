@@ -57,7 +57,8 @@ int inc_conv_v2(THCudaTensor * in_tensor, THCudaTensor * weights, THCudaTensor *
     float * workspace = NULL;
 
     workspace  = cuda_make_array(workspace, ((size_t)batch)*((size_t)n)*((size_t)k)*sizeof(float));
-    //batch_conv_dp_parent_gpu(in_tensor->size[1], in_tensor->size[2], weights->size[2], weights->size[0], padding, stride, ptr_in_tensor, ptr_weights, ptr_out_tensor, groups, batch, m, k, n, workspace);
+    batch_conv_dp_parent_gpu(in_tensor->size[1], in_tensor->size[2], weights->size[2], weights->size[0], padding, stride, ptr_in_tensor, ptr_weights, ptr_out_tensor, groups, batch, m, k, n, workspace);
 
+    cuda_free_array(workspace);
     return 1;
 }
