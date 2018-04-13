@@ -203,12 +203,12 @@ __global__ void inc_im2col_gpu_kernel(const int n, const float* data_im,
         int channel_out = channel_in * ksize * ksize;
         int h_in = h_out * stride - pad;
         int w_in = w_out * stride - pad;
-        
+
         float* data_col_ptr = data_col;
         //data_col_ptr += (channel_out * height_col + h_out) * width_col + w_out;
         data_col_ptr += (channel_out * p_height + h_out) * p_width + w_out;
-        
-        
+
+
         const float* data_im_ptr = data_im;
         data_im_ptr += (channel_in * height + h_in) * width + w_in;
         for (int i = 0; i < ksize; ++i) {
@@ -345,7 +345,7 @@ void batch_dp_gemm_conv_gpu(int in_channels, int in_size, int k_size, int out_si
 
 
 __global__ void inc_conv_mem_copy_gpu_kernel(float *c, float *ptr_out_tensor, int p_row_start, int p_col_start, int p_height,
-    int p_width, int channels, int size, int n)
+        int p_width, int channels, int size, int n)
 {
     int index = blockIdx.x*blockDim.x+threadIdx.x;
     if (index < n)
@@ -371,5 +371,96 @@ void inc_conv_mem_copy_gpu(float *c, float *ptr_out_tensor, int p_row_start, int
     int num_kernels = p_height * p_width;
     inc_conv_mem_copy_gpu_kernel<<<(num_kernels+BLOCK-1)/BLOCK,
         BLOCK>>>(c, ptr_out_tensor, p_row_start, p_col_start, p_height, p_width, channels, size, num_kernels);
+    cuda_check_error(cudaPeekAtLastError());
+}
+
+__global__ void batched_inc_conv_dp_child_kernel(cublasHandle_t handle, int batch, float *workspace, float *c, float * ptr_in_tensor, float *ptr_out_tensor,
+        float *ptr_weights, int p_row_start, int p_col_start, int p_width,
+        int p_height, int k_size, int in_size, int in_channels, int out_size, int out_channels, int padding, int stride)
+{
+    int i = (blockIdx.x + blockIdx.y*gridDim.x) * blockDim.x + threadIdx.x;
+    if (i < batch){
+        workspace = workspace + i * (p_width*p_height) * (k_size*k_size*in_channels) * sizeof(float);
+        c = c + i * (p_width*p_height) * out_channels * sizeof(float);
+
+        int height_col = (in_size + 2 * padding - k_size) / stride + 1;
+        int width_col = (in_size + 2 * padding - k_size) / stride + 1;
+        int num_kernels = in_channels * p_height * p_width;
+        inc_im2col_gpu_kernel<<<(num_kernels+BLOCK-1)/BLOCK,
+            BLOCK>>>(
+                    num_kernels, ptr_in_tensor, in_size, in_size, k_size, padding,
+                    stride, height_col,
+                    width_col, workspace, p_row_start, p_col_start, p_height, p_width);
+        cudaDeviceSynchronize();
+
+        float * a = ptr_weights;
+        float * b = workspace;
+
+        int m = out_channels;
+        int k = k_size * k_size * in_channels;
+        int n = p_width * p_height;
+
+        //cublasHandle_t handle = NULL;
+        //cublasCreate(&handle);
+        float ALPHA = 1.0;
+        float BETA = 0.0;
+        cublasStatus_t status = cublasSgemm(handle, CUBLAS_OP_N,
+                CUBLAS_OP_N, n, m, k, &ALPHA, b, n, a, k, &BETA, c, n);
+        //cublasDestroy(handle);
+        cudaDeviceSynchronize();
+
+        num_kernels = p_height * p_width;
+        inc_conv_mem_copy_gpu_kernel<<<(num_kernels+BLOCK-1)/BLOCK,
+            BLOCK>>>(c, ptr_out_tensor, p_row_start, p_col_start, p_height, p_width, out_channels, out_size, num_kernels);
+    }
+}
+
+__global__ void batched_inc_conv_dp_parent_kernel(int batch, float *workspace, float *c, float * ptr_in_tensor, float *ptr_out_tensor,
+        float *ptr_weights, int p_row_start, int p_col_start, int p_width,
+        int p_height, int k_size, int in_size, int in_channels, int out_size, int out_channels, int padding, int stride)
+{
+    dim3 dimGrid = cuda_gridsize(batch);
+    cublasHandle_t handle;
+    cublasCreate(&handle);
+    batched_inc_conv_dp_child_kernel<<<dimGrid, BLOCK>>>(handle, batch, workspace, c, ptr_in_tensor, ptr_out_tensor,
+                ptr_weights, p_row_start, p_col_start, p_width,
+                            p_height, k_size, in_size, in_channels, out_size, out_channels, padding, stride);
+    cublasDestroy(handle);
+}
+
+void batched_inc_conv_dp_gpu(int batch, float *workspace, float *c, float * ptr_in_tensor, float *ptr_out_tensor,
+        float *ptr_weights, int p_row_start, int p_col_start, int p_width,
+        int p_height, int k_size, int in_size, int in_channels, int out_size, int out_channels, int padding, int stride)
+{
+    batched_inc_conv_dp_parent_kernel<<<1,1>>>(batch, workspace, c, ptr_in_tensor, ptr_out_tensor,
+            ptr_weights, p_row_start, p_col_start, p_width,
+            p_height, k_size, in_size, in_channels, out_size, out_channels, padding, stride);
+    cuda_check_error(cudaPeekAtLastError());
+}
+
+__global__ void img_mem_copy_gpu_kernel(const int n, int size, int channels, int batch, float *data_out_ptr, float* premat_ptr)
+{
+    int index = blockIdx.x*blockDim.x+threadIdx.x;
+    if (index < n)
+    {
+        int w_out = index % size;
+        int h_index = index / size;
+        int h_out = h_index % size;
+        int channel = h_index / size;
+
+        data_out_ptr += index;
+
+        for (int i=0; i<batch; i++){
+            *data_out_ptr = premat_ptr[channel*size*size + h_out*size + w_out];
+            data_out_ptr += size * size * channels;
+        }
+    }
+}
+
+void img_mem_copy_gpu(int size, int channels, int batch, float *data_out_ptr, float *premat_ptr)
+{
+    int num_kernels = size * size * channels;
+    img_mem_copy_gpu_kernel<<<(num_kernels+BLOCK-1)/BLOCK,
+            BLOCK>>>(num_kernels, size, channels, batch, data_out_ptr, premat_ptr);
     cuda_check_error(cudaPeekAtLastError());
 }
