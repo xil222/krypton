@@ -7,6 +7,7 @@ RM_RF := rm -rf
 BUILD_DIR := build
 INCLUDE_DIRS := include
 TORCH_FFI_BUILD := build_ffi.py
+TEST := test.py
 CONV_CUDA := $(BUILD_DIR)/conv_cuda.o
 TORCH_FFI_TARGET := $(BUILD_DIR)/conv_lib.o
 
@@ -16,6 +17,7 @@ all: $(TORCH_FFI_TARGET)
 
 $(TORCH_FFI_TARGET): $(CONV_CUDA) $(TORCH_FFI_BUILD)
 	$(PYTHON) $(TORCH_FFI_BUILD)
+	$(PYTHON) $(TEST)
 
 $(BUILD_DIR)/conv_cuda.o: src/conv_cuda.cu
 	@ mkdir -p $(BUILD_DIR)
