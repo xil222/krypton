@@ -21,7 +21,7 @@ $(TORCH_FFI_TARGET): $(CONV_CUDA) $(TORCH_FFI_BUILD)
 
 $(BUILD_DIR)/conv_cuda.o: src/conv_cuda.cu
 	@ mkdir -p $(BUILD_DIR)
-	nvcc -lcublas_device -lcudadevrt src/conv_cuda.cu -o conv_cuda.o -Xcompiler -fPIC -rdc=true -shared -Iinclude -arch=sm_60
+	nvcc -O3 -lcublas_device -lcudadevrt src/conv_cuda.cu -o conv_cuda.o -Xcompiler -fPIC -rdc=true -shared -Iinclude -arch=sm_60
 	@ mv *.o $(BUILD_DIR)/
 
 clean:

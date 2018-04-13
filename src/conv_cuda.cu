@@ -63,24 +63,26 @@ const char* cublasGetErrorString(cublasStatus_t status)
 void cublas_check_error(cublasStatus_t status){
     if (status != CUBLAS_STATUS_SUCCESS) {
         const char *s = cublasGetErrorString(status);
-        char buffer[256];
         printf("CUBLAS Error: %s\n", s);
         assert(0);
-        snprintf(buffer, 256, "CUBLAS Error: %s", s);
-        error(buffer);
     }
 }
 
-dim3 cuda_gridsize(size_t n){
+__host__ __device__ dim3 cuda_gridsize(size_t n){
     size_t k = (n-1) / BLOCK + 1;
     size_t x = k;
     size_t y = 1;
     if(x > 65535){
+#if defined(__CUDA_ARCH__)
+        // Device code here
+        x = ceilf((float)sqrtf((float)k));
+#else
+        // Host code here
         x = ceil(sqrt(k));
+#endif
         y = (n-1)/(x*BLOCK) + 1;
     }
     dim3 dimGrid(x, y, 1);
-    //printf("%ld %ld %ld %ld\n", n, x, y, x*y*BLOCK);
     return dimGrid;
 }
 
@@ -186,30 +188,29 @@ void im2col_gpu(float *im,
                 width_col, data_col);
 }
 
-__global__ void im2row_gpu_kernel(const int n, const float* data_im,
+__global__ void inc_im2col_gpu_kernel(const int n, const float* data_im,
         const int height, const int width, const int ksize,
         const int pad,
         const int stride,
         const int height_col, const int width_col,
-        float *data_col) {
+        float *data_col, int p_row_start, int p_col_start, int p_height, int p_width) {
     int index = blockIdx.x*blockDim.x+threadIdx.x;
-
-    if (index < n) {
-        int w_out = index % width_col;
-        int h_index = index / width_col;
-        int h_out = h_index % height_col;
-        int channel_in = h_index / height_col;
+    for(; index < n; index += blockDim.x*gridDim.x){
+        int w_out = p_col_start + index % p_width;
+        int h_index = index / p_width;
+        int h_out = p_row_start + h_index % p_height;
+        int channel_in = h_index / p_height;
         int channel_out = channel_in * ksize * ksize;
-
         int h_in = h_out * stride - pad;
         int w_in = w_out * stride - pad;
-
+        
         float* data_col_ptr = data_col;
-        data_col_ptr += (h_out * w_out) * ((n / height_col / width_col) * ksize * ksize) + channel_out;
-
+        //data_col_ptr += (channel_out * height_col + h_out) * width_col + w_out;
+        data_col_ptr += (channel_out * p_height + h_out) * p_width + w_out;
+        
+        
         const float* data_im_ptr = data_im;
         data_im_ptr += (channel_in * height + h_in) * width + w_in;
-
         for (int i = 0; i < ksize; ++i) {
             for (int j = 0; j < ksize; ++j) {
                 int h = h_in + i;
@@ -218,27 +219,28 @@ __global__ void im2row_gpu_kernel(const int n, const float* data_im,
                 *data_col_ptr = (h >= 0 && w >= 0 && h < height && w < width) ?
                     data_im_ptr[i * width + j] : 0;
 
-                data_col_ptr += 1;
+                //data_col_ptr += height_col * width_col;
+                data_col_ptr += p_height * p_width;
             }
         }
     }
 }
 
-void im2row_gpu(float *im,
+void inc_im2col_gpu(float *im,
         int channels, int height, int width,
-        int ksize, int stride, int pad, float *data_col){
-
+        int ksize, int stride, int pad, float *data_col, int p_row_start, int p_col_start, int p_height, int p_width){
     // We are going to launch channels * height_col * width_col kernels, each
     // kernel responsible for copying a single-channel grid.
     int height_col = (height + 2 * pad - ksize) / stride + 1;
     int width_col = (width + 2 * pad - ksize) / stride + 1;
-    int num_kernels = channels * height_col * width_col;
-    im2row_gpu_kernel<<<(num_kernels+BLOCK-1)/BLOCK,
+    int num_kernels = channels * p_height * p_width;
+    inc_im2col_gpu_kernel<<<(num_kernels+BLOCK-1)/BLOCK,
         BLOCK>>>(
                 num_kernels, im, height, width, ksize, pad,
                 stride, height_col,
-                width_col, data_col);
+                width_col, data_col, p_row_start, p_col_start, p_height, p_width);
 }
+
 
 void gemm_gpu(int TA, int TB, int M, int N, int K, float ALPHA,
         float *A_gpu, int lda,
@@ -317,18 +319,13 @@ __global__ void batch_conv_dp_child_kernel(int in_c, int in_w, int filter_w, int
             float * b = workspace;
             float * c = ptr_output;
 
-            static int init[16] = {0};
-            static cublasHandle_t handle[16];
-            int i;
-            cudaGetDevice(&i);
-            if(!init[i]) {
-                cublasCreate(&handle[i]);
-                init[i] = 1;
-            }
-
             float ALPHA = 1.0;
             float BETA = 0.0;
-            cublasStatus_t status = cublasSgemm(handle[i], CUBLAS_OP_N, CUBLAS_OP_N, n, m, k, &ALPHA, b, n, a, k, &BETA, c+i*m*n, n);
+
+            cublasHandle_t handle;
+            cublasCreate(&handle);
+            cublasSgemm(handle, CUBLAS_OP_N, CUBLAS_OP_N, n, m, k, &ALPHA, b, n, a, k, &BETA, c+i*m*n, n);
+            cublasDestroy(handle);
         }
 
     }
@@ -336,15 +333,7 @@ __global__ void batch_conv_dp_child_kernel(int in_c, int in_w, int filter_w, int
 
 __global__ void batch_conv_dp_parent_kernel(int in_c, int in_w, int filter_w, int out_w, int padding, int stride, float * ptr_input, float * ptr_weights, float * ptr_output, int batch, int groups, int m, int k, int n, float * workspace)
 {
-    size_t temp = (batch-1) / BLOCK + 1;
-    size_t x = temp;
-    size_t y = 1;
-    if(x > 65535){
-        x = (size_t)ceil(sqrtf((float)temp));
-        y = (batch-1)/(x*BLOCK) + 1;
-    }
-    dim3 dimGrid(x, y, 1);
-
+    dim3 dimGrid = cuda_gridsize(batch);
     batch_conv_dp_child_kernel<<<dimGrid, BLOCK>>>(in_c, in_w, filter_w, out_w, padding, stride, ptr_input, ptr_weights, ptr_output, groups, batch, m, k, n, workspace);
 }
 
@@ -354,7 +343,33 @@ void batch_dp_gemm_conv_gpu(int in_channels, int in_size, int k_size, int out_si
     cuda_check_error(cudaPeekAtLastError());
 }
 
-void gemv_conv_gpu(float *ptr_weights, float *workspace, float *ptr_out_tensor, int in_size, int in_channels, int out_size, int out_channels, int k_size, int padding, int stride)
-{
 
+__global__ void inc_conv_mem_copy_gpu_kernel(float *c, float *ptr_out_tensor, int p_row_start, int p_col_start, int p_height,
+    int p_width, int channels, int size, int n)
+{
+    int index = blockIdx.x*blockDim.x+threadIdx.x;
+    if (index < n)
+    {
+        int col = p_col_start + index % p_width;
+        int row = p_row_start + index / p_width;
+
+        float *in_data_ptr = c + index;
+        float *out_data_ptr = ptr_out_tensor + row * size + col;
+
+        for(int i=0; i<channels; i++)
+        {
+            *out_data_ptr = *in_data_ptr;
+
+            in_data_ptr += p_width*p_height;
+            out_data_ptr += size*size;
+        }
+    }
+}
+
+void inc_conv_mem_copy_gpu(float *c, float *ptr_out_tensor, int p_row_start, int p_col_start, int p_height, int p_width, int channels, int size)
+{
+    int num_kernels = p_height * p_width;
+    inc_conv_mem_copy_gpu_kernel<<<(num_kernels+BLOCK-1)/BLOCK,
+        BLOCK>>>(c, ptr_out_tensor, p_row_start, p_col_start, p_height, p_width, channels, size, num_kernels);
+    cuda_check_error(cudaPeekAtLastError());
 }

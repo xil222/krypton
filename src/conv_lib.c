@@ -4,7 +4,7 @@
 
 extern THCState *state;
 
-//im2_col + cublas GEMM
+//Basic MCMK Convolution Implementation using im2col + GEMM
 int inc_conv_v1(THCudaTensor *in_tensor, THCudaTensor *weights, THCudaTensor *out_tensor, int padding, int stride)
 {
     float * ptr_in_tensor    = THCudaTensor_data(NULL, in_tensor);
@@ -40,7 +40,7 @@ int inc_conv_v1(THCudaTensor *in_tensor, THCudaTensor *weights, THCudaTensor *ou
 }
 
 
-//im2_col + cublas GEMM + Dynamic Parallelism
+//Trying Dynamic Parallelism for Batch Convolution(dp + im2col + GEMM)
 int inc_conv_v2(THCudaTensor * in_tensor, THCudaTensor * weights, THCudaTensor * out_tensor, int padding, int stride)
 {
     float * ptr_in_tensor    = THCudaTensor_data(NULL, in_tensor);
@@ -57,14 +57,15 @@ int inc_conv_v2(THCudaTensor * in_tensor, THCudaTensor * weights, THCudaTensor *
     float * workspace = NULL;
 
     workspace  = cuda_make_array(workspace, ((size_t)batch)*((size_t)n)*((size_t)k)*sizeof(float));
-    batch_dp_gemm_conv_gpu(in_tensor->size[1], in_tensor->size[2], weights->size[2], weights->size[0], padding, stride, ptr_in_tensor, ptr_weights, ptr_out_tensor, groups, batch, m, k, n, workspace);
+    batch_dp_gemm_conv_gpu(in_tensor->size[1], in_tensor->size[2], weights->size[2], weights->size[0], padding,
+     stride, ptr_in_tensor, ptr_weights, ptr_out_tensor, groups, batch, m, k, n, workspace);
 
     cuda_free_array(workspace);
     return 1;
 }
 
 
-//im2_col + cublas GEMV
+//Change Aware MCMK Convolution implementation(im2col + GEMM)
 int inc_conv_v3(THCudaTensor * in_tensor, THCudaTensor * weights, THCudaTensor * out_tensor, int padding, int stride)
 {
     float * ptr_in_tensor    = THCudaTensor_data(NULL, in_tensor);
@@ -80,19 +81,34 @@ int inc_conv_v3(THCudaTensor * in_tensor, THCudaTensor * weights, THCudaTensor *
     int out_size = out_tensor->size[2];
     int k_size = weights->size[2];
 
+    int p_row_start = 100;
+    int p_col_start = 100;
+    int p_width = 64;
+    int p_height = 64;
+
     float * workspace = NULL;
-    workspace  = cuda_make_array(workspace, ((size_t)out_size*out_size)*((size_t)k_size*k_size*in_channels)*sizeof(float));
+    workspace  = cuda_make_array(workspace, ((size_t)p_width*p_height)*((size_t)k_size*k_size*in_channels)*sizeof(float));
+
+    float * c = NULL;
+    c = cuda_make_array(c, ((size_t)p_width*p_height)*((size_t)out_channels)*sizeof(float));
 
     for(i = 0; i < batch; i++){
-        im2row_gpu(ptr_in_tensor + i * in_channels * in_size * in_size, in_channels, in_size,
-                in_size, k_size, stride, padding, workspace);
+        inc_im2col_gpu(ptr_in_tensor + i * in_channels * in_size * in_size, in_channels, in_size,
+                in_size, k_size, stride, padding, workspace, p_row_start, p_col_start, p_height, p_width);
 
         float * a = ptr_weights;
         float * b = workspace;
-        float * c = ptr_out_tensor;
-        gemv_conv_gpu(ptr_weights, workspace, ptr_out_tensor, in_size, in_channels, out_size, out_channels, k_size, padding, stride);
+
+        int m = out_channels;
+        int k = k_size * k_size * in_channels;
+        int n = p_width * p_height;
+
+        gemm_gpu(0, 0, m, n, k, 1., a, k, b, n, 0., c, n);
+
+        inc_conv_mem_copy_gpu(c, ptr_out_tensor, p_row_start, p_col_start, p_height, p_width, out_channels, out_size);
     }
 
+    cuda_free_array(c);
     cuda_free_array(workspace);
     return 1;
 }

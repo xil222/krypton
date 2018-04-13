@@ -54,11 +54,11 @@ class IncConvModule(Module):
 for _ in range(3):
 
     module = IncConvModule()
-    in_tensor = torch.FloatTensor(64, 3, 227, 227).fill_(1.0)
-    weights = torch.FloatTensor(64, 3, 3, 3).fill_(1.0)
+    in_tensor = torch.FloatTensor(64, 64, 227, 227).fill_(1.0)
+    weights = torch.FloatTensor(64, 64, 3, 3).fill_(1.0)
     in_tensor, weights, = in_tensor.cuda(), weights.cuda()
 
-    m = torch.nn.Conv2d(3, 64, 3, padding=1, stride=1).cuda()
+    m = torch.nn.Conv2d(64, 64, 3, padding=1, stride=1).cuda()
     m.weight.data = weights
     m.bias.data.fill_(0)
 
@@ -78,12 +78,12 @@ for _ in range(3):
     torch.cuda.synchronize()
     print('inc conv v1: ' + str(time.time() - prev_time))
 
-    torch.cuda.synchronize()
-    prev_time = time.time()
-    for i in range(5):
-        module(in_tensor, weights, out_tensor, 1, 1, version=2)
-    torch.cuda.synchronize()
-    print('inc conv v2: ' + str(time.time() - prev_time))
+    #torch.cuda.synchronize()
+    #prev_time = time.time()
+    #for i in range(5):
+    #    module(in_tensor, weights, out_tensor, 1, 1, version=2)
+    #torch.cuda.synchronize()
+    #print('inc conv v2: ' + str(time.time() - prev_time))
 
     torch.cuda.synchronize()
     prev_time = time.time()
@@ -91,3 +91,4 @@ for _ in range(3):
         module(in_tensor, weights, out_tensor, 1, 1, version=3)
     torch.cuda.synchronize()
     print('inc conv v3: ' + str(time.time() - prev_time))
+
