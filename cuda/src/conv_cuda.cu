@@ -438,29 +438,24 @@ void batched_inc_conv_dp_gpu(int batch, float *workspace, float *c, float * ptr_
     cuda_check_error(cudaPeekAtLastError());
 }
 
-__global__ void img_mem_copy_gpu_kernel(const int n, int size, int channels, int batch, float *data_out_ptr, float* premat_ptr)
+__global__ void premat_mem_copy_gpu_kernel(const int n, int size, int channels, int batch, float *data_out_ptr, float* premat_ptr)
 {
     int index = blockIdx.x*blockDim.x+threadIdx.x;
     if (index < n)
     {
-        int w_out = index % size;
-        int h_index = index / size;
-        int h_out = h_index % size;
-        int channel = h_index / size;
-
         data_out_ptr += index;
-
         for (int i=0; i<batch; i++){
-            *data_out_ptr = premat_ptr[channel*size*size + h_out*size + w_out];
+        *data_out_ptr = premat_ptr[index];
             data_out_ptr += size * size * channels;
         }
     }
 }
 
-void img_mem_copy_gpu(int size, int channels, int batch, float *data_out_ptr, float *premat_ptr)
+void premat_mem_copy_gpu(int size, int channels, int batch, float *data_out_ptr, float *premat_ptr)
 {
     int num_kernels = size * size * channels;
-    img_mem_copy_gpu_kernel<<<(num_kernels+BLOCK-1)/BLOCK,
+    premat_mem_copy_gpu_kernel<<<(num_kernels+BLOCK-1)/BLOCK,
             BLOCK>>>(num_kernels, size, channels, batch, data_out_ptr, premat_ptr);
     cuda_check_error(cudaPeekAtLastError());
 }
+

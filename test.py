@@ -1,115 +1,52 @@
-import torch
+#!/usr/bin/env python
 import time
-from torch.autograd import Function
+import torch
 from torch.autograd import Variable
-from torch.nn.modules.module import Module
+from utils import IncConvModule
 
-from _ext import inc_conv_lib
+batch_size = 128
+in_channels = 64
+in_size = 224
 
+out_channels = 64
+out_size = 224
 
-class IncConvFunctionV1(Function):
+k_size = 3
 
-    def __init__(self, padding, stride):
-        self.padding = padding
-        self.stride = stride
-
-    def forward(self, in_tensor, weights, out_tensor):
-        inc_conv_lib.inc_conv_v1(in_tensor, weights, out_tensor, self.padding, self.stride)
-        return out_tensor
+p_size = 56
 
 
-class IncConvFunctionV2(Function):
-
-    def __init__(self, padding, stride):
-        self.padding = padding
-        self.stride = stride
-
-    def forward(self, in_tensor, weights, out_tensor):
-        inc_conv_lib.inc_conv_v2(in_tensor, weights, out_tensor, self.padding, self.stride)
-        return out_tensor
-
-
-class IncConvFunctionV3(Function):
-
-    def __init__(self, padding, stride):
-        self.padding = padding
-        self.stride = stride
-
-    def forward(self, in_tensor, weights, out_tensor):
-        inc_conv_lib.inc_conv_v3(in_tensor, weights, out_tensor, self.padding, self.stride)
-        return out_tensor
-
-class IncConvFunctionV4(Function):
-
-    def __init__(self, padding, stride):
-        self.padding = padding
-        self.stride = stride
-
-    def forward(self, in_tensor, weights, out_tensor):
-        inc_conv_lib.inc_conv_v4(in_tensor, weights, out_tensor, self.padding, self.stride)
-        return out_tensor
-
-
-class IncConvModule(Module):
-
-    def forward(self, in_tensor, weights, out_tensor, padding, stride, version=1):
-        if version == 1:
-                return IncConvFunctionV1(padding, stride)(in_tensor, weights, out_tensor)
-        elif version == 2:
-                return IncConvFunctionV2(padding, stride)(in_tensor, weights, out_tensor)
-        elif version == 3:
-                return IncConvFunctionV3(padding, stride)(in_tensor, weights, out_tensor)
-        elif version == 4:
-                return IncConvFunctionV4(padding, stride)(in_tensor, weights, out_tensor)
-
-
-for _ in range(3):
+for iteration in range(3):
 
     module = IncConvModule()
-    in_tensor = torch.FloatTensor(256, 3, 224, 224).fill_(1.0)
-    weights = torch.FloatTensor(64, 3, 3, 3).fill_(1.0)
-    in_tensor, weights, = in_tensor.cuda(), weights.cuda()
+    in_tensor = torch.FloatTensor(batch_size, in_channels,  in_size, in_size).fill_(1.0)
+    weights = torch.FloatTensor(out_channels, in_channels, k_size, k_size).fill_(1.0)
+    biases = torch.FloatTensor(out_channels).fill_(1.0)
 
-    m = torch.nn.Conv2d(3, 64, 3, padding=1, stride=1).cuda()
+    in_tensor, weights, biases = in_tensor.cuda(), weights.cuda(), biases.cuda()
+
+    m = torch.nn.Conv2d(in_channels, out_channels, k_size, padding=1, stride=1).cuda()
     m.weight.data = weights
-    m.bias.data.fill_(0)
+    m.bias.data = biases
 
-    in_tensor, weights = Variable(in_tensor), Variable(weights)
+    in_tensor, weights, biases = Variable(in_tensor), Variable(weights), Variable(biases)
 
     torch.cuda.synchronize()
     prev_time = time.time()
     for i in range(5):
        out_tensor = m(in_tensor)
+       torch.cuda.synchronize()
+    
     torch.cuda.synchronize()
     print('Pytorch: ' + str(time.time() - prev_time))
 
-    torch.cuda.synchronize()
-    prev_time = time.time()
-    for i in range(5):
-        module(in_tensor, weights, out_tensor, 1, 1, version=1)
-    torch.cuda.synchronize()
-    print('inc conv v1: ' + str(time.time() - prev_time))
 
-    #torch.cuda.synchronize()
-    #prev_time = time.time()
-    #for i in range(5):
-    #    module(in_tensor, weights, out_tensor, 1, 1, version=2)
-    #torch.cuda.synchronize()
-    #print('inc conv v2: ' + str(time.time() - prev_time))
+    for v in [1, 3]:
+        torch.cuda.synchronize()
+        prev_time = time.time()
+        for i in range(5):
+            out_tensor = module(in_tensor, weights, biases, out_tensor, 1, 1, version=v, p_row_start=(in_size-p_size)//2, p_col_start=(in_size-p_size)//2, p_height=p_size, p_width=p_size)
+            torch.cuda.synchronize()
+        torch.cuda.synchronize()
+        print('inc conv v'+str(v)+': ' + str(time.time() - prev_time))
 
-    torch.cuda.synchronize()
-    prev_time = time.time()
-    for i in range(5):
-        # for j in range(1, in_tensor.size()[0]):
-        #     out_tensor[j,:,:,:] = out_premat
-        module(in_tensor, weights, out_tensor, 1, 1, version=3)
-    torch.cuda.synchronize()
-    print('inc conv v3: ' + str(time.time() - prev_time))
-
-
-    #torch.cuda.synchronize()
-    #prev_time = time.time()
-    #for i in range(5):
-    #    module(in_tensor, weights, out_tensor, 1, 1, version=4)
-    #torch.cuda.synchronize()
-    #print('inc conv v4: ' + str(time.time() - prev_time))

@@ -4,9 +4,9 @@ RM_RF := rm -rf
 
 
 # File structure.
-BUILD_DIR := build
-INCLUDE_DIRS := include
-TORCH_FFI_BUILD := build_ffi.py
+BUILD_DIR := cuda/build
+INCLUDE_DIRS := cuda/include
+TORCH_FFI_BUILD := cuda/build_ffi.py
 TEST := test.py
 CONV_CUDA := $(BUILD_DIR)/conv_cuda.o
 TORCH_FFI_TARGET := $(BUILD_DIR)/conv_lib.o
@@ -19,10 +19,12 @@ $(TORCH_FFI_TARGET): $(CONV_CUDA) $(TORCH_FFI_BUILD)
 	$(PYTHON) $(TORCH_FFI_BUILD)
 	$(PYTHON) $(TEST)
 
-$(BUILD_DIR)/conv_cuda.o: src/conv_cuda.cu
+$(BUILD_DIR)/conv_cuda.o: cuda/src/conv_cuda.cu
+	@ cd cuda
 	@ mkdir -p $(BUILD_DIR)
 	nvcc -O3 -lcublas_device -lcudadevrt src/conv_cuda.cu -o conv_cuda.o -Xcompiler -fPIC -rdc=true -shared -Iinclude -arch=sm_60
 	@ mv *.o $(BUILD_DIR)/
+	@ cd ..
 
 clean:
 	$(RM_RF) $(BUILD_DIR) $(CONV_CUDA)
