@@ -17,8 +17,12 @@ class IncConvFunction(Function):
     def forward(self, in_tensor, weights, biases, out_tensor):
         if self.version == 1:
             inc_conv_lib.inc_conv_v1(in_tensor, weights, biases, out_tensor, self.padding, self.stride)
+        elif self.version == 2:
+            inc_conv_lib.inc_conv_v2(in_tensor, weights, biases, out_tensor, self.padding, self.stride)
         elif self.version == 3:
             inc_conv_lib.inc_conv_v3(in_tensor, weights, biases, out_tensor, self.padding, self.stride, self.p_row_start, self.p_col_start, self.p_height, self.p_width)
+        elif self.version == 4:
+            inc_conv_lib.inc_conv_v4(in_tensor, weights, biases, out_tensor, self.padding, self.stride, self.p_row_start, self.p_col_start, self.p_height, self.p_width)
 
         return out_tensor
 

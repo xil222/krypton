@@ -1,7 +1,7 @@
 #include <math.h>
 #include <assert.h>
 #include <stdio.h>
-#include "cuda_runtime.h"
+#include "cuda.h"
 #include "curand.h"
 #include "cublas_v2.h"
 
@@ -459,3 +459,29 @@ void premat_mem_copy_gpu(int size, int channels, int batch, float *data_out_ptr,
     cuda_check_error(cudaPeekAtLastError());
 }
 
+__global__ void cudnn_mem_copy_gpu_kernel(int num_kernels, int batch, int channels, int size, float *in_ptr, float* out_ptr, int p_row_start, int p_col_start, int p_height, int p_width)
+{
+    int index = blockIdx.x*blockDim.x+threadIdx.x;
+    if(index < num_kernels)
+    {
+        int w_out = p_col_start + index % p_width;
+        int h_index = index / p_width;
+        int h_out = p_row_start + h_index % p_height;
+        int channel_in = h_index / p_height;
+
+        out_ptr += index;
+
+        for(int i=0; i<batch; i++)
+        {
+            *out_ptr = in_ptr[channel_in*size*size+h_out*size+w_out];
+            out_ptr += index;
+        }
+    }
+}
+
+void cudnn_mem_copy_gpu(int batch, int channels, int size, float *in_ptr, float* out_ptr, int p_row_start, int p_col_start, int p_height, int p_width)
+{
+    int num_kernels = p_height*p_width*channels;
+    cudnn_mem_copy_gpu_kernel<<<(num_kernels+BLOCK-1)/BLOCK,
+            BLOCK>>>(num_kernels, batch, channels, size, in_ptr, out_ptr, p_row_start, p_col_start, p_height, p_width);
+}

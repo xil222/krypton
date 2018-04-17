@@ -20,11 +20,9 @@ $(TORCH_FFI_TARGET): $(CONV_CUDA) $(TORCH_FFI_BUILD)
 	$(PYTHON) $(TEST)
 
 $(BUILD_DIR)/conv_cuda.o: cuda/src/conv_cuda.cu
-	@ cd cuda
 	@ mkdir -p $(BUILD_DIR)
-	nvcc -O3 -lcublas_device -lcudadevrt src/conv_cuda.cu -o conv_cuda.o -Xcompiler -fPIC -rdc=true -shared -Iinclude -arch=sm_60
+	nvcc -O3 -lcublas_device -lcudadevrt cuda/src/conv_cuda.cu -o conv_cuda.o -Xcompiler -fPIC -rdc=true -shared $(INCLUDE_FLAGS) -arch=sm_60
 	@ mv *.o $(BUILD_DIR)/
-	@ cd ..
 
 clean:
 	$(RM_RF) $(BUILD_DIR) $(CONV_CUDA)

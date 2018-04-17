@@ -20,6 +20,8 @@ void inc_conv_mem_copy_gpu(float *c, float *ptr_out_tensor, int p_row_start, int
 
 void premat_mem_copy_gpu(int size, int channels, int batch, float *data_out_ptr, float *premat_ptr);
 
+void cudnn_mem_copy_gpu(int batch, int channels, int size, float *in_ptr, float* out_ptr, int p_row_start, int p_col_start, int p_height, int p_width);
+
 //void batch_dp_gemm_conv_gpu(int in_channels, int in_size, int k_size, int out_size, int padding, int stride, float * ptr_input, float * ptr_weights, float * ptr_output, int groups, int batch, int m, int k, int n, float * workspace);
 
 //void batched_inc_conv_dp_gpu(int batch, float *workspace, float *c, float * ptr_in_tensor, float *ptr_out_tensor, 

@@ -13,7 +13,7 @@ out_size = 224
 
 k_size = 3
 
-p_size = 56
+p_size = 14
 
 
 for iteration in range(3):
@@ -41,7 +41,7 @@ for iteration in range(3):
     print('Pytorch: ' + str(time.time() - prev_time))
 
 
-    for v in [1, 3]:
+    for v in [1, 2, 3, 4]:
         torch.cuda.synchronize()
         prev_time = time.time()
         for i in range(5):

@@ -8,6 +8,26 @@
 
 extern THCState *state;
 
+int cuda_get_device()
+{
+    int n = 0;
+    cudaError_t status = cudaGetDevice(&n);
+    //cuda_check_error(status);
+    return n;
+}
+
+cudnnHandle_t cudnn_handle()
+{
+    static int init[16] = {0};
+    static cudnnHandle_t handle[16];
+    int i = cuda_get_device();
+    if(!init[i]) {
+        cudnnCreate(&handle[i]);
+        init[i] = 1;
+    }
+    return handle[i];
+}
+
 int inc_conv_v1(THCudaTensor *in_tensor, THCudaTensor *weights, THCudaTensor *biases, THCudaTensor *out_tensor, int padding, int stride)
 {
     float * ptr_in_tensor    = THCudaTensor_data(NULL, in_tensor);
@@ -52,19 +72,19 @@ int inc_conv_v2(THCudaTensor *in_tensor, THCudaTensor *weights, THCudaTensor *bi
     float * ptr_out_tensor   = THCudaTensor_data(NULL, out_tensor);
 
     int batch = in_tensor->size[0];
-    
+
     int in_channels = in_tensor->size[1];
-    int in_size = 56;//in_tensor->size[2];
-    
+    int in_size = in_tensor->size[2];
+
     int out_channels = out_tensor->size[1];
     int out_size = out_tensor->size[2];
-    
+
     int k_size = weights->size[2];
 
-    int n = 1;
+    int n = batch;
 
-    cudnnHandle_t cudnn;
-    cudnnCreate(&cudnn);
+    cudnnHandle_t cudnn = cudnn_handle();
+//    cudnnCreate(&cudnn);
 
     cudnnTensorDescriptor_t in_desc;
     cudnnCreateTensorDescriptor(&in_desc);
@@ -84,30 +104,40 @@ int inc_conv_v2(THCudaTensor *in_tensor, THCudaTensor *weights, THCudaTensor *bi
     cudnnCreateTensorDescriptor(&out_desc);
     cudnnSetTensor4dDescriptor(out_desc, CUDNN_TENSOR_NCHW, CUDNN_DATA_FLOAT, n, out_channels, out_size, out_size);
 
-    cudnnConvolutionFwdAlgo_t algo;
+    cudnnConvolutionFwdAlgo_t algo = CUDNN_CONVOLUTION_FWD_ALGO_IMPLICIT_GEMM;
     cudnnGetConvolutionForwardAlgorithm(cudnn, in_desc, filt_desc, conv_desc, out_desc, CUDNN_CONVOLUTION_FWD_PREFER_FASTEST, 0, &algo);
 
     size_t ws_size = 0;
     cudnnGetConvolutionForwardWorkspaceSize(cudnn, in_desc, filt_desc, conv_desc, out_desc, algo, &ws_size);
 
-    float * ws_data;
-    cudaMalloc((void **)&ws_data, ws_size);
+    float * ws_data = NULL;
+    if(ws_size>0)
+    {
+        cudaMalloc((void **)&ws_data, ws_size);
+    }
 
     float alpha = 1.f;
     float beta = 0.f;
 
-    for(int i = 0; i < batch; i++){
-        cudnnConvolutionForward(cudnn, &alpha, in_desc, ptr_in_tensor + in_channels * in_size * in_size * sizeof(float),
-             filt_desc, ptr_weights, conv_desc, algo, ws_data, ws_size, &beta,
-              out_desc, ptr_out_tensor + out_channels * out_size * out_size * sizeof(float));
-    }
+    //for(int i = 0; i < batch; i++){
+    //    cudnnConvolutionForward(cudnn, &alpha, in_desc, ptr_in_tensor + i * in_channels * in_size * in_size,
+    //            filt_desc, ptr_weights, conv_desc, algo, ws_data, ws_size, &beta,
+    //            out_desc, ptr_out_tensor + i * out_channels * out_size * out_size);
+    //}
 
-    cudaFree(ws_data);
+    cudnnConvolutionForward(cudnn, &alpha, in_desc, ptr_in_tensor,
+            filt_desc, ptr_weights, conv_desc, algo, ws_data, ws_size, &beta,
+            out_desc, ptr_out_tensor);
+
+    if(ws_size>0)
+    {
+        cudaFree(ws_data);
+    }
     cudnnDestroyTensorDescriptor(out_desc);
     cudnnDestroyConvolutionDescriptor(conv_desc);
     cudnnDestroyFilterDescriptor(filt_desc);
     cudnnDestroyTensorDescriptor(in_desc);
-    cudnnDestroy(cudnn);
+    //cudnnDestroy(cudnn);
 
     add_bias_gpu(ptr_out_tensor, ptr_biases, batch, out_tensor->size[1], out_tensor->size[2]*out_tensor->size[3]);
 
@@ -166,6 +196,86 @@ int inc_conv_v3(THCudaTensor * in_tensor, THCudaTensor * weights, THCudaTensor *
 
     cudaFree(workspace);
     cudaFree(c);
+
+    return 0;
+}
+
+
+int inc_conv_v4(THCudaTensor * in_tensor, THCudaTensor * weights, THCudaTensor * biases, THCudaTensor * out_tensor, int padding, int stride, int p_row_start, int p_col_start, int p_width, int p_height)
+{
+    float * ptr_in_tensor    = THCudaTensor_data(NULL, in_tensor);
+    float * ptr_weights  = THCudaTensor_data(NULL, weights);
+    float * ptr_biases = THCudaTensor_data(NULL, biases);
+    float * ptr_out_tensor   = THCudaTensor_data(NULL, out_tensor);
+
+    int batch = in_tensor->size[0];
+
+    int in_channels = in_tensor->size[1];
+    int in_size = p_width;//in_tensor->size[2];
+
+    int out_channels = out_tensor->size[1];
+    int out_size = p_width;//out_tensor->size[2];
+
+    int k_size = weights->size[2];
+
+    int n = batch;
+
+    cudnnHandle_t cudnn = cudnn_handle();
+//    cudnnCreate(&cudnn);
+
+    cudnnTensorDescriptor_t in_desc;
+    cudnnCreateTensorDescriptor(&in_desc);
+    cudnnSetTensor4dDescriptor(in_desc, CUDNN_TENSOR_NCHW, CUDNN_DATA_FLOAT, n, in_channels, in_size, in_size);
+
+    float * temp_in_tensor;
+    cudaMalloc((void **)&temp_in_tensor, n*in_channels*out_size*out_size*sizeof(float));
+
+    //FIXME
+    cudnn_mem_copy_gpu(batch, in_channels, 224, ptr_in_tensor, temp_in_tensor, p_row_start, p_col_start, p_height, p_width);
+
+    cudnnFilterDescriptor_t filt_desc;
+    cudnnCreateFilterDescriptor(&filt_desc);
+    cudnnSetFilter4dDescriptor(filt_desc, CUDNN_DATA_FLOAT, CUDNN_TENSOR_NCHW, out_channels, in_channels, k_size, k_size);
+
+    cudnnConvolutionDescriptor_t conv_desc;
+    cudnnCreateConvolutionDescriptor(&conv_desc);
+    cudnnSetConvolution2dDescriptor(conv_desc, padding, padding, stride, stride, 1, 1, CUDNN_CONVOLUTION, CUDNN_DATA_FLOAT);
+
+    cudnnGetConvolution2dForwardOutputDim(conv_desc, in_desc, filt_desc, &n, &out_channels, &out_size, &out_size);
+    float * temp_out_tensor;
+    cudaMalloc((void **)&temp_out_tensor, n*out_channels*out_size*out_size*sizeof(float));
+
+    cudnnTensorDescriptor_t out_desc;
+    cudnnCreateTensorDescriptor(&out_desc);
+    cudnnSetTensor4dDescriptor(out_desc, CUDNN_TENSOR_NCHW, CUDNN_DATA_FLOAT, n, out_channels, out_size, out_size);
+
+    cudnnConvolutionFwdAlgo_t algo;
+    cudnnGetConvolutionForwardAlgorithm(cudnn, in_desc, filt_desc, conv_desc, out_desc, CUDNN_CONVOLUTION_FWD_PREFER_FASTEST, 0, &algo);
+    if(p_width <= 14) algo = CUDNN_CONVOLUTION_FWD_ALGO_IMPLICIT_GEMM;
+
+    size_t ws_size = 0;
+    cudnnGetConvolutionForwardWorkspaceSize(cudnn, in_desc, filt_desc, conv_desc, out_desc, algo, &ws_size);
+
+    float * ws_data = NULL;
+    if(ws_size>0)cudaMalloc((void **)&ws_data, ws_size);
+
+    float alpha = 1.f;
+    float beta = 0.f;
+
+    cudnnConvolutionForward(cudnn, &alpha, in_desc, ptr_in_tensor,
+                filt_desc, ptr_weights, conv_desc, algo, ws_data, ws_size, &beta,
+                out_desc, temp_out_tensor);
+
+    add_bias_gpu(ptr_out_tensor, ptr_biases, batch, out_channels, p_width*p_width);
+    inc_conv_mem_copy_gpu(temp_out_tensor, ptr_out_tensor, p_row_start, p_col_start, p_height, p_width, out_channels, out_size);
+
+    if(ws_size>0)cudaFree(ws_data);
+    cudaFree(temp_in_tensor);
+    cudaFree(temp_out_tensor);
+    cudnnDestroyTensorDescriptor(out_desc);
+    cudnnDestroyConvolutionDescriptor(conv_desc);
+    cudnnDestroyFilterDescriptor(filt_desc);
+    cudnnDestroyTensorDescriptor(in_desc);
 
     return 0;
 }
