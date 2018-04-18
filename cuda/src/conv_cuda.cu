@@ -459,29 +459,89 @@ void premat_mem_copy_gpu(int size, int channels, int batch, float *data_out_ptr,
     cuda_check_error(cudaPeekAtLastError());
 }
 
-__global__ void cudnn_mem_copy_gpu_kernel(int num_kernels, int batch, int channels, int size, float *in_ptr, float* out_ptr, int p_row_start, int p_col_start, int p_height, int p_width)
+__global__ void cudnn_mem_copy_gpu_kernel(int num_kernels, int batch, int channels, int size, int stride,
+ int padding, float *in_ptr,
+ float* out_ptr, int * ptr_location, int p_height, int p_width)
 {
     int index = blockIdx.x*blockDim.x+threadIdx.x;
     if(index < num_kernels)
     {
-        int w_out = p_col_start + index % p_width;
         int h_index = index / p_width;
-        int h_out = p_row_start + h_index % p_height;
         int channel_in = h_index / p_height;
 
         out_ptr += index;
 
         for(int i=0; i<batch; i++)
         {
-            *out_ptr = in_ptr[channel_in*size*size+h_out*size+w_out];
-            out_ptr += index;
+            int w_out = *(ptr_location+i*2+1)*stride - padding + index % p_width;
+            int h_out = *(ptr_location+i*2)*stride - padding + h_index % p_height;
+
+            if(w_out >= size || w_out < 0 || h_out >= size || h_out < 0)
+            {
+                *out_ptr = 0;
+            }
+            else
+            {
+                *out_ptr = in_ptr[channel_in*size*size+h_out*size+w_out];
+            }
+            out_ptr += p_width*p_height*channels;
+            in_ptr += size*size*channels;
         }
     }
 }
 
-void cudnn_mem_copy_gpu(int batch, int channels, int size, float *in_ptr, float* out_ptr, int p_row_start, int p_col_start, int p_height, int p_width)
+__global__ void print_array(float * ptr, int size)
 {
-    int num_kernels = p_height*p_width*channels;
+    int index = blockIdx.x*blockDim.x+threadIdx.x;
+    if(index < 1)
+    {
+        for(int i=0; i<size; i++)
+        {
+            for(int j=0; j<size; j++)
+            {
+                printf("%f,", *(ptr+i*size+j));
+            }
+            printf("\n");
+        }
+        printf("\n");
+    }
+}
+
+void cudnn_mem_copy_gpu(int batch, int channels, int size, int padding, int stride, float *in_ptr, float* out_ptr, int * ptr_location, int in_p_height, int in_p_width)
+{
+    int num_kernels = in_p_height*in_p_width*channels;
     cudnn_mem_copy_gpu_kernel<<<(num_kernels+BLOCK-1)/BLOCK,
-            BLOCK>>>(num_kernels, batch, channels, size, in_ptr, out_ptr, p_row_start, p_col_start, p_height, p_width);
+            BLOCK>>>(num_kernels, batch, channels, size, padding, stride, in_ptr, out_ptr, ptr_location, in_p_height, in_p_width);
+}
+
+__global__ void inc_conv_mem_copy_gpu_v2_kernel(float *ptr_temp_tensor, float *ptr_out_tensor, int * ptr_location, int p_height,
+        int p_width, int channels, int size, int batch, int n)
+{
+    int index = blockIdx.x*blockDim.x+threadIdx.x;
+    if (index < n)
+    {
+        int h_index = index / p_width;
+        int channel_in = h_index / p_height;
+
+        float *in_data_ptr = ptr_temp_tensor + index;
+
+        for(int i=0; i<batch; i++)
+        {
+            int w_out = *(ptr_location+i*2+1) + index % p_width;
+            int h_out = *(ptr_location+i*2) + h_index % p_height;
+
+            ptr_out_tensor[channel_in*size*size+h_out*size+w_out] = *in_data_ptr;
+
+            in_data_ptr += p_width*p_height*channels;
+            ptr_out_tensor += size*size*channels;
+        }
+    }
+}
+
+void inc_conv_mem_copy_gpu_v2(float *ptr_temp_tensor, float *ptr_out_tensor, int * ptr_location, int batch, int p_height, int p_width, int channels, int size)
+{
+    int num_kernels = p_height * p_width * channels;
+    inc_conv_mem_copy_gpu_v2_kernel<<<(num_kernels+BLOCK-1)/BLOCK,
+        BLOCK>>>(ptr_temp_tensor, ptr_out_tensor, ptr_location, p_height, p_width, channels, size, batch, num_kernels);
+    cuda_check_error(cudaPeekAtLastError());
 }
