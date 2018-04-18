@@ -514,7 +514,7 @@ void cudnn_mem_copy_gpu(int batch, int channels, int size, int padding, int stri
             BLOCK>>>(num_kernels, batch, channels, size, padding, stride, in_ptr, out_ptr, ptr_location, in_p_height, in_p_width);
 }
 
-__global__ void inc_conv_mem_copy_gpu_v2_kernel(float *ptr_temp_tensor, float *ptr_out_tensor, int * ptr_location, int p_height,
+__global__ void inc_conv_mem_copy_gpu_v2_kernel(float *ptr_temp_tensor, float *ptr_out_tensor, float * ptr_biases, int * ptr_location, int p_height,
         int p_width, int channels, int size, int batch, int n)
 {
     int index = blockIdx.x*blockDim.x+threadIdx.x;
@@ -530,7 +530,9 @@ __global__ void inc_conv_mem_copy_gpu_v2_kernel(float *ptr_temp_tensor, float *p
             int w_out = *(ptr_location+i*2+1) + index % p_width;
             int h_out = *(ptr_location+i*2) + h_index % p_height;
 
-            ptr_out_tensor[channel_in*size*size+h_out*size+w_out] = *in_data_ptr;
+            //adding bias and performing ReLU activation
+            float temp = *in_data_ptr + ptr_biases[channel_in];
+            ptr_out_tensor[channel_in*size*size+h_out*size+w_out] =  temp > 0 ? temp : 0;
 
             in_data_ptr += p_width*p_height*channels;
             ptr_out_tensor += size*size*channels;
@@ -538,10 +540,10 @@ __global__ void inc_conv_mem_copy_gpu_v2_kernel(float *ptr_temp_tensor, float *p
     }
 }
 
-void inc_conv_mem_copy_gpu_v2(float *ptr_temp_tensor, float *ptr_out_tensor, int * ptr_location, int batch, int p_height, int p_width, int channels, int size)
+void inc_conv_mem_copy_gpu_v2(float *ptr_temp_tensor, float *ptr_out_tensor, float * ptr_biases, int * ptr_location, int batch, int p_height, int p_width, int channels, int size)
 {
     int num_kernels = p_height * p_width * channels;
     inc_conv_mem_copy_gpu_v2_kernel<<<(num_kernels+BLOCK-1)/BLOCK,
-        BLOCK>>>(ptr_temp_tensor, ptr_out_tensor, ptr_location, p_height, p_width, channels, size, batch, num_kernels);
+        BLOCK>>>(ptr_temp_tensor, ptr_out_tensor, ptr_biases, ptr_location, p_height, p_width, channels, size, batch, num_kernels);
     cuda_check_error(cudaPeekAtLastError());
 }

@@ -134,7 +134,8 @@ int inc_conv_v4(THCudaTensor * in_tensor, THCudaTensor * weights, THCudaTensor *
                 out_desc, temp_out_tensor);
 
     //add_bias_gpu(temp_out_tensor, ptr_biases, batch, out_channels, p_width*p_height);
-    inc_conv_mem_copy_gpu_v2(temp_out_tensor, ptr_out_tensor, ptr_location, batch, p_height, p_width, out_channels, out_size);
+    //Fused operator that adds the bias and performs ReLU activation
+    inc_conv_mem_copy_gpu_v2(temp_out_tensor, ptr_out_tensor, ptr_biases, ptr_location, batch, p_height, p_width, out_channels, out_size);
 
     if(ws_size>0)cudaFree(ws_data);
     //cudaFree(temp_in_tensor);
