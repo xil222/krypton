@@ -547,3 +547,30 @@ void inc_conv_mem_copy_gpu_v2(float *ptr_temp_tensor, float *ptr_out_tensor, flo
         BLOCK>>>(ptr_temp_tensor, ptr_out_tensor, ptr_biases, ptr_location, p_height, p_width, channels, size, batch, num_kernels);
     cuda_check_error(cudaPeekAtLastError());
 }
+
+__global__ void update_output_locations_gpu_kernel(int num_kernels, int * ptr_location, int size, int padding,
+    int stride, int in_p_height, int in_p_width)
+{
+    int index = blockIdx.x*blockDim.x+threadIdx.x;
+    if (index < num_kernels)
+    {
+        int current_y0 = ptr_location[index*2];
+        int current_x0 = ptr_location[index*2+1];
+
+        if(current_y0+in_p_height > size)
+            current_y0 = current_y0 - (current_y0+in_p_height - size);
+        if(current_x0+in_p_width > size)
+            current_x0 = current_x0 - (current_x0+in_p_width - size);
+
+        ptr_location[index*2] = floor((current_y0+padding) * 1.0 / stride);
+        ptr_location[index*2+1] = floor((current_x0+padding) * 1.0 / stride);
+    }
+}
+
+void update_output_locations_gpu(int batch, int* ptr_location, int size, int padding, int stride,
+    int in_p_height, int in_p_width)
+{
+    int num_kernels = batch;
+    update_output_locations_gpu_kernel<<<(num_kernels+BLOCK-1)/BLOCK, BLOCK>>>(
+        num_kernels, ptr_location, size, padding, stride, in_p_height, in_p_width);
+}

@@ -80,19 +80,27 @@ int inc_conv_v4(THCudaTensor * in_tensor, THCudaTensor * weights, THCudaTensor *
 
     cudnnHandle_t cudnn = cudnn_handle();
 
+    int out_p_height = ceil(p_height*1.0/stride);
+    int out_p_width = ceil(p_width*1.0/stride);
+
+    int in_p_height = out_p_height*stride;
+    int in_p_width = out_p_width*stride;
+
+    update_output_locations_gpu(batch, ptr_location, in_size, padding, stride, in_p_height, in_p_width);
+
     //temp input tensor
-    int in_p_height = p_height*stride + k_size-1;
-    int in_p_width = p_width*stride + k_size-1;
+    int read_p_height = in_p_height + k_size-1;
+    int read_p_width = in_p_width + k_size-1;
 
     cudnnTensorDescriptor_t in_desc;
     cudnnCreateTensorDescriptor(&in_desc);
-    cudnnSetTensor4dDescriptor(in_desc, CUDNN_TENSOR_NCHW, CUDNN_DATA_FLOAT, n, in_channels, in_p_width, in_p_height);
+    cudnnSetTensor4dDescriptor(in_desc, CUDNN_TENSOR_NCHW, CUDNN_DATA_FLOAT, n, in_channels, read_p_width, read_p_height);
 
     float * temp_in_tensor;
-    //cudaMalloc((void **)&temp_in_tensor, n*in_channels*in_p_width*in_p_height*sizeof(float));
-    temp_in_tensor = get_temp_in_tensor(n*in_channels*in_p_width*in_p_height*sizeof(float));
-    
-    cudnn_mem_copy_gpu(batch, in_channels, in_size, stride, padding, ptr_in_tensor, temp_in_tensor, ptr_location, in_p_height, in_p_width);
+    //cudaMalloc((void **)&temp_in_tensor, n*in_channels*read_p_width*read_p_height*sizeof(float));
+    temp_in_tensor = get_temp_in_tensor(n*in_channels*read_p_width*read_p_height*sizeof(float));
+
+    cudnn_mem_copy_gpu(batch, in_channels, in_size, stride, padding, ptr_in_tensor, temp_in_tensor, ptr_location, read_p_height, read_p_width);
 
     //filter tensor
     cudnnFilterDescriptor_t filt_desc;

@@ -42,20 +42,20 @@ for iteration in range(4):
 
     patch_location_tensor = Variable(
         torch.from_numpy(
-            np.array([(in_size-p_size)//2, (in_size-p_size)//2] * batch_size,
+            np.array([(in_size - p_size) // 2, (in_size - p_size) // 2] * batch_size,
                      dtype=np.int32)).cuda())
 
     for v in [4]:
         torch.cuda.synchronize()
         prev_time = time.time()
         for i in range(5):
-            if v >= 3:
-                # have to move data at each iteration
-                patch_location_tensor = Variable(
-                    torch.from_numpy(
-                        np.array([(in_size-p_size)//2, (in_size-p_size)//2] * batch_size,
-                                 dtype=np.int32)).cuda())
-            out_tensor = module(in_tensor, weights, biases, out_tensor, patch_location_tensor, 1, 1, p_height=p_size, p_width=p_size, version=v)
+            # have to move data at each iteration
+            patch_location_tensor = Variable(
+                torch.from_numpy(
+                    np.array([(in_size - p_size) // 2, (in_size - p_size) // 2] * batch_size,
+                             dtype=np.int32)).cuda())
+            (out_tensor, _), _ = module(in_tensor, weights, biases, out_tensor, patch_location_tensor, 1, 1,
+                                         p_height=p_size, p_width=p_size, version=v)
             torch.cuda.synchronize()
         torch.cuda.synchronize()
         print('inc conv v' + str(v) + ': ' + str(time.time() - prev_time))
