@@ -549,7 +549,7 @@ void inc_conv_mem_copy_gpu_v2(float *ptr_temp_tensor, float *ptr_out_tensor, flo
 }
 
 __global__ void update_output_locations_gpu_kernel(int num_kernels, int * ptr_location, int size, int padding,
-    int stride, int in_p_height, int in_p_width)
+    int stride, int k_size, int in_p_height, int in_p_width)
 {
     int index = blockIdx.x*blockDim.x+threadIdx.x;
     if (index < num_kernels)
@@ -557,20 +557,20 @@ __global__ void update_output_locations_gpu_kernel(int num_kernels, int * ptr_lo
         int current_y0 = ptr_location[index*2];
         int current_x0 = ptr_location[index*2+1];
 
-        if(current_y0+in_p_height > size)
-            current_y0 = current_y0 - (current_y0+in_p_height - size);
-        if(current_x0+in_p_width > size)
-            current_x0 = current_x0 - (current_x0+in_p_width - size);
+        if(current_y0+in_p_height > size + padding)
+            current_y0 = current_y0 - (current_y0+in_p_height - size - padding);
+        if(current_x0+in_p_width > size + padding)
+            current_x0 = current_x0 - (current_x0+in_p_width - size - padding);
 
-        ptr_location[index*2] = floor((current_y0+padding) * 1.0 / stride);
-        ptr_location[index*2+1] = floor((current_x0+padding) * 1.0 / stride);
+        ptr_location[index*2] = max((int)ceil((padding + current_y0-k_size + 1.0)/stride), 0);
+        ptr_location[index*2+1] = max((int)ceil((padding + current_x0-k_size + 1.0)/stride), 0);
     }
 }
 
 void update_output_locations_gpu(int batch, int* ptr_location, int size, int padding, int stride,
-    int in_p_height, int in_p_width)
+    int k_size, int in_p_height, int in_p_width)
 {
     int num_kernels = batch;
     update_output_locations_gpu_kernel<<<(num_kernels+BLOCK-1)/BLOCK, BLOCK>>>(
-        num_kernels, ptr_location, size, padding, stride, in_p_height, in_p_width);
+        num_kernels, ptr_location, size, padding, stride, k_size, in_p_height, in_p_width);
 }

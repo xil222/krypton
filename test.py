@@ -54,7 +54,7 @@ for iteration in range(4):
                 torch.from_numpy(
                     np.array([(in_size - p_size) // 2, (in_size - p_size) // 2] * batch_size,
                              dtype=np.int32)).cuda())
-            (out_tensor, _), _ = module(in_tensor, weights, biases, out_tensor, patch_location_tensor, 1, 1,
+            (out_tensor, _), _ = module(in_tensor, weights, biases, out_tensor, patch_location_tensor, 1, 1, k_size,
                                          p_height=p_size, p_width=p_size, version=v)
             torch.cuda.synchronize()
         torch.cuda.synchronize()

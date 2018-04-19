@@ -30,9 +30,9 @@ class IncConvFunction(Function):
 
 class IncConvModule(Module):
     def forward(self, in_tensor, weights, biases, out_tensor, patch_location_tensor,
-                padding, stride, p_height=0, p_width=0, version=1):
+                padding, stride, k_size, p_height=0, p_width=0, version=1):
         # FIXME Logic duplicated in both CUDA and Python
-        out_p_height = math.ceil(p_height * 1.0 / stride)
-        out_p_width = math.ceil(p_width * 1.0 / stride)
+        out_p_height = math.ceil((p_height+k_size-1) * 1.0 / stride)
+        out_p_width = math.ceil((p_width+k_size-1) * 1.0 / stride)
         return IncConvFunction(padding, stride, p_height, p_width, version)(in_tensor, weights, biases, out_tensor,
                                                                             patch_location_tensor), (out_p_height, out_p_width)
