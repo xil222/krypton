@@ -7,8 +7,8 @@ from PIL import Image
 from torch.autograd import Variable
 from torchvision.transforms import transforms
 
-from imagenet_classes import class_names
 from commons import load_dict_from_hdf5
+from imagenet_classes import class_names
 
 
 class VGG16(nn.Module):
@@ -133,10 +133,10 @@ if __name__ == "__main__":
     images = Image.open('./dog_resized.jpg')
 
     images = loader(images)
-    images = Variable(images.unsqueeze(0)).cuda()
+    images = Variable(images.unsqueeze(0), requires_grad=False).cuda()
 
     images = images.repeat(batch_size, 1, 1, 1)
 
-    vgg16 = VGG16()
-    x = vgg16.forward(images)
+    model = VGG16()
+    x = model.forward(images)
     print(class_names[np.argmax(x.data.cpu().numpy())])
