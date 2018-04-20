@@ -153,8 +153,8 @@ int inc_conv_v4(THCudaTensor * in_tensor, THCudaTensor * weights, THCudaTensor *
     return 0;
 }
 
-int inc_max_pool_v1(THCudaTensor * in_tensor, THCudaTensor * out_tensor, THCudaIntTensor * patch_location_tensor, int k_size,
- int padding, int stride, int p_height, int p_width)
+int inc_max_pool_v1(THCudaTensor * in_tensor, THCudaTensor * out_tensor, THCudaIntTensor * patch_location_tensor,
+ int padding, int stride, int k_size, int p_height, int p_width)
 {
     float * ptr_in_tensor    = THCudaTensor_data(NULL, in_tensor);
     float * ptr_out_tensor   = THCudaTensor_data(NULL, out_tensor);
@@ -169,6 +169,8 @@ int inc_max_pool_v1(THCudaTensor * in_tensor, THCudaTensor * out_tensor, THCudaI
 
     int out_p_height = ceil((p_height+k_size-1)*1.0/stride);
     int out_p_width = ceil((p_width+k_size-1)*1.0/stride);
+
+    //printf("%d,%d, %d,%d\n", out_p_height, out_p_width, k_size, stride);
 
     int in_p_height = out_p_height*stride;
     int in_p_width = out_p_width*stride;
