@@ -574,3 +574,53 @@ void update_output_locations_gpu(int batch, int* ptr_location, int size, int pad
     update_output_locations_gpu_kernel<<<(num_kernels+BLOCK-1)/BLOCK, BLOCK>>>(
         num_kernels, ptr_location, size, padding, stride, k_size, in_p_height, in_p_width);
 }
+
+
+__global__ void inc_max_pool_gpu_kernel(int n, float* ptr_in_tensor, float* ptr_out_tensor, int in_size, int out_size, int channels,
+    int batch, int padding, int stride, int k_size, int * ptr_location, int out_p_height, int out_p_width)
+{
+    int index = (blockIdx.x + blockIdx.y*gridDim.x) * blockDim.x + threadIdx.x;
+    if(index < n)
+    {
+        int j = index % out_p_width;
+        index /= out_p_width;
+        int i = index % out_p_height;
+        index /= out_p_height;
+        int k = index % channels;
+        index /= channels;
+        int b = index;
+
+        int w_offset = -padding;
+        int h_offset = -padding;
+
+        i = i + ptr_location[2*b];
+        j = j + ptr_location[2*b+1];
+
+        int out_index = j + out_size*(i+out_size*(k+channels*b));
+        float max = -INFINITY;
+
+        for(int l=0; l<k_size; l++)
+        {
+            for(int m=0; m<k_size; m++)
+            {
+                int cur_h = h_offset + i*stride + l;
+                int cur_w = w_offset + j*stride + m;
+                int index = cur_w + in_size*(cur_h + in_size*(k + b*channels));
+                int valid = (cur_h >= 0 && cur_h < in_size && cur_w >= 0 && cur_w < in_size);
+                float val = (valid != 0) ? ptr_in_tensor[index] : -INFINITY;
+                max   = (val > max) ? val   : max;
+            }
+        }
+
+        ptr_out_tensor[out_index] = max;
+    }
+}
+
+void inc_max_pool_gpu(float* ptr_in_tensor, float* ptr_out_tensor, int in_size, int out_size, int channels,
+    int batch, int padding, int stride, int k_size, int * ptr_location, int out_p_height, int out_p_width)
+{
+    size_t n =  out_p_height * out_p_width * channels * batch;
+    inc_max_pool_gpu_kernel<<<(n+BLOCK-1)/BLOCK, BLOCK>>>(n, ptr_in_tensor, ptr_out_tensor,
+        in_size, out_size, channels, batch, padding, stride, k_size, ptr_location, out_p_height, out_p_width);
+    //check_error(cudaPeekAtLastError());
+}

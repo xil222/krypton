@@ -153,6 +153,34 @@ int inc_conv_v4(THCudaTensor * in_tensor, THCudaTensor * weights, THCudaTensor *
     return 0;
 }
 
+int inc_max_pool_v1(THCudaTensor * in_tensor, THCudaTensor * out_tensor, THCudaIntTensor * patch_location_tensor, int k_size,
+ int padding, int stride, int p_height, int p_width)
+{
+    float * ptr_in_tensor    = THCudaTensor_data(NULL, in_tensor);
+    float * ptr_out_tensor   = THCudaTensor_data(NULL, out_tensor);
+    int * ptr_location = THCudaIntTensor_data(NULL, patch_location_tensor);
+
+    int batch = in_tensor->size[0];
+
+    int in_channels = in_tensor->size[1];
+    int in_size = in_tensor->size[2];
+
+    int out_size = out_tensor->size[2];
+
+    int out_p_height = ceil((p_height+k_size-1)*1.0/stride);
+    int out_p_width = ceil((p_width+k_size-1)*1.0/stride);
+
+    int in_p_height = out_p_height*stride;
+    int in_p_width = out_p_width*stride;
+
+    update_output_locations_gpu(batch, ptr_location, in_size, padding, stride, k_size, in_p_height, in_p_width);
+
+    inc_max_pool_gpu(ptr_in_tensor, ptr_out_tensor, in_size, out_size, in_channels, batch, padding, stride, k_size,
+        ptr_location, out_p_height, out_p_width);
+
+    return 0;
+}
+
 
 int inc_conv_v1(THCudaTensor *in_tensor, THCudaTensor *weights, THCudaTensor *biases, THCudaTensor *out_tensor, int padding, int stride)
 {
