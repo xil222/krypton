@@ -2,7 +2,9 @@
 # coding=utf-8
 
 import numpy as np
+import torch
 import torch.nn as nn
+import torchvision
 from PIL import Image
 from torch.autograd import Variable
 from torchvision.transforms import transforms
@@ -51,8 +53,8 @@ class VGG16(nn.Module):
         if init_weights:
             self._initialize_weights()
 
-        for param in self.parameters():
-            param.requires_grad = False
+        #for param in self.parameters():
+        #   param.requires_grad = False
 
     def forward(self, x):
         self.conv1_1 = self.conv1_1_op(x)
@@ -127,16 +129,18 @@ class VGG16(nn.Module):
 
 
 if __name__ == "__main__":
-    batch_size = 128
+    batch_size = 64
 
     loader = transforms.Compose([transforms.Resize([224, 224]), transforms.ToTensor()])
     images = Image.open('./dog_resized.jpg')
 
     images = loader(images)
-    images = Variable(images.unsqueeze(0), requires_grad=False).cuda()
+    images = Variable(images.unsqueeze(0), requires_grad=False, volatile=True).cuda()
 
     images = images.repeat(batch_size, 1, 1, 1)
 
     model = VGG16()
-    x = model.forward(images)
-    print(class_names[np.argmax(x.data.cpu().numpy())])
+
+    model.eval()
+    x = model(images)
+    print(class_names[np.argmax(x.data.cpu().numpy()[0,:])])
