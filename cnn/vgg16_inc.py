@@ -2,87 +2,81 @@
 # coding=utf-8
 
 import random
+
 import numpy as np
+import torch
 import torch.nn as nn
 from PIL import Image
-import torch
 from torch.autograd import Variable
 from torchvision.transforms import transforms
 
-from imagenet_classes import class_names
-from commons import load_dict_from_hdf5
-
-from vgg16 import VGG16
 from commons import IncConvModule, IncMaxPoolModule
+from imagenet_classes import class_names
+from vgg16 import VGG16
+
 
 class IncrementalVGG16(nn.Module):
 
     def __init__(self, full_model, initial_in_tenosor):
         super(IncrementalVGG16, self).__init__()
 
-        #performing initial full inference
+        # performing initial full inference
         full_model.eval()
         full_model.forward(initial_in_tenosor)
 
         self.conv1_1_op = IncConvModule(initial_in_tenosor,
-                                       full_model.conv1_1_op[0].weight.data, full_model.conv1_1_op[0].bias.data,
-                                       full_model.conv1_1, 1, 1, 3)
+                                        full_model.conv1_1_op[0].weight.data, full_model.conv1_1_op[0].bias.data,
+                                        full_model.conv1_1, 1, 1, 3)
         self.conv1_2_op = IncConvModule(full_model.conv1_1,
-                                       full_model.conv1_2_op[0].weight.data, full_model.conv1_2_op[0].bias.data,
-                                       full_model.conv1_2, 1, 1, 3)
+                                        full_model.conv1_2_op[0].weight.data, full_model.conv1_2_op[0].bias.data,
+                                        full_model.conv1_2, 1, 1, 3)
         self.pool1_op = IncMaxPoolModule(full_model.conv1_2, full_model.pool1, 0, 2, 2)
 
-
         self.conv2_1_op = IncConvModule(full_model.pool1,
-                                       full_model.conv2_1_op[0].weight.data, full_model.conv2_1_op[0].bias.data,
-                                       full_model.conv2_1, 1, 1, 3)
+                                        full_model.conv2_1_op[0].weight.data, full_model.conv2_1_op[0].bias.data,
+                                        full_model.conv2_1, 1, 1, 3)
         self.conv2_2_op = IncConvModule(full_model.conv2_1,
-                                       full_model.conv2_2_op[0].weight.data, full_model.conv2_2_op[0].bias.data,
-                                       full_model.conv2_2, 1, 1, 3)
+                                        full_model.conv2_2_op[0].weight.data, full_model.conv2_2_op[0].bias.data,
+                                        full_model.conv2_2, 1, 1, 3)
         self.pool2_op = IncMaxPoolModule(full_model.conv2_2, full_model.pool2, 0, 2, 2)
 
-
         self.conv3_1_op = IncConvModule(full_model.pool2,
-                                       full_model.conv3_1_op[0].weight.data, full_model.conv3_1_op[0].bias.data,
-                                       full_model.conv3_1, 1, 1, 3)
+                                        full_model.conv3_1_op[0].weight.data, full_model.conv3_1_op[0].bias.data,
+                                        full_model.conv3_1, 1, 1, 3)
         self.conv3_2_op = IncConvModule(full_model.conv3_1,
-                                       full_model.conv3_2_op[0].weight.data, full_model.conv3_2_op[0].bias.data,
-                                       full_model.conv2_2, 1, 1, 3)
+                                        full_model.conv3_2_op[0].weight.data, full_model.conv3_2_op[0].bias.data,
+                                        full_model.conv2_2, 1, 1, 3)
         self.conv3_3_op = IncConvModule(full_model.conv3_2,
-                                       full_model.conv3_3_op[0].weight.data, full_model.conv3_3_op[0].bias.data,
-                                       full_model.conv3_3, 1, 1, 3)
+                                        full_model.conv3_3_op[0].weight.data, full_model.conv3_3_op[0].bias.data,
+                                        full_model.conv3_3, 1, 1, 3)
         self.pool3_op = IncMaxPoolModule(full_model.conv3_3, full_model.pool3, 0, 2, 2)
 
-
         self.conv4_1_op = IncConvModule(full_model.pool3,
-                                       full_model.conv4_1_op[0].weight.data, full_model.conv4_1_op[0].bias.data,
-                                       full_model.conv4_1, 1, 1, 3)
+                                        full_model.conv4_1_op[0].weight.data, full_model.conv4_1_op[0].bias.data,
+                                        full_model.conv4_1, 1, 1, 3)
         self.conv4_2_op = IncConvModule(full_model.conv4_1,
-                                       full_model.conv4_2_op[0].weight.data, full_model.conv4_2_op[0].bias.data,
-                                       full_model.conv4_2, 1, 1, 3)
+                                        full_model.conv4_2_op[0].weight.data, full_model.conv4_2_op[0].bias.data,
+                                        full_model.conv4_2, 1, 1, 3)
         self.conv4_3_op = IncConvModule(full_model.conv4_2,
-                                       full_model.conv4_3_op[0].weight.data, full_model.conv4_3_op[0].bias.data,
-                                       full_model.conv4_3, 1, 1, 3)
+                                        full_model.conv4_3_op[0].weight.data, full_model.conv4_3_op[0].bias.data,
+                                        full_model.conv4_3, 1, 1, 3)
         self.pool4_op = IncMaxPoolModule(full_model.conv4_3, full_model.pool4, 0, 2, 2)
 
-
         self.conv5_1_op = IncConvModule(full_model.pool4,
-                                       full_model.conv5_1_op[0].weight.data, full_model.conv5_1_op[0].bias.data,
-                                       full_model.conv5_1, 1, 1, 3)
+                                        full_model.conv5_1_op[0].weight.data, full_model.conv5_1_op[0].bias.data,
+                                        full_model.conv5_1, 1, 1, 3)
         self.conv5_2_op = IncConvModule(full_model.conv5_1,
-                                       full_model.conv5_2_op[0].weight.data, full_model.conv5_2_op[0].bias.data,
-                                       full_model.conv5_2, 1, 1, 3)
+                                        full_model.conv5_2_op[0].weight.data, full_model.conv5_2_op[0].bias.data,
+                                        full_model.conv5_2, 1, 1, 3)
         self.conv5_3_op = IncConvModule(full_model.conv5_2,
-                                       full_model.conv5_3_op[0].weight.data, full_model.conv5_3_op[0].bias.data,
-                                       full_model.conv5_3, 1, 1, 3)
+                                        full_model.conv5_3_op[0].weight.data, full_model.conv5_3_op[0].bias.data,
+                                        full_model.conv5_3, 1, 1, 3)
         self.pool5_op = IncMaxPoolModule(full_model.conv5_3, full_model.pool5, 0, 2, 2)
-
 
         self.classifier = full_model.classifier
 
-
     def forward(self, x, patch_location_tensor, p_height=0, p_width=0):
-        #set the new input
+        # set the new input
         self.conv1_1_op.in_tensor = x
 
         (_, patch_location_tensor), (p_height, p_width) = self.conv1_1_op(patch_location_tensor, p_height, p_width)
