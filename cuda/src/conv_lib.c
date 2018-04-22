@@ -8,6 +8,11 @@
 
 extern THCState *state;
 
+int min(int a, int b)
+{
+    return a > b ? b : a;
+}
+
 int cuda_get_device(void)
 {
     int n = 0;
@@ -80,11 +85,11 @@ int inc_conv_v4(THCudaTensor * in_tensor, THCudaTensor * weights, THCudaTensor *
 
     cudnnHandle_t cudnn = cudnn_handle();
 
-    int out_p_height = ceil((p_height+k_size-1)*1.0/stride);
-    int out_p_width = ceil((p_width+k_size-1)*1.0/stride);
+    int out_p_height = min((int)ceil((p_height+k_size-1)*1.0/stride), out_size);
+    int out_p_width = min((int)ceil((p_width+k_size-1)*1.0/stride), out_size);
 
-    int in_p_height = out_p_height*stride;
-    int in_p_width = out_p_width*stride;
+    int in_p_height = k_size + (out_p_height-1)*stride;
+    int in_p_width = k_size + (out_p_width-1)*stride;
 
     update_output_locations_gpu(batch, ptr_location, in_size, padding, stride, k_size, in_p_height, in_p_width);
 
@@ -110,14 +115,14 @@ int inc_conv_v4(THCudaTensor * in_tensor, THCudaTensor * weights, THCudaTensor *
 
 
     //temp output tensor
-    cudnnGetConvolution2dForwardOutputDim(conv_desc, in_desc, filt_desc, &n, &out_channels, &p_height, &p_width);
+    cudnnGetConvolution2dForwardOutputDim(conv_desc, in_desc, filt_desc, &n, &out_channels, &out_p_height, &out_p_width);
     float * temp_out_tensor;
     //cudaMalloc((void **)&temp_out_tensor, n*out_channels*p_height*p_width*sizeof(float));
-    temp_out_tensor = get_temp_out_tensor(n*out_channels*p_height*p_width*sizeof(float));
+    temp_out_tensor = get_temp_out_tensor(n*out_channels*out_p_height*out_p_width*sizeof(float));
 
     cudnnTensorDescriptor_t out_desc;
     cudnnCreateTensorDescriptor(&out_desc);
-    cudnnSetTensor4dDescriptor(out_desc, CUDNN_TENSOR_NCHW, CUDNN_DATA_FLOAT, n, out_channels, p_height, p_width);
+    cudnnSetTensor4dDescriptor(out_desc, CUDNN_TENSOR_NCHW, CUDNN_DATA_FLOAT, n, out_channels, out_p_height, out_p_width);
 
 
     //convolution algorithm
@@ -140,7 +145,8 @@ int inc_conv_v4(THCudaTensor * in_tensor, THCudaTensor * weights, THCudaTensor *
 
     //add_bias_gpu(temp_out_tensor, ptr_biases, batch, out_channels, p_width*p_height);
     //Fused operator that adds the bias and performs ReLU activation
-    inc_conv_mem_copy_gpu_v2(temp_out_tensor, ptr_out_tensor, ptr_biases, ptr_location, batch, p_height, p_width, out_channels, out_size);
+    //printf("%d,%d, %d,%d\n", out_p_height, out_p_width, k_size, stride);
+    inc_conv_mem_copy_gpu_v2(temp_out_tensor, ptr_out_tensor, ptr_biases, ptr_location, batch, out_p_height, out_p_width, out_channels, out_size);
 
     if(ws_size>0)cudaFree(ws_data);
     //cudaFree(temp_in_tensor);
@@ -167,13 +173,11 @@ int inc_max_pool_v1(THCudaTensor * in_tensor, THCudaTensor * out_tensor, THCudaI
 
     int out_size = out_tensor->size[2];
 
-    int out_p_height = ceil((p_height+k_size-1)*1.0/stride);
-    int out_p_width = ceil((p_width+k_size-1)*1.0/stride);
+    int out_p_height = min((int)ceil((p_height+k_size-1)*1.0/stride), out_size);
+    int out_p_width = min((int)ceil((p_width+k_size-1)*1.0/stride), out_size);
 
-    //printf("%d,%d, %d,%d\n", out_p_height, out_p_width, k_size, stride);
-
-    int in_p_height = out_p_height*stride;
-    int in_p_width = out_p_width*stride;
+    int in_p_height = k_size + (out_p_height-1)*stride;
+    int in_p_width = k_size + (out_p_width-1)*stride;
 
     update_output_locations_gpu(batch, ptr_location, in_size, padding, stride, k_size, in_p_height, in_p_width);
 

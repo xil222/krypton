@@ -114,7 +114,7 @@ class IncrementalVGG16(nn.Module):
 
 
 if __name__ == "__main__":
-    batch_size = 1
+    batch_size = 128
     patch_size = 16
     input_size = 224
 

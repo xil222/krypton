@@ -579,7 +579,7 @@ void update_output_locations_gpu(int batch, int* ptr_location, int size, int pad
 __global__ void inc_max_pool_gpu_kernel(int n, float* ptr_in_tensor, float* ptr_out_tensor, int in_size, int out_size, int channels,
     int batch, int padding, int stride, int k_size, int * ptr_location, int out_p_height, int out_p_width)
 {
-    int index = (blockIdx.x + blockIdx.y*gridDim.x) * blockDim.x + threadIdx.x;
+    int index = blockIdx.x * blockDim.x + threadIdx.x;
     if(index < n)
     {
         int j = index % out_p_width;
