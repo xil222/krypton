@@ -62,6 +62,20 @@ float * get_temp_out_tensor(size_t size)
     return tmp_out_tensor;
 }
 
+float * get_cudnn_workspace(size_t size)
+{
+    static float * cudnn_workspace = NULL;
+    static size_t current_size = 64*1024*1024*sizeof(float);
+    if(cudnn_workspace == NULL || current_size < size)
+    {
+        if(cudnn_workspace != NULL) cudaFree(cudnn_workspace);
+        if(size > current_size) current_size = size;
+        cudaMalloc((void**)&cudnn_workspace, current_size);
+        //printf("%z\n",size);
+    }
+    return cudnn_workspace;
+}
+
 int inc_conv_v4(THCudaTensor * in_tensor, THCudaTensor * weights, THCudaTensor * biases, THCudaTensor * out_tensor,
  THCudaIntTensor * patch_location_tensor, int padding, int stride, int p_height, int p_width)
 {
@@ -134,7 +148,10 @@ int inc_conv_v4(THCudaTensor * in_tensor, THCudaTensor * weights, THCudaTensor *
     cudnnGetConvolutionForwardWorkspaceSize(cudnn, in_desc, filt_desc, conv_desc, out_desc, algo, &ws_size);
 
     float * ws_data = NULL;
-    if(ws_size>0)cudaMalloc((void **)&ws_data, ws_size);
+    if(ws_size>0)
+    {
+        ws_data = get_cudnn_workspace(ws_size);
+    }
 
     float alpha = 1.f;
     float beta = 0.f;
@@ -148,7 +165,7 @@ int inc_conv_v4(THCudaTensor * in_tensor, THCudaTensor * weights, THCudaTensor *
     //printf("%d,%d, %d,%d\n", out_p_height, out_p_width, k_size, stride);
     inc_conv_mem_copy_gpu_v2(temp_out_tensor, ptr_out_tensor, ptr_biases, ptr_location, batch, out_p_height, out_p_width, out_channels, out_size);
 
-    if(ws_size>0)cudaFree(ws_data);
+    //if(ws_size>0)cudaFree(ws_data);
     //cudaFree(temp_in_tensor);
     //cudaFree(temp_out_tensor);
     cudnnDestroyTensorDescriptor(out_desc);
