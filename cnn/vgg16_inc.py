@@ -17,7 +17,7 @@ from vgg16 import VGG16
 
 class IncrementalVGG16(nn.Module):
 
-    def __init__(self, full_model, initial_in_tenosor):
+    def __init__(self, full_model, initial_in_tenosor, patch_growth_threshold=1.0):
         super(IncrementalVGG16, self).__init__()
 
         # performing initial full inference
@@ -26,52 +26,60 @@ class IncrementalVGG16(nn.Module):
 
         self.conv1_1_op = IncConvModule(initial_in_tenosor,
                                         full_model.conv1_1_op[0].weight.data, full_model.conv1_1_op[0].bias.data,
-                                        full_model.conv1_1, 1, 1, 3)
+                                        full_model.conv1_1, 1, 1, 3, patch_growth_threshold)
         self.conv1_2_op = IncConvModule(full_model.conv1_1,
                                         full_model.conv1_2_op[0].weight.data, full_model.conv1_2_op[0].bias.data,
-                                        full_model.conv1_2, 1, 1, 3)
-        self.pool1_op = IncMaxPoolModule(full_model.conv1_2, full_model.pool1, 0, 2, 2)
+                                        full_model.conv1_2, 1, 1, 3, patch_growth_threshold)
+        self.pool1_op = IncMaxPoolModule(full_model.conv1_2, full_model.pool1, 0, 2, 2,
+                                         patch_growth_threshold)
 
         self.conv2_1_op = IncConvModule(full_model.pool1,
                                         full_model.conv2_1_op[0].weight.data, full_model.conv2_1_op[0].bias.data,
-                                        full_model.conv2_1, 1, 1, 3)
+                                        full_model.conv2_1, 1, 1, 3, patch_growth_threshold)
         self.conv2_2_op = IncConvModule(full_model.conv2_1,
                                         full_model.conv2_2_op[0].weight.data, full_model.conv2_2_op[0].bias.data,
-                                        full_model.conv2_2, 1, 1, 3)
-        self.pool2_op = IncMaxPoolModule(full_model.conv2_2, full_model.pool2, 0, 2, 2)
+                                        full_model.conv2_2, 1, 1, 3, patch_growth_threshold)
+        self.pool2_op = IncMaxPoolModule(full_model.conv2_2, full_model.pool2, 0, 2, 2,
+                                         patch_growth_threshold)
 
         self.conv3_1_op = IncConvModule(full_model.pool2,
                                         full_model.conv3_1_op[0].weight.data, full_model.conv3_1_op[0].bias.data,
-                                        full_model.conv3_1, 1, 1, 3)
+                                        full_model.conv3_1, 1, 1, 3, patch_growth_threshold)
         self.conv3_2_op = IncConvModule(full_model.conv3_1,
                                         full_model.conv3_2_op[0].weight.data, full_model.conv3_2_op[0].bias.data,
-                                        full_model.conv2_2, 1, 1, 3)
+                                        full_model.conv2_2, 1, 1, 3, patch_growth_threshold)
         self.conv3_3_op = IncConvModule(full_model.conv3_2,
                                         full_model.conv3_3_op[0].weight.data, full_model.conv3_3_op[0].bias.data,
-                                        full_model.conv3_3, 1, 1, 3)
-        self.pool3_op = IncMaxPoolModule(full_model.conv3_3, full_model.pool3, 0, 2, 2)
+                                        full_model.conv3_3, 1, 1, 3, patch_growth_threshold)
+        self.pool3_op = IncMaxPoolModule(full_model.conv3_3, full_model.pool3, 0, 2, 2,
+                                         patch_growth_threshold)
 
         self.conv4_1_op = IncConvModule(full_model.pool3,
                                         full_model.conv4_1_op[0].weight.data, full_model.conv4_1_op[0].bias.data,
-                                        full_model.conv4_1, 1, 1, 3)
+                                        full_model.conv4_1, 1, 1, 3, patch_growth_threshold)
         self.conv4_2_op = IncConvModule(full_model.conv4_1,
                                         full_model.conv4_2_op[0].weight.data, full_model.conv4_2_op[0].bias.data,
-                                        full_model.conv4_2, 1, 1, 3)
+                                        full_model.conv4_2, 1, 1, 3, patch_growth_threshold)
         self.conv4_3_op = IncConvModule(full_model.conv4_2,
                                         full_model.conv4_3_op[0].weight.data, full_model.conv4_3_op[0].bias.data,
-                                        full_model.conv4_3, 1, 1, 3)
-        self.pool4_op = IncMaxPoolModule(full_model.conv4_3, full_model.pool4, 0, 2, 2)
+                                        full_model.conv4_3, 1, 1, 3, patch_growth_threshold)
+        self.pool4_op = IncMaxPoolModule(full_model.conv4_3, full_model.pool4, 0, 2, 2,
+                                         patch_growth_threshold)
 
         self.conv5_1_op = IncConvModule(full_model.pool4,
                                         full_model.conv5_1_op[0].weight.data, full_model.conv5_1_op[0].bias.data,
-                                        full_model.conv5_1, 1, 1, 3)
+                                        full_model.conv5_1, 1, 1, 3,
+                                        patch_growth_threshold)
         self.conv5_2_op = IncConvModule(full_model.conv5_1,
                                         full_model.conv5_2_op[0].weight.data, full_model.conv5_2_op[0].bias.data,
-                                        full_model.conv5_2, 1, 1, 3)
+                                        full_model.conv5_2, 1, 1, 3,
+                                        patch_growth_threshold)
         self.conv5_3_op = IncConvModule(full_model.conv5_2,
                                         full_model.conv5_3_op[0].weight.data, full_model.conv5_3_op[0].bias.data,
-                                        full_model.conv5_3, 1, 1, 3)
-        self.pool5_op = IncMaxPoolModule(full_model.conv5_3, full_model.pool5, 0, 2, 2)
+                                        full_model.conv5_3, 1, 1, 3,
+                                        patch_growth_threshold)
+        self.pool5_op = IncMaxPoolModule(full_model.conv5_3, full_model.pool5, 0, 2, 2,
+                                         patch_growth_threshold)
 
         self.classifier = full_model.classifier
 
@@ -126,7 +134,7 @@ if __name__ == "__main__":
 
     full_model = VGG16()
     full_model.eval()
-    inc_model = IncrementalVGG16(full_model, images)
+    inc_model = IncrementalVGG16(full_model, images, patch_growth_threshold=0.25)
     del full_model
     torch.cuda.empty_cache()
 

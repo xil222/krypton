@@ -16,7 +16,7 @@ class IncMaxPoolFunction(Function):
     def forward(self, in_tensor, out_tensor, patch_location_tensor):
         if self.version == 1:
             inc_conv_lib.inc_max_pool_v1(in_tensor, out_tensor, patch_location_tensor, self.padding, self.stride,
-                                         self.k_size, self.p_height, self.p_width)
+                                         self.k_size, self.p_height, self.p_width, 1.0)
 
         return out_tensor, patch_location_tensor
 
@@ -50,7 +50,7 @@ class IncConvFunction(Function):
                                      patch_location_tensor, self.padding, self.stride, self.p_height, self.p_width)
         elif self.version == 4:
             inc_conv_lib.inc_conv_v4(in_tensor, weights, biases, out_tensor,
-                                     patch_location_tensor, self.padding, self.stride, self.p_height, self.p_width)
+                                     patch_location_tensor, self.padding, self.stride, self.p_height, self.p_width, 1.0)
 
         return out_tensor, patch_location_tensor
 

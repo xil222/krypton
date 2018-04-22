@@ -77,7 +77,8 @@ float * get_cudnn_workspace(size_t size)
 }
 
 int inc_conv_v4(THCudaTensor * in_tensor, THCudaTensor * weights, THCudaTensor * biases, THCudaTensor * out_tensor,
- THCudaIntTensor * patch_location_tensor, int padding, int stride, int p_height, int p_width)
+ THCudaIntTensor * patch_location_tensor, int padding, int stride, int p_height, int p_width,
+ float patch_growth_threshold)
 {
     float * ptr_in_tensor    = THCudaTensor_data(NULL, in_tensor);
     float * ptr_weights  = THCudaTensor_data(NULL, weights);
@@ -99,8 +100,8 @@ int inc_conv_v4(THCudaTensor * in_tensor, THCudaTensor * weights, THCudaTensor *
 
     cudnnHandle_t cudnn = cudnn_handle();
 
-    int out_p_height = min((int)ceil((p_height+k_size-1)*1.0/stride), out_size);
-    int out_p_width = min((int)ceil((p_width+k_size-1)*1.0/stride), out_size);
+    int out_p_height = min((int)ceil((p_height+k_size-1)*1.0/stride), (int)out_size * patch_growth_threshold);
+    int out_p_width = min((int)ceil((p_width+k_size-1)*1.0/stride), (int)out_size * patch_growth_threshold);
 
     int in_p_height = k_size + (out_p_height-1)*stride;
     int in_p_width = k_size + (out_p_width-1)*stride;
@@ -177,7 +178,8 @@ int inc_conv_v4(THCudaTensor * in_tensor, THCudaTensor * weights, THCudaTensor *
 }
 
 int inc_max_pool_v1(THCudaTensor * in_tensor, THCudaTensor * out_tensor, THCudaIntTensor * patch_location_tensor,
- int padding, int stride, int k_size, int p_height, int p_width)
+ int padding, int stride, int k_size, int p_height, int p_width,
+ float patch_growth_threshold)
 {
     float * ptr_in_tensor    = THCudaTensor_data(NULL, in_tensor);
     float * ptr_out_tensor   = THCudaTensor_data(NULL, out_tensor);
@@ -190,8 +192,8 @@ int inc_max_pool_v1(THCudaTensor * in_tensor, THCudaTensor * out_tensor, THCudaI
 
     int out_size = out_tensor->size[2];
 
-    int out_p_height = min((int)ceil((p_height+k_size-1)*1.0/stride), out_size);
-    int out_p_width = min((int)ceil((p_width+k_size-1)*1.0/stride), out_size);
+    int out_p_height = min((int)ceil((p_height+k_size-1)*1.0/stride), (int)out_size * patch_growth_threshold);
+    int out_p_width = min((int)ceil((p_width+k_size-1)*1.0/stride), (int)out_size * patch_growth_threshold);
 
     int in_p_height = k_size + (out_p_height-1)*stride;
     int in_p_width = k_size + (out_p_width-1)*stride;
