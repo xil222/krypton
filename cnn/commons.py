@@ -9,6 +9,41 @@ sys.path.append('../')
 from cuda._ext import inc_conv_lib
 
 
+def _out_patch_size(p_height, p_width, k_size, stride, out_size, beta):
+    # p_height = min(int(math.ceil((p_height + k_size -1) * 1.0 / stride)), int(out_size * beta))
+    # p_width = min(int(math.ceil((p_width + k_size -1) * 1.0 / stride)), int(out_size * beta))
+    # return p_height, p_width
+
+    p_height_temp = min(int(math.ceil((p_height + k_size - 1) * 1.0 / stride)), out_size)
+    p_width_temp = min(int(math.ceil((p_width + k_size - 1) * 1.0 / stride)), out_size)
+
+    if p_height_temp > out_size*beta:
+        # print(p_height, p_width, out_size)
+        return p_height, p_width
+
+    # print(p_height_temp, p_width_temp, out_size)
+    return p_height_temp, p_width_temp
+
+
+def inc_convolution(in_tensor, weights, biases, out_tensor, locations, padding, stride, p_height, p_width, beta):
+    inc_conv_lib.inc_conv_v4(in_tensor, weights, biases,
+                             out_tensor, locations, padding, stride, p_height, p_width, beta)
+    out_size = out_tensor.shape[3]
+    k_size = weights.shape[3]
+    # print(locations.cpu().numpy().flatten().tolist()[-2:])
+    return _out_patch_size(p_height, p_width, k_size, stride, out_size, beta)
+
+
+def inc_max_pool(in_tensor, out_tensor, locations, padding, stride, k_size, p_height, p_width, beta):
+    # FIXME
+    beta = 1.0
+    inc_conv_lib.inc_max_pool_v1(in_tensor, out_tensor, locations, padding, stride,
+                                 k_size, p_height, p_width, beta)
+    out_size = out_tensor.shape[3]
+    # print(locations.cpu().numpy().flatten().tolist()[-2:])
+    return _out_patch_size(p_height, p_width, k_size, stride, out_size, beta)
+
+
 class IncMaxPoolFunction(Function):
 
     def __init__(self, padding, stride, k_size, p_height, p_width, patch_growth_threshold):
@@ -37,7 +72,7 @@ class IncMaxPoolModule(Module):
         self.k_size = k_size
         self.patch_growth_threshold = patch_growth_threshold
 
-    def forward(self, patch_location_tensor, p_height=0, p_width=0):
+    def forward(self, patch_location_tensor, p_height, p_width, _=None):
         # FIXME Logic duplicated in both CUDA and Python
         out_p_height = int(math.ceil((p_height+self.k_size-1) * 1.0 / self.stride))
         out_p_width = int(math.ceil((p_width+self.k_size-1) * 1.0 / self.stride))
@@ -76,12 +111,11 @@ class IncConvModule(Module):
         self.k_size = k_size
         self.patch_growth_threshold = patch_growth_threshold
 
-    def forward(self, patch_location_tensor, p_height=0, p_width=0):
+    def forward(self, patch_location_tensor, p_height, p_width, _=None):
         # FIXME Logic duplicated in both CUDA and Python
         out_p_height = int(math.ceil((p_height+self.k_size-1) * 1.0 / self.stride))
         out_p_width = int(math.ceil((p_width+self.k_size-1) * 1.0 / self.stride))
-        return IncConvFunction(self.padding, self.stride, p_height, p_width, self.patch_growth_threshold)(self.in_tensor, self.weights, self.biases, self.out_tensor,
-                                                                            patch_location_tensor), (out_p_height, out_p_width)
+        return IncConvFunction(self.padding, self.stride, p_height, p_width, self.patch_growth_threshold)(self.in_tensor, self.weights, self.biases, self.out_tensor, patch_location_tensor), (out_p_height, out_p_width)
 
 
 def load_dict_from_hdf5(filename, cuda=True):

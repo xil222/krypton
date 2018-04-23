@@ -26,6 +26,9 @@ void inc_conv_mem_copy_gpu_v2(float *ptr_temp_tensor, float *ptr_out_tensor, flo
 void update_output_locations_gpu(int batch, int* ptr_location, int size, int padding, int stride, int k_size,
     int in_p_height, int in_p_width);
 
+void update_output_locations_gpu2(int batch, int* ptr_location, int size, int padding, int stride, int k_size,
+    int in_p_height, int in_p_width);
+
 void inc_max_pool_gpu(float* ptr_in_tensor, float* ptr_out_tensor, int in_size, int out_size, int channels,
     int batch, int padding, int stride, int k_size, int * ptr_location, int out_p_height, int out_p_width);
 

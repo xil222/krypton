@@ -100,13 +100,32 @@ int inc_conv_v4(THCudaTensor * in_tensor, THCudaTensor * weights, THCudaTensor *
 
     cudnnHandle_t cudnn = cudnn_handle();
 
-    int out_p_height = min((int)ceil((p_height+k_size-1)*1.0/stride), (int)out_size * patch_growth_threshold);
-    int out_p_width = min((int)ceil((p_width+k_size-1)*1.0/stride), (int)out_size * patch_growth_threshold);
+//    int out_p_height = min((int)ceil((p_height+k_size-1)*1.0/stride), (int)out_size * patch_growth_threshold);
+//    int out_p_width = min((int)ceil((p_width+k_size-1)*1.0/stride), (int)out_size * patch_growth_threshold);
+
+    int temp_p_height = min((int)ceil((p_height+k_size-1)*1.0/stride), out_size);
+    int temp_p_width = min((int)ceil((p_width+k_size-1)*1.0/stride), out_size);
+
+    int out_p_height = 0;
+    int out_p_width = 0;
+
+    if(temp_p_height > out_size * patch_growth_threshold)
+    {
+        out_p_height = p_height;
+        out_p_width = p_width;
+    }
+    else
+    {
+        out_p_height = temp_p_height;
+        out_p_width = temp_p_width;
+    }
 
     int in_p_height = k_size + (out_p_height-1)*stride;
     int in_p_width = k_size + (out_p_width-1)*stride;
 
-    update_output_locations_gpu(batch, ptr_location, in_size, padding, stride, k_size, in_p_height, in_p_width);
+    if(temp_p_height <= out_size * patch_growth_threshold)
+        update_output_locations_gpu(batch, ptr_location, in_size, padding, stride, k_size, in_p_height, in_p_width);
+
 
     //temp input tensor
     cudnnTensorDescriptor_t in_desc;
@@ -181,6 +200,9 @@ int inc_max_pool_v1(THCudaTensor * in_tensor, THCudaTensor * out_tensor, THCudaI
  int padding, int stride, int k_size, int p_height, int p_width,
  float patch_growth_threshold)
 {
+    //FIXME
+    patch_growth_threshold = 1.0;
+
     float * ptr_in_tensor    = THCudaTensor_data(NULL, in_tensor);
     float * ptr_out_tensor   = THCudaTensor_data(NULL, out_tensor);
     int * ptr_location = THCudaIntTensor_data(NULL, patch_location_tensor);
@@ -192,13 +214,31 @@ int inc_max_pool_v1(THCudaTensor * in_tensor, THCudaTensor * out_tensor, THCudaI
 
     int out_size = out_tensor->size[2];
 
-    int out_p_height = min((int)ceil((p_height+k_size-1)*1.0/stride), (int)out_size * patch_growth_threshold);
-    int out_p_width = min((int)ceil((p_width+k_size-1)*1.0/stride), (int)out_size * patch_growth_threshold);
+//    int out_p_height = min((int)ceil((p_height+k_size-1)*1.0/stride), (int)out_size * patch_growth_threshold);
+//    int out_p_width = min((int)ceil((p_width+k_size-1)*1.0/stride), (int)out_size * patch_growth_threshold);
+
+    int temp_p_height = min((int)ceil((p_height+k_size-1)*1.0/stride), out_size);
+    int temp_p_width = min((int)ceil((p_width+k_size-1)*1.0/stride), out_size);
+
+    int out_p_height = 0;
+    int out_p_width = 0;
+
+    if(temp_p_height > out_size * patch_growth_threshold)
+    {
+        out_p_height = p_height;
+        out_p_width = p_width;
+    }
+    else
+    {
+        out_p_height = temp_p_height;
+        out_p_width = temp_p_width;
+    }
 
     int in_p_height = k_size + (out_p_height-1)*stride;
     int in_p_width = k_size + (out_p_width-1)*stride;
 
-    update_output_locations_gpu(batch, ptr_location, in_size, padding, stride, k_size, in_p_height, in_p_width);
+    if(temp_p_height <= out_size * patch_growth_threshold)
+        update_output_locations_gpu(batch, ptr_location, in_size, padding, stride, k_size, in_p_height, in_p_width);
 
     inc_max_pool_gpu(ptr_in_tensor, ptr_out_tensor, in_size, out_size, in_channels, batch, padding, stride, k_size,
         ptr_location, out_p_height, out_p_width);

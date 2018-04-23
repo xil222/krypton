@@ -13,7 +13,7 @@ from imagenet_classes import class_names
 
 class VGG16(nn.Module):
 
-    def __init__(self, init_weights=True):
+    def __init__(self):
         super(VGG16, self).__init__()
 
         self.conv1_1_op = nn.Sequential(nn.Conv2d(3, 64, kernel_size=3, padding=1), nn.ReLU(inplace=True))
@@ -48,11 +48,8 @@ class VGG16(nn.Module):
             nn.Softmax(dim=1)
         )
 
-        if init_weights:
-            self._initialize_weights()
+        self._initialize_weights()
 
-        #for param in self.parameters():
-        #   param.requires_grad = False
 
     def forward_fused(self, x):
         x = self.conv1_1_op(x)
@@ -86,7 +83,7 @@ class VGG16(nn.Module):
         self.conv1_1 = self.conv1_1_op(x)
         self.conv1_2 = self.conv1_2_op(self.conv1_1)
         self.pool1 = self.pool1_op(self.conv1_2)
-
+        
         self.conv2_1 = self.conv2_1_op(self.pool1)
         self.conv2_2 = self.conv2_2_op(self.conv2_1)
         self.pool2 = self.pool2_op(self.conv2_2)
@@ -108,7 +105,10 @@ class VGG16(nn.Module):
 
         x = self.pool5.view(self.pool5.size(0), -1)
         x = self.classifier(x)
+
         return x
+        
+        
 
     def _initialize_weights(self):
         weights_data = load_dict_from_hdf5("./vgg16_weights_ptch.h5")
