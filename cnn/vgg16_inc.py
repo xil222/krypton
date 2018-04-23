@@ -22,7 +22,7 @@ class IncrementalVGG16(nn.Module):
 
         # performing initial full inference
         full_model.eval()
-        full_model.forward(initial_in_tenosor)
+        self.initial_result = full_model.forward(initial_in_tenosor).cpu().data.numpy()
 
         self.conv1_1_op = IncConvModule(initial_in_tenosor,
                                         full_model.conv1_1_op[0].weight.data, full_model.conv1_1_op[0].bias.data,
@@ -112,6 +112,7 @@ class IncrementalVGG16(nn.Module):
 
         x = x.view(x.size(0), -1)
         x = self.classifier(x)
+        
         return x
 
 

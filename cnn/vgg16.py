@@ -54,6 +54,34 @@ class VGG16(nn.Module):
         #for param in self.parameters():
         #   param.requires_grad = False
 
+    def forward_fused(self, x):
+        x = self.conv1_1_op(x)
+        x = self.conv1_2_op(x)
+        x = self.pool1_op(x)
+
+        x = self.conv2_1_op(x)
+        x = self.conv2_2_op(x)
+        x = self.pool2_op(x)
+
+        x = self.conv3_1_op(x)
+        x = self.conv3_2_op(x)
+        x = self.conv3_3_op(x)
+        x = self.pool2_op(x)
+
+        x = self.conv4_1_op(x)
+        x = self.conv4_2_op(x)
+        x = self.conv4_3_op(x)
+        x = self.pool4_op(x)
+
+        x = self.conv5_1_op(x)
+        x = self.conv5_2_op(x)
+        x = self.conv5_3_op(x)
+        x = self.pool5_op(x)
+
+        x = x.view(x.size(0), -1)
+        x = self.classifier(x)
+        return x
+    
     def forward(self, x):
         self.conv1_1 = self.conv1_1_op(x)
         self.conv1_2 = self.conv1_2_op(self.conv1_1)
