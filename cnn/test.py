@@ -28,8 +28,7 @@ if __name__ == "__main__":
 
     torch.cuda.synchronize()
     prev_time = time.time()
-    outputs = inc_inference_e2e(IncrementalVGG16, image_file_path, 4, 1, interested_logit_index, beta=0.33)
-    print(outputs[110, 110])
+    outputs = inc_inference_e2e(IncrementalVGG16, image_file_path, 4, 1, interested_logit_index, beta=0.4)
     torch.cuda.synchronize()
     inc_inference_time = time.time() - prev_time
     print("Incremental Inference Time: " + str(inc_inference_time))

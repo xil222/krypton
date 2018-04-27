@@ -99,14 +99,16 @@ int inc_conv(THCudaTensor * in_tensor, THCudaTensor * weights, THCudaTensor * bi
     int temp_p_height = min((int)ceil((p_height+k_size-1)*1.0/stride), out_size);
     int temp_p_width = min((int)ceil((p_width+k_size-1)*1.0/stride), out_size);
 
+    
     int out_p_height = 0;
     int out_p_width = 0;
 
     bool patch_growing = 1;
-    if(temp_p_height*1.0 > out_size * beta)
+    if(temp_p_height > ceil(out_size * beta))
     {
-        out_p_height = ceil(p_height*1.0/stride);
-        out_p_width = ceil(p_width*1.0/stride);
+        out_p_height = ceil(out_size * beta);
+        out_p_width = ceil(out_size * beta);
+        
         patch_growing = 0;
     }
     else
@@ -121,14 +123,12 @@ int inc_conv(THCudaTensor * in_tensor, THCudaTensor * weights, THCudaTensor * bi
     update_output_locations_gpu(batch, ptr_location, in_size, padding, stride, k_size, in_p_height, in_p_width,
      patch_growing);
 
-
     //temp input tensor
     cudnnTensorDescriptor_t in_desc;
     cudnnCreateTensorDescriptor(&in_desc);
     cudnnSetTensor4dDescriptor(in_desc, CUDNN_TENSOR_NCHW, CUDNN_DATA_FLOAT, n, in_channels, in_p_width, in_p_height);
 
     float * temp_in_tensor;
-    //cudaMalloc((void **)&temp_in_tensor, n*in_channels*read_p_width*read_p_height*sizeof(float));
     temp_in_tensor = get_temp_in_tensor(n*in_channels*in_p_width*in_p_height*sizeof(float));
 
     cudnn_mem_copy_gpu(batch, in_channels, in_size, stride, padding, ptr_in_tensor, temp_in_tensor, ptr_location, in_p_height, in_p_width);
@@ -146,7 +146,6 @@ int inc_conv(THCudaTensor * in_tensor, THCudaTensor * weights, THCudaTensor * bi
     //temp output tensor
     cudnnGetConvolution2dForwardOutputDim(conv_desc, in_desc, filt_desc, &n, &out_channels, &out_p_height, &out_p_width);
     float * temp_out_tensor;
-    //cudaMalloc((void **)&temp_out_tensor, n*out_channels*p_height*p_width*sizeof(float));
     temp_out_tensor = get_temp_out_tensor(n*out_channels*out_p_height*out_p_width*sizeof(float));
 
     cudnnTensorDescriptor_t out_desc;
@@ -175,19 +174,14 @@ int inc_conv(THCudaTensor * in_tensor, THCudaTensor * weights, THCudaTensor * bi
                 filt_desc, ptr_weights, conv_desc, algo, ws_data, ws_size, &BETA,
                 out_desc, temp_out_tensor);
 
-    //add_bias_gpu(temp_out_tensor, ptr_biases, batch, out_channels, p_width*p_height);
-    //Fused operator that adds the bias and performs ReLU activation
     relu_fused_mem_copy_gpu(temp_out_tensor, ptr_out_tensor, ptr_biases, ptr_location, batch, out_p_height, out_p_width, out_channels, out_size);
 
-    //if(ws_size>0)cudaFree(ws_data);
-    //cudaFree(temp_in_tensor);
-    //cudaFree(temp_out_tensor);
     cudnnDestroyTensorDescriptor(out_desc);
     cudnnDestroyConvolutionDescriptor(conv_desc);
     cudnnDestroyFilterDescriptor(filt_desc);
     cudnnDestroyTensorDescriptor(in_desc);
 
-    return 0;
+    return out_p_height*1000+out_p_width;
 }
 
 int inc_max_pool(THCudaTensor * in_tensor, THCudaTensor * out_tensor, THCudaIntTensor * patch_location_tensor,
@@ -207,15 +201,15 @@ int inc_max_pool(THCudaTensor * in_tensor, THCudaTensor * out_tensor, THCudaIntT
 
     int temp_p_height = min((int)ceil((p_height+k_size-1)*1.0/stride), out_size);
     int temp_p_width = min((int)ceil((p_width+k_size-1)*1.0/stride), out_size);
-
+    
     int out_p_height = 0;
     int out_p_width = 0;
 
     bool patch_growing = 1;
-    if(temp_p_height*1.0 > out_size * beta)
-    {
-        out_p_height = ceil(p_height*1.0/stride);
-        out_p_width = ceil(p_width*1.0/stride);
+    if(temp_p_height > round(out_size * beta))
+    {   
+        out_p_height = ceil(out_size * beta);
+        out_p_width = ceil(out_size * beta);   
         patch_growing = 0;
     }
     else
@@ -233,5 +227,5 @@ int inc_max_pool(THCudaTensor * in_tensor, THCudaTensor * out_tensor, THCudaIntT
     inc_max_pool_gpu(ptr_in_tensor, ptr_out_tensor, in_size, out_size, in_channels, batch, padding, stride, k_size,
         ptr_location, out_p_height, out_p_width);
 
-    return 0;
+    return out_p_height*1000+out_p_width;
 }

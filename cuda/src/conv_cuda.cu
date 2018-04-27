@@ -56,6 +56,9 @@ __global__ void update_output_locations_gpu_kernel(int num_kernels, int * ptr_lo
         int current_y0 = ptr_location[index*2];
         int current_x0 = ptr_location[index*2+1];
 
+        int out_size = (size - k_size + 2*padding)/stride + 1;
+        int out_p_width = (in_p_width-k_size)/stride + 1;
+        
         if(patch_growing)
         {
             current_y0 = max((int)ceil((padding + current_y0-k_size + 1.0)/stride), 0);
@@ -63,12 +66,9 @@ __global__ void update_output_locations_gpu_kernel(int num_kernels, int * ptr_lo
         }
         else
         {
-            current_y0 = current_y0/stride;
-            current_x0 = current_x0/stride;
+            current_y0 = floor(current_y0*out_size/(float)size);
+            current_x0 = floor(current_x0*out_size/(float)size);
         }
-
-        int out_size = size/stride;
-        int out_p_width = (in_p_width-k_size)/stride + 1;
 
         if(current_y0 + out_p_width > out_size)
         {
