@@ -37,54 +37,50 @@ def __recursively_load_dict_contents_from_group(h5file, path, cuda=True):
 
 def __generate_positions(x_size, y_size):
     m = int(x_size); n = int(y_size)
-    k = 0; l = 0
- 
-    patch_positions = []
-    
-    while (k < m and l < n) :
-        for i in range(l, n) :
-            patch_positions.append((k,i))
-             
-        k += 1
-        for i in range(k, m) :
-            patch_positions.append((i,n-1))
-             
-        n -= 1
-        if ( k < m) :
-            for i in range(n - 1, (l - 1), -1) :
-                patch_positions.append((m-1,i))
-            m -= 1
-         
-        if (l < n) :
-            for i in range(m - 1, k - 1, -1) :
-                patch_positions.append((i,l))
-            l += 1
-    
-    return patch_positions
+    patch_locations = []
+
+    temp = 0
+    if m % 2 == 0:
+        for i in range(n):
+            patch_locations.append((0, n-i-1))
+        temp = 1
+
+    for i in range(temp, m, 2):
+        for j in range(n):
+            patch_locations.append((i, j))
+        for j in range(n):
+            patch_locations.append((i+1, n-j-1))
 
 
-def __get_position(n, size):
-    n += 1
+    return patch_locations
 
-    if size%2 == 0:
-        offset = size / 2 - 1
-    else:
-        offset = size // 2
-        
-    k = math.ceil((math.sqrt(n) - 1) / 2)
-    t = 2 * k + 1
-    m = t ** 2
-    t -= 1
-    if n >= m - t:
-        return int(k - (m - n)) + offset, int(-k) + offset
-    m -= t
-    if n >= m - t:
-        return int(-k) + offset, int(-k + (m - n)) + offset
-    m -= t
-    if n >= m - t:
-        return int(-k + (m - n)) + offset, int(k) + offset
+# def __generate_positions(x_size, y_size):
+#     m = int(x_size); n = int(y_size)
+#     k = 0; l = 0
+#
+#     patch_positions = []
+#
+#     while (k < m and l < n) :
+#         for i in range(l, n) :
+#             patch_positions.append((k,i))
+#
+#         k += 1
+#         for i in range(k, m) :
+#             patch_positions.append((i,n-1))
+#
+#         n -= 1
+#         if ( k < m) :
+#             for i in range(n - 1, (l - 1), -1) :
+#                 patch_positions.append((m-1,i))
+#             m -= 1
+#
+#         if (l < n) :
+#             for i in range(m - 1, k - 1, -1) :
+#                 patch_positions.append((i,l))
+#             l += 1
+#
+#     return patch_positions
 
-    return int(k) + offset, int(k - (m - n - t)) + offset
 
 
 def inc_convolution(in_tensor, weights, biases, out_tensor, locations, padding, stride, p_height, p_width, beta):
