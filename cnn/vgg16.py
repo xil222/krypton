@@ -50,11 +50,15 @@ class VGG16(nn.Module):
         )
 
         self._initialize_weights(cuda)
+        self.cuda = cuda
 
     def forward(self, x):
         return self.forward_fused(x)
 
     def forward_fused(self, x):
+        if self.cuda:
+            x = x.cuda()
+            
         x = self.conv1_1_op(x)
         x = self.conv1_2_op(x)
         x = self.pool1_op(x)
@@ -83,6 +87,9 @@ class VGG16(nn.Module):
         return x
 
     def forward_materialized(self, x):
+        if self.cuda:
+            x = x.cuda()
+            
         self.conv1_1 = self.conv1_1_op(x)
         self.conv1_2 = self.conv1_2_op(self.conv1_1)
         self.pool1 = self.pool1_op(self.conv1_2)

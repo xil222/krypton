@@ -92,6 +92,7 @@ void update_output_locations_gpu(int batch, int* ptr_location, int size, int pad
         num_kernels, ptr_location, size, padding, stride, k_size, in_p_height, in_p_width, patch_growing);
 }
 
+
 __global__ void inc_max_pool_gpu_kernel(int n, float* ptr_in_tensor, float* ptr_out_tensor, int in_size, int out_size, int channels,
     int batch, int padding, int stride, int k_size, int * ptr_location, int out_p_height, int out_p_width)
 {

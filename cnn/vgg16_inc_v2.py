@@ -15,10 +15,10 @@ from imagenet_classes import class_names
 from vgg16 import VGG16
 
 
-class IncrementalVGG16(nn.Module):
+class IncrementalVGG16V2(nn.Module):
 
     def __init__(self, in_tensor, beta=1.0, cuda=True):
-        super(IncrementalVGG16, self).__init__()
+        super(IncrementalVGG16V2, self).__init__()
 
         # performing initial full inference
         full_model = VGG16()
@@ -159,7 +159,7 @@ if __name__ == "__main__":
 
     patch_locations = torch.from_numpy(np.array(patch_locations, dtype=np.int32))
 
-    inc_model = IncrementalVGG16(images, beta=1.0)
+    inc_model = IncrementalVGG16V2(images, beta=1.0)
 
     inc_model.eval()
     x = inc_model(images, patch_locations, patch_size, patch_size)

@@ -96,6 +96,7 @@ int inc_conv(THCudaTensor * in_tensor, THCudaTensor * weights, THCudaTensor * bi
 
     cudnnHandle_t cudnn = cudnn_handle();
 
+    
     int temp_p_height = min((int)ceil((p_height+k_size-1)*1.0/stride), out_size);
     int temp_p_width = min((int)ceil((p_width+k_size-1)*1.0/stride), out_size);
 
