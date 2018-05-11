@@ -1,22 +1,19 @@
 from __future__ import print_function, division
 
+import copy
 import math
 import sys
+import time
+
 import cv2
 import h5py
-import torch
-import torch.nn as nn
-import torch.optim as optim
+import matplotlib.pyplot as plt
 import numpy as np
+import torch
 from PIL import Image
 from scipy import ndimage
 from torch.autograd import Variable
-import torchvision
-from torchvision import datasets, models, transforms
-import matplotlib.pyplot as plt
-import time
-import os
-import copy
+from torchvision import transforms
 
 sys.path.append('../')
 from cuda._ext import inc_conv_lib
@@ -98,8 +95,8 @@ def load_dict_from_hdf5(filename, cuda=True):
         return __recursively_load_dict_contents_from_group(h5file, '/', cuda)
 
 
-def full_inference_e2e(model, file_path, patch_size, stride, logit_index, batch_size=256, cuda=True):
-    loader = transforms.Compose([transforms.Resize([224, 224]), transforms.ToTensor()])
+def full_inference_e2e(model, file_path, patch_size, stride, logit_index, batch_size=256, cuda=True, x_size=224, y_size=224):
+    loader = transforms.Compose([transforms.Resize([x_size, y_size]), transforms.ToTensor()])
     orig_image = Image.open(file_path)
     orig_image = Variable(loader(orig_image).unsqueeze(0), volatile=True)
      
@@ -109,7 +106,7 @@ def full_inference_e2e(model, file_path, patch_size, stride, logit_index, batch_
     full_model = model(cuda)
     full_model.eval()
 
-    output_width = int(math.ceil((224.0 - patch_size) / stride))
+    output_width = int(math.ceil((x_size*1.0 - patch_size) / stride))
     total_number = output_width * output_width
 
     logit_values = []
@@ -124,9 +121,8 @@ def full_inference_e2e(model, file_path, patch_size, stride, logit_index, batch_
         images_batch = orig_image.repeat(end - start, 1, 1, 1)
 
         for idx, j in enumerate(range(start, end)):
-            x = (j / output_width)*stride
+            x = (j // output_width)*stride
             y = (j % output_width)*stride
-
             x,y=int(x),int(y)
             images_batch[idx, :, x:x + patch_size, y:y + patch_size] = image_patch
 
@@ -180,11 +176,10 @@ def inc_inference_e2e(model, file_path, patch_size, stride, logit_index, batch_s
         x, y = patch_positions[index]
         logit_values[x, y] = logit
 
-    locations = np.zeros(shape=(batch_size, 2), dtype=np.int32)
-    locations = torch.from_numpy(locations).cuda()
-
     for i in range(1, num_batches):
         images_batch = orig_image.repeat(batch_size, 1, 1, 1)
+        locations = np.zeros(shape=(batch_size, 2), dtype=np.int32)
+
         for j in range(batch_size):
             index = j * num_batches + i
             if index >= total_number:
@@ -193,7 +188,7 @@ def inc_inference_e2e(model, file_path, patch_size, stride, logit_index, batch_s
             x, y = patch_positions[index]
             x = x*stride + x0
             y = y*stride + y0
-            x,y=int(x), int(y)
+            x,y = int(x), int(y)
             images_batch[j, :, x:x + patch_size, y:y + patch_size] = image_patch
 
             x_prev, y_prev = patch_positions[index-1]
@@ -206,7 +201,9 @@ def inc_inference_e2e(model, file_path, patch_size, stride, logit_index, batch_s
             locations[j, 0] = x
             locations[j, 1] = y
 
-        logits = inc_model(images_batch, locations, p_height=patch_size + stride, p_width=patch_size + stride)
+        locations = torch.from_numpy(locations)
+        if cuda: locations = locations.cuda()
+        logits = inc_model(images_batch, locations, p_height=patch_size+stride, p_width=patch_size+stride)
         logits = logits.cpu().data.numpy()[:, logit_index].flatten().tolist()
 
         for logit, j in zip(logits, range(batch_size)):
