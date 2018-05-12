@@ -70,7 +70,7 @@ class IncrementalVGG16V1(nn.Module):
         self.cache = {}
         
         
-    def forward(self, image, patch, in_locations, patch_size):
+    def forward(self, image, patch, in_locations, patch_size, beta=1.0):
         if self.cuda:
             patch = patch.cuda()
             image = image.cuda()
@@ -102,10 +102,17 @@ class IncrementalVGG16V1(nn.Module):
         prev_size = 224
         for layer, data, c, size, s, p, k in zip(layers, premat_data, C, sizes, S, P, K):
             out_p_size = int(min(math.ceil((patch_size + k - 1.0)/s), size))
+    
+            patch_growing = True
+            if out_p_size > math.ceil(size*beta):
+                out_p_size = int(math.ceil(size*beta))
+                    
+                patch_growing = False
+            
             in_p_size = k + (out_p_size-1)*s
-            out_locations = self.__get_output_locations(in_locations, out_p_size, s, p, k, size)
+            out_locations = self.__get_output_locations(in_locations, out_p_size, s, p, k, prev_size, size, patch_growing)
             if layer in self.cache:
-                x = self.cache[layer]#.fill_(0.0)
+                x = self.cache[layer].fill_(0.0)
             else:
                 x = torch.FloatTensor(b, c, in_p_size, in_p_size).fill_(0.0)
                 self.cache[layer] = x
@@ -119,14 +126,17 @@ class IncrementalVGG16V1(nn.Module):
                 y0 = 0 if s*out_locations[i][1]-p >= 0 else -1*(s*out_locations[i][1]-p)
                 y1 = min(prev_size - s*out_locations[i][1]+p, in_p_size)
                 
-                x[i,:,x0:x1, y0:y1] = \
-                    data[0,:,max(s*out_locations[i][0]-p,0):max(0, s*out_locations[i][0]-p)+x1-x0,
+                #x[i,:,x0:x1, y0:y1] = \
+                #    data[0,:,max(s*out_locations[i][0]-p,0):max(0, s*out_locations[i][0]-p)+x1-x0,
+                #     max(0, s*out_locations[i][1]-p):max(0, s*out_locations[i][1]-p)+y1-y0]
+                #rx = x0 + in_locations[i][0] - max(s*out_locations[i][0]-p,0)
+                #ry = y0 + in_locations[i][1] - max(s*out_locations[i][1]-p,0)
+                #x[i,:,rx:rx+patch_size,ry:ry+patch_size] = patches[i,:,:,:]
+    
+                temp = data[0,:,:,:].clone()
+                temp[:,in_locations[i][0]:in_locations[i][0]+patch_size,in_locations[i][1]:in_locations[i][1]+patch_size] = patches[i,:,:,:]
+                x[i,:,x0:x1,y0:y1] = temp[:,max(s*out_locations[i][0]-p,0):max(0, s*out_locations[i][0]-p)+x1-x0,
                      max(0, s*out_locations[i][1]-p):max(0, s*out_locations[i][1]-p)+y1-y0]
-
-                rx = x0 + in_locations[i][0] - max(s*out_locations[i][0]-p,0)
-                ry = y0 + in_locations[i][1] - max(s*out_locations[i][1]-p,0)
-
-                x[i,:,rx:rx+patch_size,ry:ry+patch_size] = patches[i,:,:,:]
                 
             patches = layer(Variable(x, volatile=True)).data
             in_locations = out_locations
@@ -143,12 +153,16 @@ class IncrementalVGG16V1(nn.Module):
         return x
         
         
-    def __get_output_locations(self, in_locations, out_p_size, stride, padding, ksize, out_size):
+    def __get_output_locations(self, in_locations, out_p_size, stride, padding, ksize, in_size, out_size, patch_growing=True):
         out_locations = []
         
         for x,y in in_locations:
-            x_out = int(max(math.ceil((padding + x - ksize + 1.0)/stride), 0))
-            y_out = int(max(math.ceil((padding + y - ksize + 1.0)/stride), 0))
+            if patch_growing:
+                x_out = int(max(math.ceil((padding + x - ksize + 1.0)/stride), 0))
+                y_out = int(max(math.ceil((padding + y - ksize + 1.0)/stride), 0))
+            else:
+                x_out = int(math.floor(x*out_size/in_size))
+                y_out = int(math.floor(y*out_size/in_size))
             
             if x_out + out_p_size > out_size:
                 x_out = out_size - out_p_size
