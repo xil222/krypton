@@ -21,6 +21,7 @@ __global__ void cudnn_mem_copy_gpu_kernel(int num_kernels, int batch, int channe
 
         out_ptr += index;
 
+        #pragma unroll 4
         for(int i=0; i<batch; i++)
         {
             int w_out = *(ptr_location+i*2+1)*stride - padding + index % p_width;
@@ -66,8 +67,8 @@ __global__ void update_output_locations_gpu_kernel(int num_kernels, int * ptr_lo
         }
         else
         {
-            current_y0 = floor(current_y0*out_size/(float)size);
-            current_x0 = floor(current_x0*out_size/(float)size);
+            current_y0 = round(current_y0*out_size/(float)size);
+            current_x0 = round(current_x0*out_size/(float)size);
         }
 
         if(current_y0 + out_p_width > out_size)
@@ -116,8 +117,10 @@ __global__ void inc_max_pool_gpu_kernel(int n, float* ptr_in_tensor, float* ptr_
         int out_index = j + out_size*(i+out_size*(k+channels*b));
         float max = -INFINITY;
 
+        #pragma unroll 3
         for(int l=0; l<k_size; l++)
         {
+            #pragma unroll 3
             for(int m=0; m<k_size; m++)
             {
                 int cur_h = h_offset + i*stride + l;
@@ -153,6 +156,7 @@ __global__ void relu_fused_mem_copy_gpu_kernel(float *ptr_temp_tensor, float *pt
         float *in_data_ptr = ptr_temp_tensor + index;
 
         float temp = 0.0;
+        #pragma unroll 4
         for(int i=0; i<batch; i++)
         {
             int w_out = *(ptr_location+i*2+1) + index % p_width;

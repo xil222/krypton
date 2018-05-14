@@ -105,10 +105,10 @@ int inc_conv(THCudaTensor * in_tensor, THCudaTensor * weights, THCudaTensor * bi
     int out_p_width = 0;
 
     bool patch_growing = 1;
-    if(temp_p_height > ceil(out_size * beta))
+    if(temp_p_height > round(out_size * beta))
     {
-        out_p_height = ceil(out_size * beta);
-        out_p_width = ceil(out_size * beta);
+        out_p_height = round(out_size * beta);
+        out_p_width = round(out_size * beta);
         
         patch_growing = 0;
     }
@@ -155,9 +155,9 @@ int inc_conv(THCudaTensor * in_tensor, THCudaTensor * weights, THCudaTensor * bi
 
 
     //convolution algorithm
-    cudnnConvolutionFwdAlgo_t algo = CUDNN_CONVOLUTION_FWD_ALGO_WINOGRAD;
-    //cudnnGetConvolutionForwardAlgorithm(cudnn, in_desc, filt_desc, conv_desc, out_desc, CUDNN_CONVOLUTION_FWD_PREFER_FASTEST, 0, &algo);
-    if(p_width <= 14) algo = CUDNN_CONVOLUTION_FWD_ALGO_IMPLICIT_GEMM;
+    cudnnConvolutionFwdAlgo_t algo;// = CUDNN_CONVOLUTION_FWD_ALGO_WINOGRAD;
+    cudnnGetConvolutionForwardAlgorithm(cudnn, in_desc, filt_desc, conv_desc, out_desc, CUDNN_CONVOLUTION_FWD_PREFER_FASTEST, 0, &algo);
+    if(p_width <= 6) algo = CUDNN_CONVOLUTION_FWD_ALGO_IMPLICIT_GEMM;
 
     size_t ws_size = 0;
     cudnnGetConvolutionForwardWorkspaceSize(cudnn, in_desc, filt_desc, conv_desc, out_desc, algo, &ws_size);
@@ -209,8 +209,8 @@ int inc_max_pool(THCudaTensor * in_tensor, THCudaTensor * out_tensor, THCudaIntT
     bool patch_growing = 1;
     if(temp_p_height > round(out_size * beta))
     {   
-        out_p_height = ceil(out_size * beta);
-        out_p_width = ceil(out_size * beta);   
+        out_p_height = round(out_size * beta);
+        out_p_width = round(out_size * beta);   
         patch_growing = 0;
     }
     else

@@ -104,8 +104,8 @@ class IncrementalVGG16V1(nn.Module):
             out_p_size = int(min(math.ceil((patch_size + k - 1.0)/s), size))
     
             patch_growing = True
-            if out_p_size > math.ceil(size*beta):
-                out_p_size = int(math.ceil(size*beta))
+            if out_p_size > math.round(size*beta):
+                out_p_size = int(math.round(size*beta))
                     
                 patch_growing = False
             
@@ -161,8 +161,8 @@ class IncrementalVGG16V1(nn.Module):
                 x_out = int(max(math.ceil((padding + x - ksize + 1.0)/stride), 0))
                 y_out = int(max(math.ceil((padding + y - ksize + 1.0)/stride), 0))
             else:
-                x_out = int(math.floor(x*out_size/in_size))
-                y_out = int(math.floor(y*out_size/in_size))
+                x_out = int(math.round(x*out_size/in_size))
+                y_out = int(math.round(y*out_size/in_size))
             
             if x_out + out_p_size > out_size:
                 x_out = out_size - out_p_size

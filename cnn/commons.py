@@ -176,10 +176,11 @@ def inc_inference_e2e(model, file_path, patch_size, stride, logit_index, batch_s
         x, y = patch_positions[index]
         logit_values[x, y] = logit
 
+    
+    locations = torch.zeros([batch_size, 2], dtype=torch.int32)
     for i in range(1, num_batches):
         images_batch = orig_image.repeat(batch_size, 1, 1, 1)
-        locations = np.zeros(shape=(batch_size, 2), dtype=np.int32)
-
+    
         for j in range(batch_size):
             index = j * num_batches + i
             if index >= total_number:
@@ -201,9 +202,9 @@ def inc_inference_e2e(model, file_path, patch_size, stride, logit_index, batch_s
             locations[j, 0] = x
             locations[j, 1] = y
 
-        locations = torch.from_numpy(locations)
-        if cuda: locations = locations.cuda()
-        logits = inc_model(images_batch, locations, p_height=patch_size+stride, p_width=patch_size+stride)
+        locations_final = locations
+        if cuda: locations_final = locations_final.cuda()
+        logits = inc_model(images_batch, locations_final, p_height=patch_size+stride, p_width=patch_size+stride)
         logits = logits.cpu().data.numpy()[:, logit_index].flatten().tolist()
 
         for logit, j in zip(logits, range(batch_size)):
