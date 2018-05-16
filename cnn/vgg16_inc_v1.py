@@ -30,7 +30,7 @@ class IncrementalVGG16V1(nn.Module):
         if self.cuda:
             in_tensor = in_tensor.cuda()
             
-        full_model.forward_materialized(Variable(in_tensor, volatile=True))
+        full_model.forward_materialized(in_tensor)
         self.full_model = full_model
         
         self.conv1_1_op = nn.Sequential(nn.Conv2d(3, 64, kernel_size=3, padding=0), nn.ReLU(inplace=True))
@@ -104,8 +104,8 @@ class IncrementalVGG16V1(nn.Module):
             out_p_size = int(min(math.ceil((patch_size + k - 1.0)/s), size))
     
             patch_growing = True
-            if out_p_size > math.round(size*beta):
-                out_p_size = int(math.round(size*beta))
+            if out_p_size > round(size*beta):
+                out_p_size = int(round(size*beta))
                     
                 patch_growing = False
             
@@ -138,7 +138,7 @@ class IncrementalVGG16V1(nn.Module):
                 x[i,:,x0:x1,y0:y1] = temp[:,max(s*out_locations[i][0]-p,0):max(0, s*out_locations[i][0]-p)+x1-x0,
                      max(0, s*out_locations[i][1]-p):max(0, s*out_locations[i][1]-p)+y1-y0]
                 
-            patches = layer(Variable(x, volatile=True)).data
+            patches = layer(x).data
             in_locations = out_locations
             patch_size = out_p_size
             prev_size = size
@@ -147,7 +147,7 @@ class IncrementalVGG16V1(nn.Module):
         for i, (x, y) in enumerate(out_locations):
             output[i,:,x:x+out_p_size,y:y+out_p_size] = patches[i,:,:,:]
         
-        x = Variable(output, volatile=True)
+        x = output
         x = x.view(x.size(0), -1)
         x = self.classifier(x)
         return x
@@ -161,8 +161,8 @@ class IncrementalVGG16V1(nn.Module):
                 x_out = int(max(math.ceil((padding + x - ksize + 1.0)/stride), 0))
                 y_out = int(max(math.ceil((padding + y - ksize + 1.0)/stride), 0))
             else:
-                x_out = int(math.round(x*out_size/in_size))
-                y_out = int(math.round(y*out_size/in_size))
+                x_out = int(round(x*out_size/in_size))
+                y_out = int(round(y*out_size/in_size))
             
             if x_out + out_p_size > out_size:
                 x_out = out_size - out_p_size
