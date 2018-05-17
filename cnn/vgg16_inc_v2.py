@@ -22,12 +22,12 @@ class IncrementalVGG16V2(nn.Module):
 
         # performing initial full inference
         full_model = VGG16()
-        full_model.eval()
+        #full_model.eval()
         self.cuda = cuda
         if self.cuda:
             in_tensor = in_tensor.cuda()
 
-        self.initial_result = full_model.forward_materialized(Variable(in_tensor, volatile=True)).cpu().data.numpy()
+        self.initial_result = full_model.forward_materialized(in_tensor).cpu().data.numpy()
         self.full_model = full_model
         self.beta = beta
 
@@ -127,7 +127,7 @@ class IncrementalVGG16V2(nn.Module):
         inc_max_pool(m.conv5_3.data, m.pool5.data, locations,
                      0, 2, 2, p_height, p_width, beta)
 
-        x = Variable(m.pool5.data)
+        x = m.pool5.data
         x = x.view(x.size(0), -1)
         x = m.classifier(x)
         return x
@@ -155,7 +155,7 @@ if __name__ == "__main__":
     for i,(x,y) in enumerate(patch_locations):
         images[i, :, x:x+patch_size, y:y+patch_size] = image_patch
 
-    y = VGG16().forward(Variable(images).cuda())
+    y = VGG16().forward(images.cuda())
 
     patch_locations = torch.from_numpy(np.array(patch_locations, dtype=np.int32))
 

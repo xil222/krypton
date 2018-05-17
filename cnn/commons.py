@@ -81,9 +81,16 @@ def __generate_positions(x_size, y_size):
 
 
 def inc_convolution(in_tensor, weights, biases, out_tensor, locations, padding, stride, p_height, p_width, beta):
-    temp = inc_conv_lib.inc_conv(in_tensor, weights, biases, out_tensor, locations, padding, stride, int(p_height), int(p_width), beta)
+    temp = inc_conv_lib.inc_conv_relu(in_tensor, weights, biases, out_tensor, locations, padding, stride, int(p_height), int(p_width), beta)
     return int(temp/1000),int(temp%1000)
 
+def inc_convolution_bn(in_tensor, weights, bn_mean, bn_var, bn_weights, bn_biases, out_tensor, locations, padding, stride, p_height, p_width, beta, relu=True):
+    temp = inc_conv_lib.inc_conv_bn(in_tensor, weights, bn_mean, bn_var, bn_weights, bn_biases, out_tensor, locations, padding, stride, int(p_height), int(p_width), beta, relu)
+    return int(temp/1000),int(temp%1000)
+
+def inc_add(in_tensor1, in_tensor2, out_tensor, locations, p_height, p_width, relu=True):
+    temp = inc_conv_lib.inc_add(in_tensor1, in_tensor2, out_tensor, locations, p_height, p_width, relu)
+    return int(p_height),int(p_width)
 
 def inc_max_pool(in_tensor, out_tensor, locations, padding, stride, k_size, p_height, p_width, beta):
     temp = inc_conv_lib.inc_max_pool(in_tensor, out_tensor, locations, padding, stride,
