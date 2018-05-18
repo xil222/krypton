@@ -188,7 +188,7 @@ int inc_conv_relu(THCudaTensor * in_tensor, THCudaTensor * weights, THCudaTensor
 int inc_conv_bn(THCudaTensor * in_tensor, THCudaTensor * weights, THCudaTensor * bn_mean, THCudaTensor * bn_var,
  THCudaTensor * bn_weights,THCudaTensor * bn_biases, THCudaTensor * out_tensor,
  THCudaIntTensor * patch_location_tensor, int padding, int stride, int p_height, int p_width,
- float beta, int relu)
+ float beta, int relu, float eps)
 {
     float * ptr_in_tensor    = THCudaTensor_data(NULL, in_tensor);
     float * ptr_weights  = THCudaTensor_data(NULL, weights);
@@ -294,7 +294,8 @@ int inc_conv_bn(THCudaTensor * in_tensor, THCudaTensor * weights, THCudaTensor *
                 filt_desc, ptr_weights, conv_desc, algo, ws_data, ws_size, &BETA,
                 out_desc, temp_out_tensor);
 
-    bn_fused_mem_copy_gpu(temp_out_tensor, ptr_out_tensor, ptr_bn_mean, ptr_bn_var, ptr_bn_weights, ptr_bn_biases, ptr_location, batch, out_p_height, out_p_width, out_channels, out_size, relu);
+    bn_fused_mem_copy_gpu(temp_out_tensor, ptr_out_tensor, ptr_bn_mean, ptr_bn_var, ptr_bn_weights, ptr_bn_biases,
+     ptr_location, batch, out_p_height, out_p_width, out_channels, out_size, relu, eps);
 
     cudnnDestroyTensorDescriptor(out_desc);
     cudnnDestroyConvolutionDescriptor(conv_desc);

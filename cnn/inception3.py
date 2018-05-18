@@ -1,17 +1,17 @@
+import os
+import sys
+
 import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-import torch.utils.model_zoo as model_zoo
 from PIL import Image
 from torchvision.transforms import transforms
-import os
-import sys
 
 sys.path.append('../')
 
 from cnn.imagenet_classes import class_names
-from cnn.commons import load_dict_from_hdf5
+from cnn.commons import load_dict_from_hdf5, inc_convolution_bn, inc_max_pool
 
 
 class Inception3(nn.Module):
@@ -62,7 +62,7 @@ class Inception3(nn.Module):
         self.__initialize_weights(gpu)
 
     def forward(self, x):
-        return self.forward_materialized(x)
+        return self.forward_fused(x)
 
     def forward_fused(self, x):
         x = x.clone()
@@ -83,6 +83,8 @@ class Inception3(nn.Module):
         x = self.mixed_5c(x)
 
         x = self.mixed_6a(x)
+        return x
+
         x = self.mixed_6b(x)
         x = self.mixed_6c(x)
         x = self.mixed_6d(x)
@@ -133,7 +135,74 @@ class Inception3(nn.Module):
         
         return x
 
-    
+
+    def forward_inc_v2(self, x, locations, p_height, p_width):
+        beta = 1.0
+
+        if self.gpu:
+            x = x.cuda()
+            locations = locations.cuda()
+
+        x = x.clone()
+        x[:, 0] = x[:, 0] * (0.229 / 0.5) + (0.485 - 0.5) / 0.5
+        x[:, 1] = x[:, 1] * (0.224 / 0.5) + (0.456 - 0.5) / 0.5
+        x[:, 2] = x[:, 2] * (0.225 / 0.5) + (0.406 - 0.5) / 0.5
+
+        self.conv1 = self.conv1_op(x)
+        # conv1
+        p_height, p_width = inc_convolution_bn(x, self.conv1_op[0].weight.data,
+                                               self.conv1_op[1].running_mean.data,
+                                               self.conv1_op[1].running_var.data,
+                                               self.conv1_op[1].weight.data,
+                                               self.conv1_op[1].bias.data,
+                                               self.conv1.data, locations, 0, 2, p_height, p_width, beta, relu=True, eps=1e-3)
+
+        # conv2
+        p_height, p_width = inc_convolution_bn(self.conv1.data, self.conv2_a_op[0].weight.data,
+                                               self.conv2_a_op[1].running_mean.data,
+                                               self.conv2_a_op[1].running_var.data,
+                                               self.conv2_a_op[1].weight.data,
+                                               self.conv2_a_op[1].bias.data,
+                                               self.conv2_a.data, locations, 0, 1, p_height, p_width, beta, relu=True,
+                                               eps=1e-3)
+        p_height, p_width = inc_convolution_bn(self.conv2_a.data, self.conv2_b_op[0].weight.data,
+                                               self.conv2_b_op[1].running_mean.data,
+                                               self.conv2_b_op[1].running_var.data,
+                                               self.conv2_b_op[1].weight.data,
+                                               self.conv2_b_op[1].bias.data,
+                                               self.conv2_b.data, locations, 1, 1, p_height, p_width, beta, relu=True,
+                                               eps=1e-3)
+
+        p_height, p_width = inc_max_pool(self.conv2_b.data, self.pool2.data, locations, 0, 2, 3, p_height, p_width, beta)
+
+        # conv3
+        p_height, p_width = inc_convolution_bn(self.pool2.data, self.conv3_op[0].weight.data,
+                                               self.conv3_op[1].running_mean.data,
+                                               self.conv3_op[1].running_var.data,
+                                               self.conv3_op[1].weight.data,
+                                               self.conv3_op[1].bias.data,
+                                               self.conv3.data, locations, 0, 1, p_height, p_width, beta, relu=True,
+                                               eps=1e-3)
+
+        # conv4
+        p_height, p_width = inc_convolution_bn(self.conv3.data, self.conv4_op[0].weight.data,
+                                               self.conv4_op[1].running_mean.data,
+                                               self.conv4_op[1].running_var.data,
+                                               self.conv4_op[1].weight.data,
+                                               self.conv4_op[1].bias.data,
+                                               self.conv4.data, locations, 0, 1, p_height, p_width, beta, relu=True,
+                                               eps=1e-3)
+        p_height, p_width = inc_max_pool(self.conv4.data, self.pool4.data, locations, 0, 2, 3, p_height, p_width,
+                                         beta)
+
+        x = self.mixed_5a.forward_inc_v2(self.pool4.data, locations, p_height, p_width)
+        x = self.mixed_5b.forward_inc_v2(x, locations, p_height, p_width)
+        x = self.mixed_5c.forward_inc_v2(x, locations, p_height, p_width)
+
+        x = self.mixed_6a.forward_inc_v2(x, locations, p_height, p_width)
+        return x
+
+
     def __initialize_weights(self, gpu):
         dir_path = os.path.dirname(os.path.realpath(__file__))
         values = load_dict_from_hdf5(dir_path + "/inception3_weights_ptch.h5", gpu)
@@ -286,6 +355,75 @@ class InceptionA(nn.Module):
         x = torch.cat([self.b1, self.b5_2, self.b3_3, self.b_pool_2], 1)
         return x
 
+    def forward_inc_v2(self, x, locations, p_height, p_width, beta=1.0):
+
+        # 1x1
+        locations1 = locations.clone()
+        p_height1, p_width1 = inc_convolution_bn(x, self.b1_op[0].weight.data,
+                                               self.b1_op[1].running_mean.data,
+                                               self.b1_op[1].running_var.data,
+                                               self.b1_op[1].weight.data,
+                                               self.b1_op[1].bias.data,
+                                               self.b1.data, locations1, 0, 1, p_height, p_width, beta, relu=True,
+                                               eps=1e-3)
+
+        # 3x3
+        locations3 = locations.clone()
+        p_height3, p_width3 = inc_convolution_bn(x, self.b3_1_op[0].weight.data,
+                                                 self.b3_1_op[1].running_mean.data,
+                                                 self.b3_1_op[1].running_var.data,
+                                                 self.b3_1_op[1].weight.data,
+                                                 self.b3_1_op[1].bias.data,
+                                                 self.b3_1.data, locations3, 0, 1, p_height, p_width, beta, relu=True,
+                                                 eps=1e-3)
+        p_height3, p_width3 = inc_convolution_bn(self.b3_1.data, self.b3_2_op[0].weight.data,
+                                                 self.b3_2_op[1].running_mean.data,
+                                                 self.b3_2_op[1].running_var.data,
+                                                 self.b3_2_op[1].weight.data,
+                                                 self.b3_2_op[1].bias.data,
+                                                 self.b3_2.data, locations3, 1, 1, p_height3, p_width3, beta, relu=True,
+                                                 eps=1e-3)
+        p_height3, p_width3 = inc_convolution_bn(self.b3_2.data, self.b3_3_op[0].weight.data,
+                                                 self.b3_3_op[1].running_mean.data,
+                                                 self.b3_3_op[1].running_var.data,
+                                                 self.b3_3_op[1].weight.data,
+                                                 self.b3_3_op[1].bias.data,
+                                                 self.b3_3.data, locations3, 1, 1, p_height3, p_width3, beta, relu=True,
+                                                 eps=1e-3)
+
+
+        # clone
+        locationsp = locations.clone()
+        self.b_pool_1 = F.avg_pool2d(x, kernel_size=3, stride=1, padding=1)
+        p_heightp, p_widthp = inc_convolution_bn(self.b_pool_1, self.branch_pool_op[0].weight.data,
+                                               self.branch_pool_op[1].running_mean.data,
+                                               self.branch_pool_op[1].running_var.data,
+                                               self.branch_pool_op[1].weight.data,
+                                               self.branch_pool_op[1].bias.data,
+                                               self.b_pool_2.data, locationsp, 0, 1, p_height, p_width, beta, relu=True,
+                                               eps=1e-3)
+
+        # 5x5
+        p_height, p_width = inc_convolution_bn(x, self.b5_1_op[0].weight.data,
+                                                 self.b5_1_op[1].running_mean.data,
+                                                 self.b5_1_op[1].running_var.data,
+                                                 self.b5_1_op[1].weight.data,
+                                                 self.b5_1_op[1].bias.data,
+                                                 self.b5_1.data, locations, 0, 1, p_height, p_width, beta, relu=True,
+                                                 eps=1e-3)
+
+        p_height, p_width = inc_convolution_bn(self.b5_1.data, self.b5_2_op[0].weight.data,
+                                               self.b5_2_op[1].running_mean.data,
+                                               self.b5_2_op[1].running_var.data,
+                                               self.b5_2_op[1].weight.data,
+                                               self.b5_2_op[1].bias.data,
+                                               self.b5_2.data, locations, 2, 1, p_height, p_width, beta, relu=True,
+                                               eps=1e-3)
+
+
+        x = torch.cat([self.b1, self.b5_2, self.b3_3, self.b_pool_2], 1)
+        return x
+
 class InceptionB(nn.Module):
 
     def __init__(self, in_channels):
@@ -310,7 +448,8 @@ class InceptionB(nn.Module):
         b_pool = F.max_pool2d(x, kernel_size=3, stride=2)
 
         outputs = [b3, b3_db, b_pool]
-        return torch.cat(outputs, 1)
+        x = torch.cat(outputs, 1)
+        return x
     
     
     def forward_materialized(self, x):
@@ -324,6 +463,48 @@ class InceptionB(nn.Module):
 
         outputs = [self.b3, self.b3_db_3, self.b_pool]
         return torch.cat(outputs, 1)
+
+    def forward_inc_v2(self, x, locations, p_height, p_width, beta=1.0):
+
+        # 3x3
+        locations3 = locations.clone()
+        p_height3, p_width3 = inc_convolution_bn(x, self.b3_op[0].weight.data,
+                                               self.b3_op[1].running_mean.data,
+                                               self.b3_op[1].running_var.data,
+                                               self.b3_op[1].weight.data,
+                                               self.b3_op[1].bias.data,
+                                               self.b3.data, locations3, 0, 2, p_height, p_width, beta, relu=True,
+                                               eps=1e-3)
+
+        # pool
+        self.b_pool = F.max_pool2d(x, kernel_size=3, stride=2)
+
+        # 3x3_db
+        p_height, p_width = inc_convolution_bn(x, self.b3_db_1_op[0].weight.data,
+                                                 self.b3_db_1_op[1].running_mean.data,
+                                                 self.b3_db_1_op[1].running_var.data,
+                                                 self.b3_db_1_op[1].weight.data,
+                                                 self.b3_db_1_op[1].bias.data,
+                                                 self.b3_db_1.data, locations, 0, 1, p_height, p_width, beta, relu=True,
+                                                 eps=1e-3)
+        p_height, p_width = inc_convolution_bn(self.b3_db_1.data, self.b3_db_2_op[0].weight.data,
+                                                 self.b3_db_2_op[1].running_mean.data,
+                                                 self.b3_db_2_op[1].running_var.data,
+                                                 self.b3_db_2_op[1].weight.data,
+                                                 self.b3_db_2_op[1].bias.data,
+                                                 self.b3_db_2.data, locations, 1, 1, p_height, p_width, beta, relu=True,
+                                                 eps=1e-3)
+        p_height, p_width = inc_convolution_bn(self.b3_db_2.data, self.b3_db_3_op[0].weight.data,
+                                                 self.b3_db_3_op[1].running_mean.data,
+                                                 self.b3_db_3_op[1].running_var.data,
+                                                 self.b3_db_3_op[1].weight.data,
+                                                 self.b3_db_3_op[1].bias.data,
+                                                 self.b3_db_3.data, locations, 0, 2, p_height, p_width, beta, relu=True,
+                                                 eps=1e-3)
+
+        outputs = [self.b3, self.b3_db_3, self.b_pool]
+        x = torch.cat(outputs, 1)
+        return x
 
 
 class InceptionC(nn.Module):

@@ -91,8 +91,8 @@ def inc_convolution(in_tensor, weights, biases, out_tensor, locations, padding, 
     temp = inc_conv_lib.inc_conv_relu(in_tensor, weights, biases, out_tensor, locations, padding, stride, int(p_height), int(p_width), beta)
     return int(temp/1000),int(temp%1000)
 
-def inc_convolution_bn(in_tensor, weights, bn_mean, bn_var, bn_weights, bn_biases, out_tensor, locations, padding, stride, p_height, p_width, beta, relu=True):
-    temp = inc_conv_lib.inc_conv_bn(in_tensor, weights, bn_mean, bn_var, bn_weights, bn_biases, out_tensor, locations, padding, stride, int(p_height), int(p_width), beta, relu)
+def inc_convolution_bn(in_tensor, weights, bn_mean, bn_var, bn_weights, bn_biases, out_tensor, locations, padding, stride, p_height, p_width, beta, relu=True, eps=1e-5):
+    temp = inc_conv_lib.inc_conv_bn(in_tensor, weights, bn_mean, bn_var, bn_weights, bn_biases, out_tensor, locations, padding, stride, int(p_height), int(p_width), beta, relu, eps)
     return int(temp/1000),int(temp%1000)
 
 def inc_add(in_tensor1, in_tensor2, out_tensor, locations, p_height, p_width, relu=True):
