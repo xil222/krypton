@@ -7,7 +7,7 @@
 extern "C" {
 #endif
 
-void update_output_locations_gpu(int batch, int* ptr_location, int size, int padding, int stride, int k_size, int in_p_height, int in_p_width, bool patch_growing);
+void update_output_locations_gpu(int batch, int* ptr_location, int size, int padding, int stride, int k_size_x, int k_size_y, int in_p_height, int in_p_width, bool patch_growing);
 
 void cudnn_mem_copy_gpu(int batch, int channels, int size, int padding, int stride, float *in_ptr, float* out_ptr, int * ptr_location, int in_p_height, int in_p_width);
 

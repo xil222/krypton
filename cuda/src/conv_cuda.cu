@@ -49,7 +49,7 @@ void cudnn_mem_copy_gpu(int batch, int channels, int size, int padding, int stri
 }
 
 __global__ void update_output_locations_gpu_kernel(int num_kernels, int * ptr_location, int size, int padding,
-    int stride, int k_size, int in_p_height, int in_p_width, bool patch_growing)
+    int stride, int k_size_x, int k_size_y, int in_p_height, int in_p_width, bool patch_growing)
 {
     int index = blockIdx.x*blockDim.x+threadIdx.x;
     if (index < num_kernels)
@@ -57,27 +57,30 @@ __global__ void update_output_locations_gpu_kernel(int num_kernels, int * ptr_lo
         int current_y0 = ptr_location[index*2];
         int current_x0 = ptr_location[index*2+1];
 
-        int out_size = (size - k_size + 2*padding)/stride + 1;
-        int out_p_width = (in_p_width-k_size)/stride + 1;
-        
+        int out_size_x = (size - k_size_x + 2*padding)/stride + 1;
+        int out_size_y = (size - k_size_y + 2*padding)/stride + 1;
+
+        int out_p_width = (in_p_width-k_size_x)/stride + 1;
+        int out_p_height = (in_p_width-k_size_y)/stride + 1;
+
         if(patch_growing)
         {
-            current_y0 = max((int)ceil((padding + current_y0-k_size + 1.0)/stride), 0);
-            current_x0 = max((int)ceil((padding + current_x0-k_size + 1.0)/stride), 0);
+            current_y0 = max((int)ceil((padding + current_y0-k_size_y + 1.0)/stride), 0);
+            current_x0 = max((int)ceil((padding + current_x0-k_size_x + 1.0)/stride), 0);
         }
         else
         {
-            current_y0 = round(current_y0*out_size/(float)size);
-            current_x0 = round(current_x0*out_size/(float)size);
+            current_y0 = round(current_y0*out_size_y/(float)size);
+            current_x0 = round(current_x0*out_size_x/(float)size);
         }
 
-        if(current_y0 + out_p_width > out_size)
+        if(current_y0 + out_p_height > out_size_y)
         {
-            current_y0 = out_size - out_p_width;
+            current_y0 = out_size_y - out_p_height;
         }
-        if(current_x0 + out_p_width > out_size)
+        if(current_x0 + out_p_width > out_size_x)
         {
-            current_x0 = out_size - out_p_width;
+            current_x0 = out_size_x - out_p_width;
         }
 
         ptr_location[index*2] = current_y0;
@@ -86,11 +89,11 @@ __global__ void update_output_locations_gpu_kernel(int num_kernels, int * ptr_lo
 }
 
 void update_output_locations_gpu(int batch, int* ptr_location, int size, int padding, int stride,
-    int k_size, int in_p_height, int in_p_width, bool patch_growing)
+    int k_size_x, int k_size_y , int in_p_height, int in_p_width, bool patch_growing)
 {
     int num_kernels = batch;
     update_output_locations_gpu_kernel<<<(num_kernels+BLOCK-1)/BLOCK, BLOCK>>>(
-        num_kernels, ptr_location, size, padding, stride, k_size, in_p_height, in_p_width, patch_growing);
+        num_kernels, ptr_location, size, padding, stride, k_size_x, k_size_y, in_p_height, in_p_width, patch_growing);
 }
 
 

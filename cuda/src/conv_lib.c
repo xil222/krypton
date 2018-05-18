@@ -121,7 +121,7 @@ int inc_conv_relu(THCudaTensor * in_tensor, THCudaTensor * weights, THCudaTensor
     int in_p_height = k_size + (out_p_height-1)*stride;
     int in_p_width = k_size + (out_p_width-1)*stride;
 
-    update_output_locations_gpu(batch, ptr_location, in_size, padding, stride, k_size, in_p_height, in_p_width,
+    update_output_locations_gpu(batch, ptr_location, in_size, padding, stride, k_size, k_size, in_p_height, in_p_width,
      patch_growing);
 
     //temp input tensor
@@ -209,15 +209,16 @@ int inc_conv_bn(THCudaTensor * in_tensor, THCudaTensor * weights, THCudaTensor *
     int out_channels = out_tensor->size[1];
     int out_size = out_tensor->size[2];
 
-    int k_size = weights->size[2];
+    int k_size_x = weights->size[3];
+    int k_size_y = weights->size[2];
 
     int n = batch;
 
     cudnnHandle_t cudnn = cudnn_handle();
 
     
-    int temp_p_height = min((int)ceil((p_height+k_size-1)*1.0/stride), out_size);
-    int temp_p_width = min((int)ceil((p_width+k_size-1)*1.0/stride), out_size);
+    int temp_p_height = min((int)ceil((p_height+k_size_y-1)*1.0/stride), out_size);
+    int temp_p_width = min((int)ceil((p_width+k_size_x-1)*1.0/stride), out_size);
 
     
     int out_p_height = 0;
@@ -237,10 +238,10 @@ int inc_conv_bn(THCudaTensor * in_tensor, THCudaTensor * weights, THCudaTensor *
         out_p_width = temp_p_width;
     }
 
-    int in_p_height = k_size + (out_p_height-1)*stride;
-    int in_p_width = k_size + (out_p_width-1)*stride;
+    int in_p_height = k_size_y + (out_p_height-1)*stride;
+    int in_p_width = k_size_x + (out_p_width-1)*stride;
 
-    update_output_locations_gpu(batch, ptr_location, in_size, padding, stride, k_size, in_p_height, in_p_width,
+    update_output_locations_gpu(batch, ptr_location, in_size, padding, stride, k_size_x, k_size_y, in_p_height, in_p_width,
      patch_growing);
 
     //temp input tensor
@@ -256,7 +257,7 @@ int inc_conv_bn(THCudaTensor * in_tensor, THCudaTensor * weights, THCudaTensor *
     //filter tensor
     cudnnFilterDescriptor_t filt_desc;
     cudnnCreateFilterDescriptor(&filt_desc);
-    cudnnSetFilter4dDescriptor(filt_desc, CUDNN_DATA_FLOAT, CUDNN_TENSOR_NCHW, out_channels, in_channels, k_size, k_size);
+    cudnnSetFilter4dDescriptor(filt_desc, CUDNN_DATA_FLOAT, CUDNN_TENSOR_NCHW, out_channels, in_channels, k_size_y, k_size_x);
 
     cudnnConvolutionDescriptor_t conv_desc;
     cudnnCreateConvolutionDescriptor(&conv_desc);
@@ -342,7 +343,7 @@ int inc_max_pool(THCudaTensor * in_tensor, THCudaTensor * out_tensor, THCudaIntT
     int in_p_height = k_size + (out_p_height-1)*stride;
     int in_p_width = k_size + (out_p_width-1)*stride;
 
-    update_output_locations_gpu(batch, ptr_location, in_size, padding, stride, k_size, in_p_height, in_p_width,
+    update_output_locations_gpu(batch, ptr_location, in_size, padding, stride, k_size, k_size, in_p_height, in_p_width,
      patch_growing);
 
     inc_max_pool_gpu(ptr_in_tensor, ptr_out_tensor, in_size, out_size, in_channels, batch, padding, stride, k_size,
