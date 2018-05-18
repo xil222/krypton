@@ -121,7 +121,7 @@ int inc_conv_relu(THCudaTensor * in_tensor, THCudaTensor * weights, THCudaTensor
     int in_p_height = k_size + (out_p_height-1)*stride;
     int in_p_width = k_size + (out_p_width-1)*stride;
 
-    update_output_locations_gpu(batch, ptr_location, in_size, padding, stride, k_size, k_size, in_p_height, in_p_width,
+    update_output_locations_gpu(batch, ptr_location, in_size, padding, padding, stride, k_size, k_size, in_p_height, in_p_width,
      patch_growing);
 
     //temp input tensor
@@ -132,7 +132,7 @@ int inc_conv_relu(THCudaTensor * in_tensor, THCudaTensor * weights, THCudaTensor
     float * temp_in_tensor;
     temp_in_tensor = get_temp_in_tensor(n*in_channels*in_p_width*in_p_height*sizeof(float));
 
-    cudnn_mem_copy_gpu(batch, in_channels, in_size, stride, padding, ptr_in_tensor, temp_in_tensor, ptr_location, in_p_height, in_p_width);
+    cudnn_mem_copy_gpu(batch, in_channels, in_size, stride, padding, padding, ptr_in_tensor, temp_in_tensor, ptr_location, in_p_height, in_p_width);
 
     //filter tensor
     cudnnFilterDescriptor_t filt_desc;
@@ -187,7 +187,7 @@ int inc_conv_relu(THCudaTensor * in_tensor, THCudaTensor * weights, THCudaTensor
 
 int inc_conv_bn(THCudaTensor * in_tensor, THCudaTensor * weights, THCudaTensor * bn_mean, THCudaTensor * bn_var,
  THCudaTensor * bn_weights,THCudaTensor * bn_biases, THCudaTensor * out_tensor,
- THCudaIntTensor * patch_location_tensor, int padding, int stride, int p_height, int p_width,
+ THCudaIntTensor * patch_location_tensor, int padding_x, int padding_y, int stride, int p_height, int p_width,
  float beta, int relu, float eps)
 {
     float * ptr_in_tensor    = THCudaTensor_data(NULL, in_tensor);
@@ -241,7 +241,7 @@ int inc_conv_bn(THCudaTensor * in_tensor, THCudaTensor * weights, THCudaTensor *
     int in_p_height = k_size_y + (out_p_height-1)*stride;
     int in_p_width = k_size_x + (out_p_width-1)*stride;
 
-    update_output_locations_gpu(batch, ptr_location, in_size, padding, stride, k_size_x, k_size_y, in_p_height, in_p_width,
+    update_output_locations_gpu(batch, ptr_location, in_size, padding_x, padding_y, stride, k_size_x, k_size_y, in_p_height, in_p_width,
      patch_growing);
 
     //temp input tensor
@@ -252,7 +252,7 @@ int inc_conv_bn(THCudaTensor * in_tensor, THCudaTensor * weights, THCudaTensor *
     float * temp_in_tensor;
     temp_in_tensor = get_temp_in_tensor(n*in_channels*in_p_width*in_p_height*sizeof(float));
 
-    cudnn_mem_copy_gpu(batch, in_channels, in_size, stride, padding, ptr_in_tensor, temp_in_tensor, ptr_location, in_p_height, in_p_width);
+    cudnn_mem_copy_gpu(batch, in_channels, in_size, stride, padding_x, padding_y, ptr_in_tensor, temp_in_tensor, ptr_location, in_p_height, in_p_width);
 
     //filter tensor
     cudnnFilterDescriptor_t filt_desc;
@@ -343,7 +343,7 @@ int inc_max_pool(THCudaTensor * in_tensor, THCudaTensor * out_tensor, THCudaIntT
     int in_p_height = k_size + (out_p_height-1)*stride;
     int in_p_width = k_size + (out_p_width-1)*stride;
 
-    update_output_locations_gpu(batch, ptr_location, in_size, padding, stride, k_size, k_size, in_p_height, in_p_width,
+    update_output_locations_gpu(batch, ptr_location, in_size, padding, padding, stride, k_size, k_size, in_p_height, in_p_width,
      patch_growing);
 
     inc_max_pool_gpu(ptr_in_tensor, ptr_out_tensor, in_size, out_size, in_channels, batch, padding, stride, k_size,

@@ -49,14 +49,8 @@ def __generate_positions(x_size, y_size):
 #             patch_locations.append((0, n-i-1))
 #         temp = 1
 
-#     for i in range(temp, m, 2):
-#         for j in range(n):
-#             patch_locations.append((i, j))
-#         for j in range(n):
-#             patch_locations.append((i+1, n-j-1))
 
-
-#     return patch_locations
+    return patch_locations
 
 # def __generate_positions(x_size, y_size):
 #     m = int(x_size); n = int(y_size)
@@ -92,7 +86,7 @@ def inc_convolution(in_tensor, weights, biases, out_tensor, locations, padding, 
     return int(temp/1000),int(temp%1000)
 
 def inc_convolution_bn(in_tensor, weights, bn_mean, bn_var, bn_weights, bn_biases, out_tensor, locations, padding, stride, p_height, p_width, beta, relu=True, eps=1e-5):
-    temp = inc_conv_lib.inc_conv_bn(in_tensor, weights, bn_mean, bn_var, bn_weights, bn_biases, out_tensor, locations, padding, stride, int(p_height), int(p_width), beta, relu, eps)
+    temp = inc_conv_lib.inc_conv_bn(in_tensor, weights, bn_mean, bn_var, bn_weights, bn_biases, out_tensor, locations, padding, padding, stride, int(p_height), int(p_width), beta, relu, eps)
     return int(temp/1000),int(temp%1000)
 
 def inc_add(in_tensor1, in_tensor2, out_tensor, locations, p_height, p_width, relu=True):

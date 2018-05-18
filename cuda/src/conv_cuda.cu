@@ -10,7 +10,7 @@
 #define BLOCK 512
 
 __global__ void cudnn_mem_copy_gpu_kernel(int num_kernels, int batch, int channels, int size, int stride,
- int padding, float *in_ptr,
+ int padding_x, int padding_y, float *in_ptr,
  float* out_ptr, int * ptr_location, int p_height, int p_width)
 {
     int index = blockIdx.x*blockDim.x+threadIdx.x;
@@ -24,8 +24,8 @@ __global__ void cudnn_mem_copy_gpu_kernel(int num_kernels, int batch, int channe
         #pragma unroll 4
         for(int i=0; i<batch; i++)
         {
-            int w_out = *(ptr_location+i*2+1)*stride - padding + index % p_width;
-            int h_out = *(ptr_location+i*2)*stride - padding + h_index % p_height;
+            int w_out = *(ptr_location+i*2+1)*stride - padding_x + index % p_width;
+            int h_out = *(ptr_location+i*2)*stride - padding_y + h_index % p_height;
 
             if(w_out >= size || w_out < 0 || h_out >= size || h_out < 0)
             {
@@ -41,14 +41,14 @@ __global__ void cudnn_mem_copy_gpu_kernel(int num_kernels, int batch, int channe
     }
 }
 
-void cudnn_mem_copy_gpu(int batch, int channels, int size, int padding, int stride, float *in_ptr, float* out_ptr, int * ptr_location, int in_p_height, int in_p_width)
+void cudnn_mem_copy_gpu(int batch, int channels, int size, int padding_x, int padding_y, int stride, float *in_ptr, float* out_ptr, int * ptr_location, int in_p_height, int in_p_width)
 {
     int num_kernels = in_p_height*in_p_width*channels;
     cudnn_mem_copy_gpu_kernel<<<(num_kernels+BLOCK-1)/BLOCK,
-            BLOCK>>>(num_kernels, batch, channels, size, padding, stride, in_ptr, out_ptr, ptr_location, in_p_height, in_p_width);
+            BLOCK>>>(num_kernels, batch, channels, size, padding_x, padding_y, stride, in_ptr, out_ptr, ptr_location, in_p_height, in_p_width);
 }
 
-__global__ void update_output_locations_gpu_kernel(int num_kernels, int * ptr_location, int size, int padding,
+__global__ void update_output_locations_gpu_kernel(int num_kernels, int * ptr_location, int size, int padding_x, int padding_y,
     int stride, int k_size_x, int k_size_y, int in_p_height, int in_p_width, bool patch_growing)
 {
     int index = blockIdx.x*blockDim.x+threadIdx.x;
@@ -57,16 +57,16 @@ __global__ void update_output_locations_gpu_kernel(int num_kernels, int * ptr_lo
         int current_y0 = ptr_location[index*2];
         int current_x0 = ptr_location[index*2+1];
 
-        int out_size_x = (size - k_size_x + 2*padding)/stride + 1;
-        int out_size_y = (size - k_size_y + 2*padding)/stride + 1;
+        int out_size_x = (size - k_size_x + 2*padding_x)/stride + 1;
+        int out_size_y = (size - k_size_y + 2*padding_y)/stride + 1;
 
         int out_p_width = (in_p_width-k_size_x)/stride + 1;
         int out_p_height = (in_p_width-k_size_y)/stride + 1;
 
         if(patch_growing)
         {
-            current_y0 = max((int)ceil((padding + current_y0-k_size_y + 1.0)/stride), 0);
-            current_x0 = max((int)ceil((padding + current_x0-k_size_x + 1.0)/stride), 0);
+            current_y0 = max((int)ceil((padding_y + current_y0-k_size_y + 1.0)/stride), 0);
+            current_x0 = max((int)ceil((padding_x + current_x0-k_size_x + 1.0)/stride), 0);
         }
         else
         {
@@ -88,12 +88,12 @@ __global__ void update_output_locations_gpu_kernel(int num_kernels, int * ptr_lo
     }
 }
 
-void update_output_locations_gpu(int batch, int* ptr_location, int size, int padding, int stride,
+void update_output_locations_gpu(int batch, int* ptr_location, int size, int padding_x, int padding_y, int stride,
     int k_size_x, int k_size_y , int in_p_height, int in_p_width, bool patch_growing)
 {
     int num_kernels = batch;
     update_output_locations_gpu_kernel<<<(num_kernels+BLOCK-1)/BLOCK, BLOCK>>>(
-        num_kernels, ptr_location, size, padding, stride, k_size_x, k_size_y, in_p_height, in_p_width, patch_growing);
+        num_kernels, ptr_location, size, padding_x, padding_y, stride, k_size_x, k_size_y, in_p_height, in_p_width, patch_growing);
 }
 
 
