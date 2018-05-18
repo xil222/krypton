@@ -76,7 +76,7 @@ class ResNet18(nn.Module):
     def forward_fused(self, x):
         x = self.conv1_op(x)
         x = self.pool1_op(x)
-
+        
         residual = x
         x = self.conv2_1_a_op(x)
         x = self.conv2_1_b_op(x)
@@ -86,6 +86,7 @@ class ResNet18(nn.Module):
         x = self.conv2_2_b_op(x)
         x = F.relu(x + residual)
 
+        
         residual = self.residual_3_op(x)
         x = self.conv3_1_a_op(x)   
         x = self.conv3_1_b_op(x)

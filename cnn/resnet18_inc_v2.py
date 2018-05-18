@@ -9,6 +9,7 @@ import torch.nn as nn
 from PIL import Image
 from torch.autograd import Variable
 from torchvision.transforms import transforms
+import torch.nn.functional as F
 
 from commons import inc_convolution_bn, inc_max_pool, inc_add
 from imagenet_classes import class_names
@@ -68,7 +69,8 @@ class IncrementalResNet18V2(nn.Module):
                                                m.conv2_1_b_op[1].weight.data,
                                                m.conv2_1_b_op[1].bias.data,
                                             m.conv2_1_b.data, locations, 1, 1, p_height, p_width, beta, relu=False)
-        inc_add(m.pool1.data, m.conv2_1_b.data, m.merge_2_1, locations, p_height, p_width, relu=True)
+        
+        inc_add(m.pool1.data, m.conv2_1_b.data, m.merge_2_1.data, locations, p_height, p_width, relu=True)
         
         p_height, p_width = inc_convolution_bn(m.merge_2_1.data, m.conv2_2_a_op[0].weight.data,
                                                m.conv2_2_a_op[1].running_mean.data,
@@ -83,7 +85,7 @@ class IncrementalResNet18V2(nn.Module):
                                                m.conv2_2_b_op[1].bias.data,
                                             m.conv2_2_b.data, locations, 1, 1, p_height, p_width, beta, relu=False)
 
-        inc_add(m.merge_2_1.data, m.conv2_2_b.data, m.merge_2_2, locations, p_height, p_width, relu=True)
+        inc_add(m.merge_2_1.data, m.conv2_2_b.data, m.merge_2_2.data, locations, p_height, p_width, relu=True)
         
         r_p_height, r_p_width = p_height, p_width
         r_locations = locations.clone()
@@ -108,7 +110,7 @@ class IncrementalResNet18V2(nn.Module):
                                                m.residual_3_op[1].weight.data,
                                                m.residual_3_op[1].bias.data,
                                                m.residual_3.data, r_locations, 0, 2, r_p_height, r_p_width, beta, relu=False)
-        inc_add(m.residual_3.data, m.conv3_1_b.data, m.merge_3_1, locations, p_height, p_width, relu=True)
+        inc_add(m.residual_3.data, m.conv3_1_b.data, m.merge_3_1.data, locations, p_height, p_width, relu=True)
         
         p_height, p_width = inc_convolution_bn(m.merge_3_1.data, m.conv3_2_a_op[0].weight.data,
                                                m.conv3_2_a_op[1].running_mean.data,

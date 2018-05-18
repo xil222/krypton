@@ -14,6 +14,7 @@ from PIL import Image
 from scipy import ndimage
 from torch.autograd import Variable
 from torchvision import transforms
+from curvetools import generate_map
 
 sys.path.append('../')
 from cuda._ext import inc_conv_lib
@@ -33,23 +34,29 @@ def __recursively_load_dict_contents_from_group(h5file, path, cuda=True):
 
 
 def __generate_positions(x_size, y_size):
-    m = int(x_size); n = int(y_size)
-    patch_locations = []
-
-    temp = 0
-    if m % 2 == 0:
-        for i in range(n):
-            patch_locations.append((0, n-i-1))
-        temp = 1
-
-    for i in range(temp, m, 2):
-        for j in range(n):
-            patch_locations.append((i, j))
-        for j in range(n):
-            patch_locations.append((i+1, n-j-1))
+    curve_map = generate_map(x_size, y_size)
+    
+    return [(int(x),int(y)) for x,y in curve_map[0]]
 
 
-    return patch_locations
+# def __generate_positions(x_size, y_size):
+#     m = int(x_size); n = int(y_size)
+#     patch_locations = []
+
+#     temp = 0
+#     if m % 2 == 0:
+#         for i in range(n):
+#             patch_locations.append((0, n-i-1))
+#         temp = 1
+
+#     for i in range(temp, m, 2):
+#         for j in range(n):
+#             patch_locations.append((i, j))
+#         for j in range(n):
+#             patch_locations.append((i+1, n-j-1))
+
+
+#     return patch_locations
 
 # def __generate_positions(x_size, y_size):
 #     m = int(x_size); n = int(y_size)
