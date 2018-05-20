@@ -89,6 +89,10 @@ def inc_convolution_bn(in_tensor, weights, bn_mean, bn_var, bn_weights, bn_biase
     temp = inc_conv_lib.inc_conv_bn(in_tensor, weights, bn_mean, bn_var, bn_weights, bn_biases, out_tensor, locations, padding, padding, stride, int(p_height), int(p_width), beta, relu, eps)
     return int(temp/1000),int(temp%1000)
 
+def inc_convolution_bn2(in_tensor, weights, bn_mean, bn_var, bn_weights, bn_biases, out_tensor, locations, padding_y, padding_x, stride, p_height, p_width, beta, relu=True, eps=1e-5):
+    temp = inc_conv_lib.inc_conv_bn(in_tensor, weights, bn_mean, bn_var, bn_weights, bn_biases, out_tensor, locations, padding_y, padding_x, stride, int(p_height), int(p_width), beta, relu, eps)
+    return int(temp/1000),int(temp%1000)
+
 def inc_add(in_tensor1, in_tensor2, out_tensor, locations, p_height, p_width, relu=True):
     temp = inc_conv_lib.inc_add(in_tensor1, in_tensor2, out_tensor, locations, p_height, p_width, relu)
     return int(p_height),int(p_width)
@@ -98,13 +102,24 @@ def inc_max_pool(in_tensor, out_tensor, locations, padding, stride, k_size, p_he
                                  k_size, int(p_height), int(p_width), beta)
     return int(temp/1000),int(temp%1000)
 
+def inc_avg_pool(in_tensor, out_tensor, locations, padding, stride, k_size, p_height, p_width, beta):
+    temp = inc_conv_lib.inc_avg_pool(in_tensor, out_tensor, locations, padding, stride,
+                                 k_size, int(p_height), int(p_width), beta)
+    return int(temp/1000),int(temp%1000)
+
+def update_output_locations(locations, padding_y, padding_x, stride, k_size_y, k_size_x, p_height, p_width, in_size, out_size, beta):
+    temp = inc_conv_lib.update_output_locations(locations, padding_y, padding_x, stride,
+                                 k_size_y, k_size_x, int(p_height), int(p_width), in_size, out_size, beta)
+    return int(temp/1000),int(temp%1000)
+
+
 def load_dict_from_hdf5(filename, cuda=True):
     with h5py.File(filename, 'r') as h5file:
         return __recursively_load_dict_contents_from_group(h5file, '/', cuda)
 
 
-def full_inference_e2e(model, file_path, patch_size, stride, logit_index, batch_size=256, cuda=True, x_size=224, y_size=224):
-    loader = transforms.Compose([transforms.Resize([x_size, y_size]), transforms.ToTensor()])
+def full_inference_e2e(model, file_path, patch_size, stride, logit_index, batch_size=256, cuda=True, image_size=224, x_size=224, y_size=224):
+    loader = transforms.Compose([transforms.Resize([image_size, image_size]), transforms.ToTensor()])
     orig_image = Image.open(file_path)
     orig_image = Variable(loader(orig_image).unsqueeze(0), volatile=True)
      
@@ -140,10 +155,10 @@ def full_inference_e2e(model, file_path, patch_size, stride, logit_index, batch_
     return np.array(logit_values).reshape(output_width, output_width)
 
 
-def inc_inference_e2e(model, file_path, patch_size, stride, logit_index, batch_size=64, beta=1.0, x0=0, y0=0,
+def inc_inference_e2e(model, file_path, patch_size, stride, logit_index, batch_size=64, beta=1.0, x0=0, y0=0, image_size=224,
                       x_size=224, y_size=224, cuda=True):
 
-    loader = transforms.Compose([transforms.Resize([224, 224]), transforms.ToTensor()])
+    loader = transforms.Compose([transforms.Resize([image_size, image_size]), transforms.ToTensor()])
     orig_image = Image.open(file_path)
     orig_image = loader(orig_image).unsqueeze(0)
 
@@ -224,24 +239,24 @@ def inc_inference_e2e(model, file_path, patch_size, stride, logit_index, batch_s
 
     return logit_values
 
-def adaptive_drilldown(model, file_path, patch_size, stride, logit_index, batch_size=128, beta=1.0, percentile=75):
-    final_out_width = int(math.ceil((224.0-patch_size)/stride))
+def adaptive_drilldown(model, file_path, patch_size, stride, logit_index, batch_size=128, image_size=224, beta=1.0, percentile=75):
+    final_out_width = int(math.ceil((image_size*1.0-patch_size)/stride))
     #checking for interested regions
     temp1 = inc_inference_e2e(model, file_path, patch_size, patch_size/2, logit_index,
-                                    batch_size=batch_size, beta=beta)
+                                    batch_size=batch_size, beta=beta, image_size=image_size, x_size=image_size, y_size=image_size )
     temp1 = cv2.resize(temp1, (final_out_width, final_out_width))
     
     threshold = np.percentile(temp1, percentile)
     idx = np.argwhere(temp1 <= threshold)
     
     x0 = int(np.min(idx[:,0])*stride); x1 = int(np.max(idx[:,0])*stride)
-    x_size = int(min(224-x0, x1-x0 + patch_size))
+    x_size = int(min(image_size-x0, x1-x0 + patch_size))
     y0 = int(np.min(idx[:,1])*stride); y1 = int(np.max(idx[:,1])*stride)
-    y_size = int(min(224-y0, y1-y0 + patch_size))
+    y_size = int(min(image_size-y0, y1-y0 + patch_size))
 
     #drilldown into interested regions
     temp2 = inc_inference_e2e(model, file_path, patch_size, stride, logit_index,
-                                    batch_size=batch_size, beta=beta, x0=x0, y0=y0, x_size=x_size, y_size=y_size)
+                                    batch_size=batch_size, beta=beta, x0=x0, y0=y0, image_size=image_size, x_size=x_size, y_size=y_size)
 
     temp1[int(x0/stride):int(x1/stride),int(y0/stride):int(y1/stride)] = temp2
 

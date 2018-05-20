@@ -61,7 +61,7 @@ __global__ void update_output_locations_gpu_kernel(int num_kernels, int * ptr_lo
         int out_size_y = (size - k_size_y + 2*padding_y)/stride + 1;
 
         int out_p_width = (in_p_width-k_size_x)/stride + 1;
-        int out_p_height = (in_p_width-k_size_y)/stride + 1;
+        int out_p_height = (in_p_height-k_size_y)/stride + 1;
 
         if(patch_growing)
         {
@@ -144,6 +144,59 @@ void inc_max_pool_gpu(float* ptr_in_tensor, float* ptr_out_tensor, int in_size, 
 {
     size_t n =  out_p_height * out_p_width * channels * batch;
     inc_max_pool_gpu_kernel<<<(n+BLOCK-1)/BLOCK, BLOCK>>>(n, ptr_in_tensor, ptr_out_tensor,
+        in_size, out_size, channels, batch, padding, stride, k_size, ptr_location, out_p_height, out_p_width);
+}
+
+
+__global__ void inc_avg_pool_gpu_kernel(int n, float* ptr_in_tensor, float* ptr_out_tensor, int in_size, int out_size, int channels,
+    int batch, int padding, int stride, int k_size, int * ptr_location, int out_p_height, int out_p_width)
+{
+    int index = blockIdx.x * blockDim.x + threadIdx.x;
+    if(index < n)
+    {
+        int j = index % out_p_width;
+        index /= out_p_width;
+        int i = index % out_p_height;
+        index /= out_p_height;
+        int k = index % channels;
+        index /= channels;
+        int b = index;
+
+        int w_offset = -padding;
+        int h_offset = -padding;
+
+        i = i + ptr_location[2*b];
+        j = j + ptr_location[2*b+1];
+
+        int out_index = j + out_size*(i+out_size*(k+channels*b));
+        float sum = 0;
+        int count = 0;
+
+        #pragma unroll 3
+        for(int l=0; l<k_size; l++)
+        {
+            #pragma unroll 3
+            for(int m=0; m<k_size; m++)
+            {
+                int cur_h = h_offset + i*stride + l;
+                int cur_w = w_offset + j*stride + m;
+                int index = cur_w + in_size*(cur_h + in_size*(k + b*channels));
+                int valid = (cur_h >= 0 && cur_h < in_size && cur_w >= 0 && cur_w < in_size);
+                float val = (valid != 0) ? ptr_in_tensor[index] : 0;
+                sum = sum + val;
+                count = count + 1;
+            }
+        }
+
+        ptr_out_tensor[out_index] = sum/count;
+    }
+}
+
+void inc_avg_pool_gpu(float* ptr_in_tensor, float* ptr_out_tensor, int in_size, int out_size, int channels,
+    int batch, int padding, int stride, int k_size, int * ptr_location, int out_p_height, int out_p_width)
+{
+    size_t n =  out_p_height * out_p_width * channels * batch;
+    inc_avg_pool_gpu_kernel<<<(n+BLOCK-1)/BLOCK, BLOCK>>>(n, ptr_in_tensor, ptr_out_tensor,
         in_size, out_size, channels, batch, padding, stride, k_size, ptr_location, out_p_height, out_p_width);
 }
 

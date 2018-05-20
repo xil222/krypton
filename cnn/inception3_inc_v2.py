@@ -35,7 +35,7 @@ class IncrementalInception3V2(nn.Module):
         torch.cuda.empty_cache()
 
     def forward(self, x, locations, p_height, p_width):        
-        return self.full_model.forward_inc_v2(x, locations, p_height, p_width)
+        return self.full_model.forward_inc_v2(x, locations, p_height, p_width, self.beta)
 
 
 if __name__ == "__main__":
@@ -75,5 +75,6 @@ if __name__ == "__main__":
     temp = (y - x).cpu().data.numpy()
     import matplotlib.pyplot as plt
     plt.imshow(temp[0,0,:,:])
+    plt.colorbar()
     plt.show()
     print(np.max(np.abs(temp)))
