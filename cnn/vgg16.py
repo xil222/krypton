@@ -60,6 +60,7 @@ class VGG16(nn.Module):
             x = x.cuda()
             
         x = self.conv1_1_op(x)
+        return x        
         x = self.conv1_2_op(x)
         x = self.pool1_op(x)
 

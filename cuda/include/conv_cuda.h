@@ -21,6 +21,14 @@ void inc_add_gpu(float * ptr_in_tensor1, float * ptr_in_tensor2, float * ptr_out
 void relu_fused_mem_copy_gpu(float *ptr_temp_tensor, float *ptr_out_tensor, float * ptr_biases, int * ptr_location, int batch, int p_height, int p_width, int channels, int size);
 
 void bn_fused_mem_copy_gpu(float *ptr_temp_tensor, float *ptr_out_tensor, float * ptr_bn_mean, float * ptr_bn_var, float * ptr_bn_weights, float * ptr_bn_biases, int * ptr_location, int batch, int p_height, int p_width, int channels, int size, bool relu, float eps);
+
+    
+    
+void cudnn_mem_copy_gpu2(int batch, int channels, int size, int padding_x, int padding_y, int stride, float *premat_ptr, float *in_ptr, float* out_ptr, int * ptr_location, int in_p_height, int in_p_width);
+       
+void relu_add_bias_gpu(float *ptr_out_tensor, float * ptr_biases, int batch, int p_height, int p_width, int channels);
+
+void inc_max_pool_gpu2(float* ptr_premat_tensor, float* ptr_in_tensor, float* ptr_out_tensor, int in_size, int in_p_size, int channels, int batch, int padding, int stride, int k_size, int * ptr_location, int out_p_height, int out_p_width);    
     
 #ifdef __cplusplus
 }

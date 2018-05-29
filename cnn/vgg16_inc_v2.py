@@ -5,21 +5,24 @@ import random
 
 import numpy as np
 import torch
+import math
 import torch.nn as nn
 from PIL import Image
 from torch.autograd import Variable
 from torchvision.transforms import transforms
 
-from commons import inc_convolution, inc_max_pool
+from commons import inc_convolution, inc_convolution2, inc_max_pool, inc_max_pool2
 from imagenet_classes import class_names
 from vgg16 import VGG16
 
 
 class IncrementalVGG16V2(nn.Module):
-
+    
     def __init__(self, in_tensor, beta=1.0, cuda=True):
         super(IncrementalVGG16V2, self).__init__()
-
+    
+        self.tensor_cache = {}
+            
         # performing initial full inference
         full_model = VGG16()
         #full_model.eval()
@@ -96,9 +99,6 @@ class IncrementalVGG16V2(nn.Module):
                                             m.conv4_2_op[0].bias.data, m.conv4_2.data,
                                             locations, 1, 1, p_height, p_width, beta)
 
-        # beta = 1.0
-        # print(p_height, p_width)
-
         # conv4_3
         p_height, p_width = inc_convolution(m.conv4_2.data, m.conv4_3_op[0].weight.data,
                                             m.conv4_3_op[0].bias.data, m.conv4_3.data,
@@ -133,27 +133,68 @@ class IncrementalVGG16V2(nn.Module):
         return x
 
 
+    def forward_gpu2(self, x, locations, p_height, p_width):
+        m = self.full_model
+        beta = self.beta
+        batch_size = x.shape[0]
+        
+        if self.cuda:
+            x = x.cuda()
+            locations = locations.cuda()
+
+        # conv1_1
+        out = self.__get_tensor('conv1_1', batch_size, 64, p_height, p_width, 3, 1, 224)
+        p_height, p_width = inc_convolution2(m.conv1_1.data, x, m.conv1_1_op[0].weight.data, m.conv1_1_op[0].bias.data,
+                                            out, locations, 224, 1, 1, p_height, p_width, beta)
+        x = out
+        return x
+        
+        # conv1_2
+        out = self.__get_tensor('conv1_2', batch_size, 64, p_height, p_width, 3, 1, 224)
+        p_height, p_width = inc_convolution2(m.conv1_1.data, x, m.conv1_2_op[0].weight.data, m.conv1_2_op[0].bias.data,
+                                            out, locations, 224, 1, 1, p_height, p_width, beta)
+        x = out
+    
+        return x
+    
+      
+    def __get_tensor(self, name, batch_size, channels, p_height, p_width, k_size, stride, out_size):
+        if name in self.tensor_cache:
+            return self.tensor_cache[name]
+        else:
+            tensor = torch.FloatTensor(batch_size, channels, *self.__get_output_shape(p_height, p_width, k_size, stride, out_size)).cuda()
+            self.tensor_cache[name] = tensor
+            return tensor
+        
+                
+    def __get_output_shape(self, p_height, p_width, k_size, stride, out_size):
+        p_height = min(int(math.ceil((p_height+k_size-1)*1.0/stride)), out_size)
+        p_width = min(int(math.ceil((p_width+k_size-1)*1.0/stride)), out_size)
+        return (p_height,p_width)
+    
+    
+    
 if __name__ == "__main__":
     batch_size = 1
     patch_size = 16
     input_size = 224
 
-    image_patch = torch.cuda.FloatTensor(3, patch_size, patch_size).fill_(0)
+    image_patches = torch.cuda.FloatTensor(3, patch_size, patch_size).fill_(0).repeat(batch_size, 1, 1)
 
     x_loc = random.sample(range(0, input_size - patch_size), batch_size)
     y_loc = random.sample(range(0, input_size - patch_size), batch_size)
     patch_locations = zip(x_loc, y_loc)
-    patch_locations = [(175, 175)]
+    patch_locations = [(0, 0)]
 
     loader = transforms.Compose([transforms.Resize([224, 224]), transforms.ToTensor()])
     images = Image.open('./dog_resized.jpg')
     images = loader(images)
 
     images = images.unsqueeze(0)
-    images = images.repeat(batch_size, 1, 1, 1)
+    #images = images.repeat(batch_size, 1, 1, 1)
 
-    for i,(x,y) in enumerate(patch_locations):
-        images[i, :, x:x+patch_size, y:y+patch_size] = image_patch
+    #for i,(x,y) in enumerate(patch_locations):
+    #    images[i, :, x:x+patch_size, y:y+patch_size] = image_patch
 
     y = VGG16().forward(images.cuda())
 
@@ -162,8 +203,8 @@ if __name__ == "__main__":
     inc_model = IncrementalVGG16V2(images, beta=1.0)
 
     inc_model.eval()
-    x = inc_model(images, patch_locations, patch_size, patch_size)
+    x = inc_model.forward_gpu2(image_patches, patch_locations, patch_size, patch_size)
     # print(class_names[np.argmax(x.data.cpu().numpy()[0, :])])
 
-    temp = y - x
+    temp = y[:,:,0:18,0:18] - x
     print(np.max(np.abs(temp.cpu().data.numpy())))
