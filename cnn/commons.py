@@ -41,19 +41,27 @@ def __recursively_load_dict_contents_from_group(h5file, path, cuda=True):
     
 #     return [(int(x),int(y)) for x,y in curve_map[0]]
 
-
 def __generate_positions(x_size, y_size):
     m = int(x_size); n = int(y_size)
     patch_locations = []
-
-    temp = 0
-    if m % 2 == 0:
-        for i in range(n):
-            patch_locations.append((0, n-i-1))
-        temp = 1
-
-
+    for i in range(m):
+        for j in range(n):
+            patch_locations.append((i, j))
+            
     return patch_locations
+
+# def __generate_positions(x_size, y_size):
+#     m = int(x_size); n = int(y_size)
+#     patch_locations = []
+
+#     temp = 0
+#     if m % 2 == 0:
+#         for i in range(n):
+#             patch_locations.append((0, n-i-1))
+#         temp = 1
+
+
+#     return patch_locations
 
 # def __generate_positions(x_size, y_size):
 #     m = int(x_size); n = int(y_size)
@@ -253,6 +261,63 @@ def inc_inference_e2e(model, file_path, patch_size, stride, logit_index, batch_s
         
     return logit_values
 
+
+def inc_inference_e2e2(model, file_path, patch_size, stride, logit_index, batch_size=64, beta=1.0, x0=0, y0=0, image_size=224,
+                      x_size=224, y_size=224, cuda=True):
+
+    loader = transforms.Compose([transforms.Resize([image_size, image_size]), transforms.ToTensor()])
+    orig_image = Image.open(file_path)
+    orig_image = loader(orig_image).unsqueeze(0)
+
+    if cuda:
+        orig_image = orig_image.cuda()
+
+    x_output_width = int(math.ceil((x_size*1.0 - patch_size) / stride))
+    y_output_width = int(math.ceil((y_size*1.0 - patch_size) / stride))
+
+    total_number = x_output_width * y_output_width
+    logit_values = np.zeros((x_output_width, y_output_width), dtype=np.float32)
+    image_patches = torch.cuda.FloatTensor(3, patch_size, patch_size).fill_(128.0/255).repeat(batch_size, 1, 1, 1)
+    patch_positions = __generate_positions(x_output_width, y_output_width)
+    
+    num_batches = int(math.ceil(total_number * 1.0 / batch_size))
+    inc_model = model(orig_image, beta=beta)
+    inc_model.eval()    
+ 
+    locations = torch.zeros([batch_size, 2], dtype=torch.int32)
+    for i in range(num_batches):
+        for j in range(batch_size):
+            index = j * num_batches + i
+            if index >= total_number:
+                break
+
+            x, y = patch_positions[index]
+            x = x*stride + x0
+            y = y*stride + y0
+            x,y = int(x), int(y)
+            
+            locations[j, 0] = x
+            locations[j, 1] = y
+
+        locations_final = locations
+        if cuda: locations_final = locations_final.cuda()
+        logits = inc_model.forward_gpu2(image_patches, locations_final, p_height=patch_size, p_width=patch_size)
+        logits = logits.cpu().data.numpy()[:, logit_index].flatten().tolist()
+
+        for logit, j in zip(logits, range(batch_size)):
+            index = j * num_batches + i
+            if index >= total_number:
+                break
+            x, y = patch_positions[index]
+            logit_values[x, y] = logit
+
+    del inc_model
+    gc.collect()
+
+    return logit_values
+
+
+
 def adaptive_drilldown(model, file_path, patch_size, stride, logit_index, batch_size=128, image_size=224, beta=1.0, percentile=75, num_batches=32):
     final_out_width = int(math.ceil((image_size*1.0-patch_size)/stride))
     #checking for interested regions
@@ -443,3 +508,7 @@ def inc_max_pool2(premat_tensor, in_tensor, out_tensor, locations, out_size, pad
     temp = inc_conv_lib.inc_max_pool2(premat_tensor, in_tensor, out_tensor, locations, out_size, padding, stride,
                                  k_size, int(p_height), int(p_width), beta)
     return int(temp/1000),int(temp%1000)
+
+
+def final_full_projection(premat_tensor, in_tensor, out_tensor, locations, p_height, p_width):    
+    inc_conv_lib.final_full_projection(premat_tensor, in_tensor, out_tensor, locations, int(p_height), int(p_width))

@@ -59,30 +59,30 @@ class VGG16(nn.Module):
         if self.cuda:
             x = x.cuda()
             
-        x = self.conv1_1_op(x)
-        return x        
-        x = self.conv1_2_op(x)
-        x = self.pool1_op(x)
-
-        x = self.conv2_1_op(x)
+        x = self.conv1_1_op(x)            
+        x = self.conv1_2_op(x)        
+        x = self.pool1_op(x)          
+    
+        x = self.conv2_1_op(x)        
         x = self.conv2_2_op(x)
-        x = self.pool2_op(x)
-
-        x = self.conv3_1_op(x)
-        x = self.conv3_2_op(x)
-        x = self.conv3_3_op(x)
-        x = self.pool2_op(x)
-
+        x = self.pool2_op(x)          
+        
+        x = self.conv3_1_op(x)        
+        x = self.conv3_2_op(x)         
+        x = self.conv3_3_op(x)        
+        x = self.pool3_op(x)
+        
         x = self.conv4_1_op(x)
         x = self.conv4_2_op(x)
         x = self.conv4_3_op(x)
         x = self.pool4_op(x)
-
+        
         x = self.conv5_1_op(x)
         x = self.conv5_2_op(x)
         x = self.conv5_3_op(x)
         x = self.pool5_op(x)
-
+        #return x
+    
         x = x.view(x.size(0), -1)
         x = self.classifier(x)
         return x
@@ -90,7 +90,8 @@ class VGG16(nn.Module):
     def forward_materialized(self, x):
         if self.cuda:
             x = x.cuda()
-            
+        
+        self.image = x
         self.conv1_1 = self.conv1_1_op(x)
         self.conv1_2 = self.conv1_2_op(self.conv1_1)
         self.pool1 = self.pool1_op(self.conv1_2)
@@ -102,7 +103,7 @@ class VGG16(nn.Module):
         self.conv3_1 = self.conv3_1_op(self.pool2)
         self.conv3_2 = self.conv3_2_op(self.conv3_1)
         self.conv3_3 = self.conv3_3_op(self.conv3_2)
-        self.pool3 = self.pool2_op(self.conv3_3)
+        self.pool3 = self.pool3_op(self.conv3_3)
 
         self.conv4_1 = self.conv4_1_op(self.pool3)
         self.conv4_2 = self.conv4_2_op(self.conv4_1)

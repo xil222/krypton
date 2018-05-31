@@ -72,7 +72,9 @@ float * get_cudnn_workspace(size_t size)
     return cudnn_workspace;
 }
 
-int inc_conv_relu2(THCudaTensor * premat_tensor, THCudaTensor * in_tensor, THCudaTensor * weights, THCudaTensor * biases, THCudaTensor * out_tensor, THCudaIntTensor * patch_location_tensor, int out_size, int padding, int stride, int p_height, int p_width, float beta)
+int inc_conv_relu2(THCudaTensor * premat_tensor, THCudaTensor * in_tensor, THCudaTensor * weights, THCudaTensor * biases,
+ THCudaTensor * out_tensor, THCudaIntTensor * patch_location_tensor, int out_size, int padding,
+  int stride, int p_height, int p_width, float beta)
 {
     float * ptr_premat_tensor = THCudaTensor_data(NULL, premat_tensor);
     float * ptr_in_tensor = THCudaTensor_data(NULL, in_tensor);    
@@ -103,11 +105,6 @@ int inc_conv_relu2(THCudaTensor * premat_tensor, THCudaTensor * in_tensor, THCud
     int in_p_height = k_size + (out_p_height-1)*stride;
     int in_p_width = k_size + (out_p_width-1)*stride;
 
-    //FIXME
-    int patch_growing = 1;
-    update_output_locations_gpu(batch, ptr_location, in_size, padding, padding, stride, k_size, k_size, in_p_height, in_p_width,
-     patch_growing);
-
     //temp input tensor
     cudnnTensorDescriptor_t in_desc;
     cudnnCreateTensorDescriptor(&in_desc);
@@ -116,8 +113,15 @@ int inc_conv_relu2(THCudaTensor * premat_tensor, THCudaTensor * in_tensor, THCud
     float * temp_in_tensor;
     temp_in_tensor = get_temp_in_tensor(n*in_channels*in_p_width*in_p_height*sizeof(float));
 
-    cudnn_mem_copy_gpu2(batch, in_channels, in_size, stride, padding, padding, ptr_premat_tensor, ptr_in_tensor, temp_in_tensor, ptr_location, in_p_height, in_p_width);
 
+    int patch_growing = 1;
+
+    cudnn_mem_copy_gpu2(batch, in_channels, in_size, stride, padding, padding, ptr_premat_tensor, ptr_in_tensor,
+     temp_in_tensor, ptr_location, p_height, in_p_height, in_p_width, k_size, k_size);    
+
+    update_output_locations_gpu(batch, ptr_location, in_size, padding, padding, stride, k_size, k_size, in_p_height, in_p_width,
+     patch_growing);
+    
     //filter tensor
     cudnnFilterDescriptor_t filt_desc;
     cudnnCreateFilterDescriptor(&filt_desc);
@@ -133,7 +137,7 @@ int inc_conv_relu2(THCudaTensor * premat_tensor, THCudaTensor * in_tensor, THCud
     cudnnTensorDescriptor_t out_desc;
     cudnnCreateTensorDescriptor(&out_desc);
     cudnnSetTensor4dDescriptor(out_desc, CUDNN_TENSOR_NCHW, CUDNN_DATA_FLOAT, n, out_channels, out_p_height, out_p_width);
-
+    
     //convolution algorithm
     cudnnConvolutionFwdAlgo_t algo;// = CUDNN_CONVOLUTION_FWD_ALGO_WINOGRAD;
     cudnnGetConvolutionForwardAlgorithm(cudnn, in_desc, filt_desc, conv_desc, out_desc, CUDNN_CONVOLUTION_FWD_PREFER_FASTEST, 0, &algo);
@@ -180,12 +184,30 @@ int inc_max_pool2(THCudaTensor * premat_tensor, THCudaTensor * in_tensor, THCuda
     int in_p_height = k_size + (out_p_height-1)*stride;
     int in_p_width = k_size + (out_p_width-1)*stride;
 
+    inc_max_pool_gpu2(ptr_premat_tensor, ptr_in_tensor, ptr_out_tensor, in_size, out_size, p_height, in_channels, batch, padding, stride, k_size, ptr_location, out_p_height, out_p_width);
+
     update_output_locations_gpu(batch, ptr_location, in_size, padding, padding, stride, k_size, k_size, in_p_height, in_p_width,
      patch_growing);
     
-    inc_max_pool_gpu2(ptr_premat_tensor, ptr_in_tensor, ptr_out_tensor, in_size, p_height, in_channels, batch, padding, stride, k_size, ptr_location, out_p_height, out_p_width);
-
     return out_p_height*1000+out_p_width;
+}
+
+
+int final_full_projection(THCudaTensor * premat_tensor, THCudaTensor * in_tensor, THCudaTensor * out_tensor,  THCudaIntTensor * patch_location_tensor, int p_height, int p_width)
+{
+    float * ptr_premat_tensor = THCudaTensor_data(NULL, premat_tensor);
+    float * ptr_in_tensor = THCudaTensor_data(NULL, in_tensor);
+    float * ptr_out_tensor = THCudaTensor_data(NULL, out_tensor);    
+    int * ptr_location = THCudaIntTensor_data(NULL, patch_location_tensor);
+
+    int batch = in_tensor->size[0];
+
+    int in_channels = in_tensor->size[1];
+    int in_size = premat_tensor->size[2];
+    
+    final_full_projection_gpu(ptr_premat_tensor, ptr_in_tensor, ptr_out_tensor, ptr_location, batch, in_channels, in_size, p_height, p_width);
+        
+    return 0;
 }
 
 

@@ -15,3 +15,5 @@ int update_output_locations(THCudaIntTensor * patch_location_tensor, int padding
 int inc_conv_relu2(THCudaTensor * premat_tensor, THCudaTensor * in_tensor, THCudaTensor * weights, THCudaTensor * biases, THCudaTensor * out_tensor, THCudaIntTensor * patch_location_tensor, int out_size, int padding, int stride, int p_height, int p_width, float beta);
 
 int inc_max_pool2(THCudaTensor * premat_tensor, THCudaTensor * in_tensor, THCudaTensor * out_tensor,  THCudaIntTensor * patch_location_tensor, int out_size, int padding, int stride, int k_size, int p_height, int p_width, float beta);
+
+int final_full_projection(THCudaTensor * premat_tensor, THCudaTensor * in_tensor, THCudaTensor * out_tensor,  THCudaIntTensor * patch_location_tensor, int p_height, int p_width);
