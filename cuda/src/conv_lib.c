@@ -99,9 +99,27 @@ int inc_conv_relu2(THCudaTensor * premat_tensor, THCudaTensor * in_tensor, THCud
 
     cudnnHandle_t cudnn = cudnn_handle();
  
-    int out_p_height = min((int)ceil((p_height+k_size-1)*1.0/stride), out_size);
-    int out_p_width = min((int)ceil((p_width+k_size-1)*1.0/stride), out_size);
+    int temp_p_height = min((int)ceil((p_height+k_size-1)*1.0/stride), out_size);
+    int temp_p_width = min((int)ceil((p_width+k_size-1)*1.0/stride), out_size);
 
+    int out_p_height = 0;
+    int out_p_width = 0;
+
+    bool patch_growing = 1;
+    if(temp_p_height > round(out_size * beta))
+    {
+        out_p_height = (int)ceil(p_height*1.0/stride);
+        out_p_width = (int)ceil(p_width*1.0/stride);
+        
+        patch_growing = 0;
+    }
+    else
+    {
+        out_p_height = temp_p_height;
+        out_p_width = temp_p_width;
+    }
+
+      
     int in_p_height = k_size + (out_p_height-1)*stride;
     int in_p_width = k_size + (out_p_width-1)*stride;
 
@@ -113,11 +131,8 @@ int inc_conv_relu2(THCudaTensor * premat_tensor, THCudaTensor * in_tensor, THCud
     float * temp_in_tensor;
     temp_in_tensor = get_temp_in_tensor(n*in_channels*in_p_width*in_p_height*sizeof(float));
 
-
-    int patch_growing = 1;
-
     cudnn_mem_copy_gpu2(batch, in_channels, in_size, stride, padding, padding, ptr_premat_tensor, ptr_in_tensor,
-     temp_in_tensor, ptr_location, p_height, in_p_height, in_p_width, k_size, k_size);    
+     temp_in_tensor, ptr_location, p_height, in_p_height, in_p_width, k_size, k_size, patch_growing);    
 
     update_output_locations_gpu(batch, ptr_location, in_size, padding, padding, stride, k_size, k_size, in_p_height, in_p_width,
      patch_growing);
@@ -176,15 +191,30 @@ int inc_max_pool2(THCudaTensor * premat_tensor, THCudaTensor * in_tensor, THCuda
     int in_channels = in_tensor->size[1];
     int in_size = premat_tensor->size[2];
     
-    int out_p_height = min((int)ceil((p_height+k_size-1)*1.0/stride), out_size);
-    int out_p_width = min((int)ceil((p_width+k_size-1)*1.0/stride), out_size);
+    int temp_p_height = min((int)ceil((p_height+k_size-1)*1.0/stride), out_size);
+    int temp_p_width = min((int)ceil((p_width+k_size-1)*1.0/stride), out_size);
     
+    int out_p_height = 0;
+    int out_p_width = 0;
+
     bool patch_growing = 1;
+    if(temp_p_height > round(out_size * beta))
+    {
+        out_p_height = (int)ceil(p_height*1.0/stride);
+        out_p_width = (int)ceil(p_width*1.0/stride);
+        
+        patch_growing = 0;
+    }
+    else
+    {
+        out_p_height = temp_p_height;
+        out_p_width = temp_p_width;
+    }
 
     int in_p_height = k_size + (out_p_height-1)*stride;
     int in_p_width = k_size + (out_p_width-1)*stride;
 
-    inc_max_pool_gpu2(ptr_premat_tensor, ptr_in_tensor, ptr_out_tensor, in_size, out_size, p_height, in_channels, batch, padding, stride, k_size, ptr_location, out_p_height, out_p_width);
+    inc_max_pool_gpu2(ptr_premat_tensor, ptr_in_tensor, ptr_out_tensor, in_size, out_size, p_height, in_channels, batch, padding, stride, k_size, ptr_location, out_p_height, out_p_width, patch_growing);
 
     update_output_locations_gpu(batch, ptr_location, in_size, padding, padding, stride, k_size, k_size, in_p_height, in_p_width,
      patch_growing);
