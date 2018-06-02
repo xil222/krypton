@@ -8,8 +8,8 @@ import os
 from torch.autograd import Variable
 from torchvision.transforms import transforms
 
-from commons import load_dict_from_hdf5
-from imagenet_classes import class_names
+from scratch.cnn.commons import load_dict_from_hdf5
+from scratch.cnn.imagenet_classes import class_names
 
 
 class VGG16(nn.Module):
@@ -81,7 +81,6 @@ class VGG16(nn.Module):
         x = self.conv5_2_op(x)
         x = self.conv5_3_op(x)
         x = self.pool5_op(x)
-        #return x
     
         x = x.view(x.size(0), -1)
         x = self.classifier(x)

@@ -9,12 +9,10 @@ import torch
 import torch.nn as nn
 from PIL import Image
 from commons import load_dict_from_hdf5
-from torch.autograd import Variable
 from torchvision.transforms import transforms
 
-from commons import inc_convolution, inc_max_pool
 from imagenet_classes import class_names
-from vgg16 import VGG16
+from cnn.vgg16 import VGG16
 
 
 class IncrementalVGG16V1(nn.Module):

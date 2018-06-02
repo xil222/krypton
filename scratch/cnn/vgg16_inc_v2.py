@@ -8,12 +8,10 @@ import torch
 import math
 import torch.nn as nn
 from PIL import Image
-from torch.autograd import Variable
 from torchvision.transforms import transforms
 
 from commons import inc_convolution, inc_convolution2, inc_max_pool, inc_max_pool2, final_full_projection
-from imagenet_classes import class_names
-from vgg16 import VGG16
+from cnn.vgg16 import VGG16
 
 
 class IncrementalVGG16V2(nn.Module):
