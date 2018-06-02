@@ -5,18 +5,24 @@ import numpy as np
 import torch.nn as nn
 from PIL import Image
 import os
+import math
+import torch
+import torch.nn.functional as F
 from torch.autograd import Variable
 from torchvision.transforms import transforms
 
-from scratch.cnn.commons import load_dict_from_hdf5
-from scratch.cnn.imagenet_classes import class_names
+from commons import inc_convolution, inc_max_pool, full_projection
+from commons import load_dict_from_hdf5
+from imagenet_classes import class_names
 
 
 class VGG16(nn.Module):
 
-    def __init__(self, cuda=True):
+    def __init__(self, beta=1.0, gpu=True):
         super(VGG16, self).__init__()
-
+        self.initialized = False
+        self.tensor_cache = {}
+        
         self.conv1_1_op = nn.Sequential(nn.Conv2d(3, 64, kernel_size=3, padding=1), nn.ReLU(inplace=True))
         self.conv1_2_op = nn.Sequential(nn.Conv2d(64, 64, kernel_size=3, padding=1), nn.ReLU(inplace=True))
         self.pool1_op = nn.MaxPool2d(kernel_size=2, stride=2)
@@ -49,17 +55,18 @@ class VGG16(nn.Module):
             nn.Softmax(dim=1)
         )
 
-        self._initialize_weights(cuda)
-        self.cuda = cuda
+        self.__initialize_weights(gpu)
+        self.gpu = gpu
+        self.beta = beta
 
     def forward(self, x):
         return self.forward_fused(x)
 
     def forward_fused(self, x):
-        if self.cuda:
+        if self.gpu:
             x = x.cuda()
             
-        x = self.conv1_1_op(x)            
+        x = self.conv1_1_op(x)
         x = self.conv1_2_op(x)        
         x = self.pool1_op(x)          
     
@@ -87,7 +94,8 @@ class VGG16(nn.Module):
         return x
 
     def forward_materialized(self, x):
-        if self.cuda:
+        self.initialized = True
+        if self.gpu:
             x = x.cuda()
         
         self.image = x
@@ -119,9 +127,155 @@ class VGG16(nn.Module):
 
         return x
 
-    def _initialize_weights(self, cuda):
+    def forward_gpu(self, x, locations, p_height, p_width):
+        if not self.initialized:
+            raise Exception("Not initialized...")
+        
+        beta = self.beta
+        batch_size = x.shape[0]
+        
+        if self.gpu:
+            x = x.cuda()
+            locations = locations.cuda()
+
+        # conv1_1
+        out = self.__get_tensor('conv1_1', batch_size, 64, p_height, p_width, 3, 1, 224)
+        p_height, p_width = inc_convolution(self.image.data, x, self.conv1_1_op[0].weight.data, self.conv1_1_op[0].bias.data,
+                                            out.data, locations.data, 1, 1, 1, 1, p_height, p_width, beta)
+        x = F.relu(out)
+        print(locations, p_height)
+    
+        # conv1_2
+        out = self.__get_tensor('conv1_2', batch_size, 64, p_height, p_width, 3, 1, 224)
+        p_height, p_width = inc_convolution(self.conv1_1.data, x, self.conv1_2_op[0].weight.data, self.conv1_2_op[0].bias.data,
+                                            out, locations, 1, 1, 1, 1, p_height, p_width, beta)
+        x = F.relu(out)
+        print(locations, p_height)
+        
+        # pool1
+        out = self.__get_tensor('pool1', batch_size, 64, p_height, p_width, 2, 2, 224)
+        p_height, p_width = inc_max_pool(self.conv1_2.data, x,
+                                            out, locations, 0, 0, 2, 2, 2, 2, p_height, p_width, beta)
+        x = out                                            
+        print(locations, p_height)
+        
+        # conv2_1
+        out = self.__get_tensor('conv2_1', batch_size, 128, p_height, p_width, 3, 1, 112)
+        p_height, p_width = inc_convolution(self.pool1.data, x, self.conv2_1_op[0].weight.data, self.conv2_1_op[0].bias.data,
+                                            out.data, locations.data, 1, 1, 1, 1, p_height, p_width, beta)
+        x = F.relu(out)
+        print(locations, p_height)
+        
+        # conv2_2
+        out = self.__get_tensor('conv2_2', batch_size, 128, p_height, p_width, 3, 1, 112)
+        p_height, p_width = inc_convolution(self.conv2_1.data, x, self.conv2_2_op[0].weight.data, self.conv2_2_op[0].bias.data,
+                                            out, locations, 1, 1, 1, 1, p_height, p_width, beta)
+        x = F.relu(out)
+        print(locations, p_height)
+        
+        # pool2
+        out = self.__get_tensor('pool2', batch_size, 128, p_height, p_width, 2, 2, 112)
+        p_height, p_width = inc_max_pool(self.conv2_2.data, x,
+                                            out, locations, 0, 0, 2, 2, 2, 2, p_height, p_width, beta)
+        x = out
+        print(locations, p_height)
+        
+        # conv3_1
+        out = self.__get_tensor('conv3_1', batch_size, 256, p_height, p_width, 3, 1, 56)
+        p_height, p_width = inc_convolution(self.pool2.data, x, self.conv3_1_op[0].weight.data, self.conv3_1_op[0].bias.data,
+                                            out.data, locations.data, 1, 1, 1, 1, p_height, p_width, beta)
+        x = F.relu(out)
+        print(locations, p_height)
+        
+        # conv3_2
+        out = self.__get_tensor('conv3_2', batch_size, 256, p_height, p_width, 3, 1, 56)
+        p_height, p_width = inc_convolution(self.conv3_1.data, x, self.conv3_2_op[0].weight.data, self.conv3_2_op[0].bias.data,
+                                            out, locations, 1, 1, 1, 1, p_height, p_width, beta)
+        x = F.relu(out)    
+        print(locations, p_height)
+        
+        # conv3_3
+        out = self.__get_tensor('conv3_3', batch_size, 256, p_height, p_width, 3, 1, 56)
+        p_height, p_width = inc_convolution(self.conv3_2.data, x, self.conv3_3_op[0].weight.data, self.conv3_3_op[0].bias.data,
+                                            out, locations, 1, 1, 1, 1, p_height, p_width, beta)
+        x = F.relu(out)                             
+        print(locations, p_height)
+        
+        # pool3
+        out = self.__get_tensor('pool3', batch_size, 256, p_height, p_width, 2, 2, 56)
+        p_height, p_width = inc_max_pool(self.conv3_3.data, x,
+                                            out, locations, 0, 0, 2, 2, 2, 2, p_height, p_width, beta)
+        x = out        
+        print(locations, p_height)
+        
+        # conv4_1
+        out = self.__get_tensor('conv4_1', batch_size, 512, p_height, p_width, 3, 1, 28)
+        p_height, p_width = inc_convolution(self.pool3.data, x, self.conv4_1_op[0].weight.data, self.conv4_1_op[0].bias.data,
+                                            out.data, locations.data, 1, 1, 1, 1, p_height, p_width, beta)
+        x = F.relu(out)
+        print(locations, p_height)
+        
+        # conv4_2
+        out = self.__get_tensor('conv4_2', batch_size, 512, p_height, p_width, 3, 1, 28)
+        p_height, p_width = inc_convolution(self.conv4_1.data, x, self.conv4_2_op[0].weight.data, self.conv4_2_op[0].bias.data,
+                                            out, locations, 1, 1, 1, 1, p_height, p_width, beta)
+        x = F.relu(out)
+        print(locations, p_height)
+        
+        # conv4_3
+        out = self.__get_tensor('conv4_3', batch_size, 512, p_height, p_width, 3, 1, 28)
+        p_height, p_width = inc_convolution(self.conv4_2.data, x, self.conv4_3_op[0].weight.data, self.conv4_3_op[0].bias.data,
+                                            out, locations, 1, 1, 1, 1, p_height, p_width, beta)
+        x = F.relu(out)
+        print(locations, p_height)
+        
+        # pool4
+        out = self.__get_tensor('pool4', batch_size, 512, p_height, p_width, 2, 2, 28)
+        p_height, p_width = inc_max_pool(self.conv4_3.data, x,
+                                            out, locations, 0, 0, 2, 2, 2, 2, p_height, p_width, beta)
+        x = out                
+        print(locations, p_height)
+        
+        # conv5_1
+        out = self.__get_tensor('conv5_1', batch_size, 512, p_height, p_width, 3, 1, 14)
+        p_height, p_width = inc_convolution(self.pool4.data, x, self.conv5_1_op[0].weight.data, self.conv5_1_op[0].bias.data,
+                                            out.data, locations.data, 1, 1, 1, 1, p_height, p_width, beta)
+        x = F.relu(out)        
+        print(locations, p_height)
+        
+        # conv5_2
+        out = self.__get_tensor('conv5_2', batch_size, 512, p_height, p_width, 3, 1, 14)
+        p_height, p_width = inc_convolution(self.conv5_1.data, x, self.conv5_2_op[0].weight.data, self.conv5_2_op[0].bias.data,
+                                            out, locations, 1, 1, 1, 1, p_height, p_width, beta)
+        x = F.relu(out)
+        print(locations, p_height)
+        
+        # conv5_3
+        out = self.__get_tensor('conv5_3', batch_size, 512, p_height, p_width, 3, 1, 14)
+        p_height, p_width = inc_convolution(self.conv5_2.data, x, self.conv5_3_op[0].weight.data, self.conv5_3_op[0].bias.data,
+                                            out, locations, 1, 1, 1, 1, p_height, p_width, beta)
+        x = F.relu(out)
+        print(locations, p_height)
+        
+        # pool5
+        out = self.__get_tensor('pool5', batch_size, 512, p_height, p_width, 2, 2, 14)
+        p_height, p_width = inc_max_pool(self.conv5_3.data, x,
+                                            out, locations, 0, 0, 2, 2, 2, 2, p_height, p_width, beta)
+        x = out                      
+        print(locations, p_height)
+        
+        #final full-projection
+        out = self.__get_tensor('pool5-full', batch_size, 512, 7, 7, 1, 1, 7)
+        full_projection(self.pool5.data, x, out, locations, p_height, p_width)
+        x = out
+        
+        x = x.view(x.size(0), -1)
+        x = self.classifier(x)
+        return x    
+    
+    def __initialize_weights(self, gpu):
         dir_path = os.path.dirname(os.path.realpath(__file__))
-        weights_data = load_dict_from_hdf5(dir_path + "/vgg16_weights_ptch.h5", cuda)
+        weights_data = load_dict_from_hdf5(dir_path + "/vgg16_weights_ptch.h5", gpu)
 
         self.conv1_1_op[0].weight.data = weights_data['conv1_1_W:0']
         self.conv1_1_op[0].bias.data = weights_data['conv1_1_b:0']
@@ -163,6 +317,24 @@ class VGG16(nn.Module):
         self.classifier[4].weight.data = weights_data['fc8_W:0']
         self.classifier[4].bias.data = weights_data['fc8_b:0']
 
+        
+    def __get_tensor(self, name, batch_size, channels, p_height, p_width, k_size, stride, out_size):
+        if name in self.tensor_cache:
+            return self.tensor_cache[name]
+        else:
+            tensor = torch.FloatTensor(batch_size, channels, *self.__get_output_shape(p_height, p_width, k_size, stride, out_size)).cuda()
+            self.tensor_cache[name] = tensor
+            return tensor
+
+
+    def __get_output_shape(self, p_height, p_width, k_size, stride, out_size):
+        p_height = min(int(math.ceil((p_height+k_size-1)*1.0/stride)), out_size)
+        
+        if p_height > round(out_size*self.beta):
+            p_height = int(math.ceil(p_height*1.0/stride))
+        
+        return (p_height,p_height)
+    
 
 if __name__ == "__main__":
     batch_size = 64
