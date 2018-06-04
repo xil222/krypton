@@ -14,6 +14,11 @@ int min(int a, int b)
     return a > b ? b : a;
 }
 
+int max(int a, int b)
+{
+    return a > b ? a : b;
+}
+
 int cuda_get_device(void)
 {
     int n = 0;
@@ -86,24 +91,21 @@ int inc_convolution(THCudaTensor * premat_tensor, THCudaTensor * in_tensor, THCu
     int out_width = (in_width - k_width + 2*padding_x)/stride_x + 1;
     int out_height = (in_height - k_height + 2*padding_y)/stride_y + 1;
  
-    int temp_p_height = min((int)ceil((p_height+k_height-1)*1.0/stride_y), out_height);
-    int temp_p_width = min((int)ceil((p_width+k_width-1)*1.0/stride_x), out_width);
+    int out_p_height = min((int)ceil((p_height+k_height-1)*1.0/stride_y), out_height);
+    int out_p_width = min((int)ceil((p_width+k_width-1)*1.0/stride_x), out_width);
 
-    int out_p_height = 0;
-    int out_p_width = 0;
-
-    bool patch_growing = 1;
-    if(temp_p_height > round(out_height * beta) || temp_p_width > round(out_width * beta))
+    int remove_y=0;
+    int remove_x=0;
+    if((p_height > round(in_height * beta) || p_width > round(in_width * beta)) && p_height >= 3 && p_width >= 3)
     {
-        out_p_height = (int)ceil(p_height*1.0/stride_y);
-        out_p_width = (int)ceil(p_width*1.0/stride_x);
+        remove_x = max(2, ((p_width - (int)round(in_width * beta))/2)*2);
+        remove_y = max(2, ((p_height - (int)round(in_height * beta))/2)*2);
         
-        patch_growing = 0;
-    }
-    else
-    {
-        out_p_height = temp_p_height;
-        out_p_width = temp_p_width;
+        p_height -= remove_y;
+        p_width -= remove_x;
+        
+        out_p_height = min((int)ceil(((p_height)+k_height-1)*1.0/stride_y), out_height);
+        out_p_width = min((int)ceil(((p_width)+k_width-1)*1.0/stride_x), out_width);        
     }
 
     int in_p_height = k_height + (out_p_height-1)*stride_y;
@@ -119,10 +121,10 @@ int inc_convolution(THCudaTensor * premat_tensor, THCudaTensor * in_tensor, THCu
 
     extract_input_volume_gpu(ptr_premat_tensor, ptr_in_tensor, temp_in_tensor, ptr_location, batch, in_channels,
      in_height, in_width, out_height, out_width, stride_x, stride_y, padding_x, padding_y, p_height, p_width, in_p_height,
-     in_p_width, out_p_height, out_p_width, k_width, k_height, patch_growing);
+     in_p_width, out_p_height, out_p_width, k_width, k_height, remove_x, remove_y);
 
     update_output_locations_gpu(ptr_location, batch, in_height, in_width, out_height, out_width, padding_x, padding_y,
-                                stride_x, stride_y, k_width, k_height, out_p_height, out_p_width, patch_growing);
+              stride_x, stride_y, k_width, k_height, out_p_height, out_p_width, remove_x, remove_y);
     
     //filter tensor
     cudnnFilterDescriptor_t filt_desc;
@@ -177,35 +179,32 @@ int inc_max_pool(THCudaTensor * premat_tensor, THCudaTensor * in_tensor, THCudaT
     int batch = in_tensor->size[0];
     int in_channels = in_tensor->size[1];
     int in_height = premat_tensor->size[2];
-    int in_width = premat_tensor->size[2];
+    int in_width = premat_tensor->size[3];
 
     int out_width = (in_width - k_width + 2*padding_x)/stride_x + 1;
     int out_height = (in_height - k_height + 2*padding_y)/stride_y + 1;
 
-    int temp_p_height = min((int)ceil((p_height+k_height-1)*1.0/stride_y), out_height);
-    int temp_p_width = min((int)ceil((p_width+k_width-1)*1.0/stride_x), out_width);
+    int out_p_height = min((int)ceil((p_height+k_height-1)*1.0/stride_y), out_height);
+    int out_p_width = min((int)ceil((p_width+k_width-1)*1.0/stride_x), out_width);
     
-    int out_p_height = 0;
-    int out_p_width = 0;
-
-    bool patch_growing = 1;
-    if(temp_p_height > round(out_height * beta) || temp_p_width > round(out_width * beta))
+    int remove_y=0;
+    int remove_x=0;
+    if((p_height > round(in_height * beta) || p_width > round(in_width * beta)) && p_height >= 3 && p_width >= 3)
     {
-        out_p_height = (int)ceil(p_height*1.0/stride_y);
-        out_p_width = (int)ceil(p_width*1.0/stride_x);
+        remove_y = max(2, ((p_height - (int)round(in_height * beta))/2)*2);
+        remove_x = max(2, ((p_width - (int)round(in_width * beta))/2)*2);
         
-        patch_growing = 0;
-    }
-    else
-    {
-        out_p_height = temp_p_height;
-        out_p_width = temp_p_width;
+        p_height -= remove_y;
+        p_width -= remove_x;
+        
+        out_p_height = min((int)ceil(((p_height)+k_height-1)*1.0/stride_y), out_height);
+        out_p_width = min((int)ceil(((p_width)+k_width-1)*1.0/stride_x), out_width);        
     }
 
-    inc_max_pool_gpu(ptr_premat_tensor, ptr_in_tensor, ptr_out_tensor, ptr_location, batch, in_channels, in_height, in_width, out_height, out_width, padding_x, padding_y, stride_x, stride_y, k_width, k_height, p_height, p_width, out_p_height, out_p_width, patch_growing);
+    inc_max_pool_gpu(ptr_premat_tensor, ptr_in_tensor, ptr_out_tensor, ptr_location, batch, in_channels, in_height, in_width, out_height, out_width, padding_x, padding_y, stride_x, stride_y, k_width, k_height, p_height, p_width, out_p_height, out_p_width, remove_x, remove_y);
 
     update_output_locations_gpu(ptr_location, batch, in_height, in_width, out_height, out_width, padding_x, padding_y,
-                                stride_x, stride_y, k_width, k_height, out_p_height, out_p_width, patch_growing);
+         stride_x, stride_y, k_width, k_height, out_p_height, out_p_width, remove_x, remove_y);
     
     return out_p_height*1000+out_p_width;
 }

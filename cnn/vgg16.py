@@ -67,8 +67,8 @@ class VGG16(nn.Module):
             x = x.cuda()
             
         x = self.conv1_1_op(x)
-        x = self.conv1_2_op(x)        
-        x = self.pool1_op(x)          
+        x = self.conv1_2_op(x)
+        x = self.pool1_op(x)     
     
         x = self.conv2_1_op(x)        
         x = self.conv2_2_op(x)
@@ -78,14 +78,14 @@ class VGG16(nn.Module):
         x = self.conv3_2_op(x)         
         x = self.conv3_3_op(x)        
         x = self.pool3_op(x)
-        
+    
         x = self.conv4_1_op(x)
         x = self.conv4_2_op(x)
         x = self.conv4_3_op(x)
         x = self.pool4_op(x)
-        
+          
         x = self.conv5_1_op(x)
-        x = self.conv5_2_op(x)
+        x = self.conv5_2_op(x)               
         x = self.conv5_3_op(x)
         x = self.pool5_op(x)
     
@@ -134,141 +134,143 @@ class VGG16(nn.Module):
         beta = self.beta
         batch_size = x.shape[0]
         
+        debug = False
+        
         if self.gpu:
             x = x.cuda()
             locations = locations.cuda()
 
         # conv1_1
-        out = self.__get_tensor('conv1_1', batch_size, 64, p_height, p_width, 3, 1, 224)
+        out = self.__get_tensor('conv1_1', batch_size, 64, p_height, p_width, 3, 1, 224, 224)
         p_height, p_width = inc_convolution(self.image.data, x, self.conv1_1_op[0].weight.data, self.conv1_1_op[0].bias.data,
                                             out.data, locations.data, 1, 1, 1, 1, p_height, p_width, beta)
         x = F.relu(out)
-        print(locations, p_height)
-    
+        if debug: print(locations, p_height, x.shape)
+
         # conv1_2
-        out = self.__get_tensor('conv1_2', batch_size, 64, p_height, p_width, 3, 1, 224)
+        out = self.__get_tensor('conv1_2', batch_size, 64, p_height, p_width, 3, 1, 224, 224)
         p_height, p_width = inc_convolution(self.conv1_1.data, x, self.conv1_2_op[0].weight.data, self.conv1_2_op[0].bias.data,
                                             out, locations, 1, 1, 1, 1, p_height, p_width, beta)
         x = F.relu(out)
-        print(locations, p_height)
-        
+        if debug: print(locations, p_height, x.shape)
+    
         # pool1
-        out = self.__get_tensor('pool1', batch_size, 64, p_height, p_width, 2, 2, 224)
+        out = self.__get_tensor('pool1', batch_size, 64, p_height, p_width, 2, 2, 224, 112)
         p_height, p_width = inc_max_pool(self.conv1_2.data, x,
                                             out, locations, 0, 0, 2, 2, 2, 2, p_height, p_width, beta)
         x = out                                            
-        print(locations, p_height)
+        if debug: print(locations, p_height, x.shape)
         
         # conv2_1
-        out = self.__get_tensor('conv2_1', batch_size, 128, p_height, p_width, 3, 1, 112)
+        out = self.__get_tensor('conv2_1', batch_size, 128, p_height, p_width, 3, 1, 112, 112)
         p_height, p_width = inc_convolution(self.pool1.data, x, self.conv2_1_op[0].weight.data, self.conv2_1_op[0].bias.data,
                                             out.data, locations.data, 1, 1, 1, 1, p_height, p_width, beta)
         x = F.relu(out)
-        print(locations, p_height)
+        if debug: print(locations, p_height, x.shape)
         
         # conv2_2
-        out = self.__get_tensor('conv2_2', batch_size, 128, p_height, p_width, 3, 1, 112)
+        out = self.__get_tensor('conv2_2', batch_size, 128, p_height, p_width, 3, 1, 112, 112)
         p_height, p_width = inc_convolution(self.conv2_1.data, x, self.conv2_2_op[0].weight.data, self.conv2_2_op[0].bias.data,
                                             out, locations, 1, 1, 1, 1, p_height, p_width, beta)
         x = F.relu(out)
-        print(locations, p_height)
+        if debug: print(locations, p_height, x.shape)
         
         # pool2
-        out = self.__get_tensor('pool2', batch_size, 128, p_height, p_width, 2, 2, 112)
+        out = self.__get_tensor('pool2', batch_size, 128, p_height, p_width, 2, 2, 112, 56, 56)
         p_height, p_width = inc_max_pool(self.conv2_2.data, x,
                                             out, locations, 0, 0, 2, 2, 2, 2, p_height, p_width, beta)
         x = out
-        print(locations, p_height)
+        if debug: print(locations, p_height, x.shape)
         
         # conv3_1
-        out = self.__get_tensor('conv3_1', batch_size, 256, p_height, p_width, 3, 1, 56)
+        out = self.__get_tensor('conv3_1', batch_size, 256, p_height, p_width, 3, 1, 56, 56)
         p_height, p_width = inc_convolution(self.pool2.data, x, self.conv3_1_op[0].weight.data, self.conv3_1_op[0].bias.data,
                                             out.data, locations.data, 1, 1, 1, 1, p_height, p_width, beta)
         x = F.relu(out)
-        print(locations, p_height)
+        if debug: print(locations, p_height, x.shape)
         
         # conv3_2
-        out = self.__get_tensor('conv3_2', batch_size, 256, p_height, p_width, 3, 1, 56)
+        out = self.__get_tensor('conv3_2', batch_size, 256, p_height, p_width, 3, 1, 56, 56)
         p_height, p_width = inc_convolution(self.conv3_1.data, x, self.conv3_2_op[0].weight.data, self.conv3_2_op[0].bias.data,
                                             out, locations, 1, 1, 1, 1, p_height, p_width, beta)
         x = F.relu(out)    
-        print(locations, p_height)
+        if debug: print(locations, p_height, x.shape)
         
         # conv3_3
-        out = self.__get_tensor('conv3_3', batch_size, 256, p_height, p_width, 3, 1, 56)
+        out = self.__get_tensor('conv3_3', batch_size, 256, p_height, p_width, 3, 1, 56, 56)
         p_height, p_width = inc_convolution(self.conv3_2.data, x, self.conv3_3_op[0].weight.data, self.conv3_3_op[0].bias.data,
                                             out, locations, 1, 1, 1, 1, p_height, p_width, beta)
         x = F.relu(out)                             
-        print(locations, p_height)
+        if debug: print(locations, p_height, x.shape)
         
         # pool3
-        out = self.__get_tensor('pool3', batch_size, 256, p_height, p_width, 2, 2, 56)
+        out = self.__get_tensor('pool3', batch_size, 256, p_height, p_width, 2, 2, 56, 28, 28)
         p_height, p_width = inc_max_pool(self.conv3_3.data, x,
                                             out, locations, 0, 0, 2, 2, 2, 2, p_height, p_width, beta)
         x = out        
-        print(locations, p_height)
-        
+        if debug: print(locations, p_height, x.shape)
+    
         # conv4_1
-        out = self.__get_tensor('conv4_1', batch_size, 512, p_height, p_width, 3, 1, 28)
+        out = self.__get_tensor('conv4_1', batch_size, 512, p_height, p_width, 3, 1, 28, 28)
         p_height, p_width = inc_convolution(self.pool3.data, x, self.conv4_1_op[0].weight.data, self.conv4_1_op[0].bias.data,
                                             out.data, locations.data, 1, 1, 1, 1, p_height, p_width, beta)
         x = F.relu(out)
-        print(locations, p_height)
+        if debug: print(locations, p_height, x.shape)
         
         # conv4_2
-        out = self.__get_tensor('conv4_2', batch_size, 512, p_height, p_width, 3, 1, 28)
+        out = self.__get_tensor('conv4_2', batch_size, 512, p_height, p_width, 3, 1, 28, 28)
         p_height, p_width = inc_convolution(self.conv4_1.data, x, self.conv4_2_op[0].weight.data, self.conv4_2_op[0].bias.data,
                                             out, locations, 1, 1, 1, 1, p_height, p_width, beta)
         x = F.relu(out)
-        print(locations, p_height)
+        if debug: print(locations, p_height, x.shape)
         
         # conv4_3
-        out = self.__get_tensor('conv4_3', batch_size, 512, p_height, p_width, 3, 1, 28)
+        out = self.__get_tensor('conv4_3', batch_size, 512, p_height, p_width, 3, 1, 28, 28)
         p_height, p_width = inc_convolution(self.conv4_2.data, x, self.conv4_3_op[0].weight.data, self.conv4_3_op[0].bias.data,
                                             out, locations, 1, 1, 1, 1, p_height, p_width, beta)
         x = F.relu(out)
-        print(locations, p_height)
+        if debug: print(locations, p_height, x.shape)
         
         # pool4
-        out = self.__get_tensor('pool4', batch_size, 512, p_height, p_width, 2, 2, 28)
+        out = self.__get_tensor('pool4', batch_size, 512, p_height, p_width, 2, 2, 28, 14, 14)
         p_height, p_width = inc_max_pool(self.conv4_3.data, x,
                                             out, locations, 0, 0, 2, 2, 2, 2, p_height, p_width, beta)
         x = out                
-        print(locations, p_height)
-        
+        if debug: print(locations, p_height, x.shape)
+    
         # conv5_1
-        out = self.__get_tensor('conv5_1', batch_size, 512, p_height, p_width, 3, 1, 14)
+        out = self.__get_tensor('conv5_1', batch_size, 512, p_height, p_width, 3, 1, 14, 14)
         p_height, p_width = inc_convolution(self.pool4.data, x, self.conv5_1_op[0].weight.data, self.conv5_1_op[0].bias.data,
                                             out.data, locations.data, 1, 1, 1, 1, p_height, p_width, beta)
         x = F.relu(out)        
-        print(locations, p_height)
-        
+        if debug: print(locations, p_height, x.shape)
+            
         # conv5_2
-        out = self.__get_tensor('conv5_2', batch_size, 512, p_height, p_width, 3, 1, 14)
+        out = self.__get_tensor('conv5_2', batch_size, 512, p_height, p_width, 3, 1, 14, 14)
         p_height, p_width = inc_convolution(self.conv5_1.data, x, self.conv5_2_op[0].weight.data, self.conv5_2_op[0].bias.data,
                                             out, locations, 1, 1, 1, 1, p_height, p_width, beta)
         x = F.relu(out)
-        print(locations, p_height)
-        
+        if debug: print(locations, p_height, x.shape)
+            
         # conv5_3
-        out = self.__get_tensor('conv5_3', batch_size, 512, p_height, p_width, 3, 1, 14)
+        out = self.__get_tensor('conv5_3', batch_size, 512, p_height, p_width, 3, 1, 14, 14)
         p_height, p_width = inc_convolution(self.conv5_2.data, x, self.conv5_3_op[0].weight.data, self.conv5_3_op[0].bias.data,
                                             out, locations, 1, 1, 1, 1, p_height, p_width, beta)
         x = F.relu(out)
-        print(locations, p_height)
-        
+        if debug: print(locations, p_height, x.shape)
+
         # pool5
-        out = self.__get_tensor('pool5', batch_size, 512, p_height, p_width, 2, 2, 14)
+        out = self.__get_tensor('pool5', batch_size, 512, p_height, p_width, 2, 2, 14, 7, 7)
         p_height, p_width = inc_max_pool(self.conv5_3.data, x,
                                             out, locations, 0, 0, 2, 2, 2, 2, p_height, p_width, beta)
         x = out                      
-        print(locations, p_height)
+        if debug: print(locations, p_height, x.shape)
         
         #final full-projection
-        out = self.__get_tensor('pool5-full', batch_size, 512, 7, 7, 1, 1, 7)
+        out = self.__get_tensor('pool5-full', batch_size, 512, 7, 7, 1, 1, 7, 7, truncate=False)
         full_projection(self.pool5.data, x, out, locations, p_height, p_width)
         x = out
-        
+
         x = x.view(x.size(0), -1)
         x = self.classifier(x)
         return x    
@@ -318,22 +320,23 @@ class VGG16(nn.Module):
         self.classifier[4].bias.data = weights_data['fc8_b:0']
 
         
-    def __get_tensor(self, name, batch_size, channels, p_height, p_width, k_size, stride, out_size):
+    def __get_tensor(self, name, batch_size, channels, p_height, p_width, k_size, stride, in_size, out_size, truncate=True):
         if name in self.tensor_cache:
             return self.tensor_cache[name]
         else:
-            tensor = torch.FloatTensor(batch_size, channels, *self.__get_output_shape(p_height, p_width, k_size, stride, out_size)).cuda()
+            tensor = torch.FloatTensor(batch_size, channels, *self.__get_output_shape(p_height, p_width, k_size, stride, in_size, out_size, truncate)).cuda()
             self.tensor_cache[name] = tensor
             return tensor
 
 
-    def __get_output_shape(self, p_height, p_width, k_size, stride, out_size):
-        p_height = min(int(math.ceil((p_height+k_size-1)*1.0/stride)), out_size)
+    def __get_output_shape(self, p_height, p_width, k_size, stride, in_size, out_size, truncate):
+        temp_p_height = min(int(math.ceil((p_height+k_size-1)*1.0/stride)), out_size)
         
-        if p_height > round(out_size*self.beta):
-            p_height = int(math.ceil(p_height*1.0/stride))
+        if truncate and p_height > round(in_size*self.beta) and p_height >= 3:
+            remove_y = max(2, ((p_height - round(in_size * self.beta))//2)*2)
+            temp_p_height = min(int(math.ceil((p_height-remove_y+k_size-1)*1.0/stride)), out_size)
         
-        return (p_height,p_height)
+        return (temp_p_height,temp_p_height)
     
 
 if __name__ == "__main__":
