@@ -1,0 +1,69 @@
+\begin{thebibliography}{10}
+
+\bibitem{arbabzadah2016identifying}
+F.~Arbabzadah, G.~Montavon, K.-R. M{\"u}ller, and W.~Samek.
+\newblock Identifying individual facial expressions by deconstructing a neural
+  network.
+\newblock In {\em German Conference on Pattern Recognition}, pages 344--354.
+  Springer, 2016.
+
+\bibitem{transfer-learning-factors}
+H.~Azizpour, A.~S. Razavian, J.~Sullivan, A.~Maki, and S.~Carlsson.
+\newblock Factors of transferability for a generic convnet representation.
+\newblock {\em IEEE transactions on pattern analysis and machine intelligence},
+  38(9):1790--1802, 2016.
+
+\bibitem{islam2017abnormality}
+M.~T. Islam, M.~A. Aowal, A.~T. Minhaz, and K.~Ashraf.
+\newblock Abnormality detection and localization in chest x-rays using deep
+  convolutional neural networks.
+\newblock {\em arXiv preprint arXiv:1705.09850}, 2017.
+
+\bibitem{jung2017deep}
+K.-H. Jung, H.~Park, and W.~Hwang.
+\newblock Deep learning for medical image analysis: Applications to computed
+  tomography and magnetic resonance imaging.
+\newblock {\em Hanyang Medical Reviews}, 37(2):61--70, 2017.
+
+\bibitem{kermany2018identifying}
+D.~S. Kermany, M.~Goldbaum, W.~Cai, C.~C. Valentim, H.~Liang, S.~L. Baxter,
+  A.~McKeown, G.~Yang, X.~Wu, F.~Yan, et~al.
+\newblock Identifying medical diagnoses and treatable diseases by image-based
+  deep learning.
+\newblock {\em Cell}, 172(5):1122--1131, 2018.
+
+\bibitem{alexnet}
+A.~Krizhevsky, I.~Sutskever, and G.~E. Hinton.
+\newblock Imagenet classification with deep convolutional neural networks.
+\newblock In {\em Advances in neural information processing systems}, pages
+  1097--1105, 2012.
+
+\bibitem{mohanty2016using}
+S.~P. Mohanty, D.~P. Hughes, and M.~Salath{\'e}.
+\newblock Using deep learning for image-based plant disease detection.
+\newblock {\em Frontiers in plant science}, 7:1419, 2016.
+
+\bibitem{vggnet}
+K.~Simonyan and A.~Zisserman.
+\newblock Very deep convolutional networks for large-scale image recognition.
+\newblock {\em arXiv preprint arXiv:1409.1556}, 2014.
+
+\bibitem{wang2017deep}
+Y.~Wang and M.~Kosinski.
+\newblock Deep neural networks are more accurate than humans at detecting
+  sexual orientation from facial images.
+\newblock 2017.
+
+\bibitem{zeiler2014visualizing}
+M.~D. Zeiler and R.~Fergus.
+\newblock Visualizing and understanding convolutional networks.
+\newblock In {\em European conference on computer vision}, pages 818--833.
+  Springer, 2014.
+
+\bibitem{zintgraf2017visualizing}
+L.~M. Zintgraf, T.~S. Cohen, T.~Adel, and M.~Welling.
+\newblock Visualizing deep neural network decisions: Prediction difference
+  analysis.
+\newblock {\em arXiv preprint arXiv:1702.04595}, 2017.
+
+\end{thebibliography}
