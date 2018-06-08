@@ -1,0 +1,79 @@
+\documentclass[10, sigconf]{acmart}
+
+\usepackage{graphicx,xspace,verbatim,comment}
+\usepackage{hyperref,array,color,balance,multirow}
+\usepackage{balance,float,url,amsfonts,alltt}
+\usepackage{mathtools,rotating,amsmath,amssymb}
+\usepackage{color,ifpdf,fancyvrb}
+\usepackage{etoolbox,listings,subcaption}
+\usepackage{bigstrut,morefloats,pbox}
+\usepackage{amsmath}
+\usepackage{algorithm}
+\usepackage[noend]{algpseudocode}
+\usepackage{booktabs}
+
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{proposition}{Proposition}[section]
+\newtheorem{corollary}[theorem]{Corollary}
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{definition}{Definition}[section]
+\newcommand{\eat}[1]{}
+\newcommand{\red}{\textcolor{red}}
+\newcommand{\system}{\textsc{Krypton}}
+
+\makeatletter
+\def\BState{\State\hskip-\ALG@thistlm}
+\makeatother 
+
+\newenvironment{packeditems}{
+\begin{itemize}
+  \setlength{\itemsep}{1pt}
+  \setlength{\parskip}{0pt}
+  \setlength{\parsep}{0pt}
+}{\end{itemize}}
+
+\newenvironment{packedenums}{
+\begin{enumerate}
+  \setlength{\itemsep}{1pt}
+  \setlength{\parskip}{0pt}
+  \setlength{\parsep}{0pt}
+}{\end{enumerate}}
+
+
+\newcolumntype{P}[1]{>{\centering\arraybackslash}p{#1}}
+
+\DeclareMathOperator*{\argmin}{arg\,min}
+
+\setcopyright{none}
+\settopmatter{printacmref=false}
+\renewcommand\footnotetextcopyrightpermission[1]{} % removes footnote with 
+\pagestyle{plain} % removes running headers
+
+\begin{document}
+\title{\textsc{Kryton}: A System for Accelerating Occlusion based Deep CNN Explainability Workloads}
+
+\author{Supun Nakandala \hspace{7mm} Arun Kumar}
+\affiliation{%
+  \institution{University of California, San Diego}
+}
+\email{{snakanda, arunkk}@eng.ucsd.edu}
+
+
+\begin{abstract}
+Deep Convolution Neural Networks (CNN) have revolutionized the field of computer vision with even surpassing human level accuracy in some of the image recognition tasks such as ImageNet challenge. Thus they are now being deployed in many real-world use cases using a paradigm called \textit{transfer learning}. However one of the major criticisms pointed against Deep CNNs is the black-box nature of how they make predictions. This is a critical issue when applying CNN based approaches to critical applications such as in health care where the explainability of the predictions is also very important. For interpreting CNN predictions several approaches has been proposed and one of the widely used method in image classification tasks is occlusion experiments. In occlusion experiments one would mask the regions of the input image using a small grey or black patch and record the change in the predicted label probability. By systematically changing the position of the patch location, a sensitivity map can be generated from which the regions in the input image which influence the predicted class label most can be identified. However, this method requires performing multiple forward passes of CNN inference for explaining a single prediction and hence very time consuming.
+We present \system, the first data system to elevate occlusion experiments to a declarative level and enable automated \textit{incremental} and \textit{approximate} inference optimizations. Experiments with real-world datasets and deep CNNs show that \system~can enable up to 10x speedups.
+\end{abstract}
+
+\maketitle
+
+\input{introduction}
+
+\input{background}
+
+\input{system_overview}
+
+\input{experiments}
+
+\bibliographystyle{abbrv}
+\bibliography{main}
+\end{document}

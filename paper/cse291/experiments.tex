@@ -1,0 +1,41 @@
+\section{Early Experimental Results}
+In this section we summarize the early experimental results obtained by implementing the incremental inference for occlusion experiments.
+
+\textbf{Experimental Setup.} The experiments was performed on an Intel(R) Core(TM) i7-6700 CPU 3.40GHz machine with 32 GB RAM. The machine is also equipped with a Nvidia Titan Xp GPU. We use PyTorch 0.3.1 library as the deep learning toolkit library.
+
+\textbf{Workload}. We use a popular ImageNet pre-trained VGG 16 layer CNN model and subject it to occlusion experiments. The performance of the occlusion experiment with naive approach and incremental inference approach is benchmarked on CPU and GPU separately.
+An occlusion patch of size $16\times16$ was placed on the center of the image of size $224\times224$ and runtime for full inference approach and incremental inference approach average over 5 iterations is recorded. From these values the speedup is calculated. The experiment was repeated with a batch size of 1 and 16 (see Table. \ref{table:speedup}).
+
+\begin{table}[h]
+\centering
+\begin{tabular}{|l|l|l|l|}
+\hline
+\multirow{2}{*}{Batch Size} & \multirow{2}{*}{Theoretical Speedup} & \multicolumn{2}{l|}{Experimental Speedup} \\ \cline{3-4} 
+ &  & CPU & GPU \\ \hline
+1 & 7.6 & 5.4 & 1.3 \\ \hline
+16 & 7.6 & 5.4 & 1.6 \\ \hline
+\end{tabular}
+\caption{Theoretical versus empirical speedup achievable with incremental inference}
+\label{table:speedup}
+\end{table}
+\vspace{-5.mm}
+
+Our implementation of incremental inference of Conv and Pool layers could achieve a speedup of 5.4 on CPU for a batch size of 1 and 16 compared to the theoretical maximum speedup of $7.4$. However, the GPU implementation could achieve a speedup of only 1.3 and this can be increased upto 1.6 with a batch size of 16. We suspect that the random memory operations introduced by the incremental inference approach due to stitching of output of incremental Conv and Pool layers with pre-materialized activations of the full inference is  throttling the GPU performance in incremental approach.
+
+\section{Conclusions \& Future Work}
+In this work explore applying incremental inference of Conv and Pooling layers of CNN models to reduce the runtime of occlusion experiments.
+We formalize the incremental inference approach for CNNs and evaluate the theoretical upper-bound of speedup achievable for different CNN architectures by statically analyzing the CNN architecture definitions specified in PyTorch framework.
+For most CNN architectures we can achieve a speedup higher than 2 and for some CNN architectures, such as VGG and Squezenet1\_0, this can be higher than $7$.
+Our implementation of incremental inference of Conv and Pool layers could achieve a empirical speedup of 5.4 on CPU and 1.6 on GPU with a batch size of 16. We suspect the relatively low speedup of GPU implementation is attributable to the random memory operations caused by incremental inference throttling the GPU performance.
+
+As future work we are looking in to developing a more efficient GPU implementation which can attain higher speedup. This will require implementing GPU kernels which can perform incremental Conv and Pooling operations in place without additional memory copying.
+We also plan to explore several other optimizations including explore and exploit style approaches on localizing the most sensitive image regions and approximate CNN inference for reducing the runtime of occlusion based CNN explainability workloads.
+Explore and exploit style approach is an algorithmic optimization motivated by the specific use cases of occlusion experiments.
+In most applications such as medical imaging the objects of interest in an image occupies a relatively small portion and are located together.
+In such settings rather using a patch of small size we can start with a large patch with a relatively large stride and then iteratively focus into smaller regions which appears to be sensitive for the predicted class label.
+% We name this approach as \textit{hierarchical inference of occlusion patches}.
+Approximate inference of CNN approach is based on a general observation of deep CNN inference.
+Even though in theory the projective field of an input pixel grows linearly in practice the effective projective field does not grow in that rate.
+This mean most of the local changes in the input space are affecting localized changes in the output space of a convolution operation.
+Therefore we plan to experiment the possibility of constraining the growth of the projective field of an input pixel and there by reduce runtime using our \textit{incremental inference} approach.
+% We name this optimization as \textit{approximate inference} of deep CNNs.
