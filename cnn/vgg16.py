@@ -18,7 +18,7 @@ from imagenet_classes import class_names
 
 class VGG16(nn.Module):
 
-    def __init__(self, beta=1.0, gpu=True):
+    def __init__(self, beta=1.0, gpu=True, n_labels=1000, weights_data=None):
         super(VGG16, self).__init__()
         self.initialized = False
         self.tensor_cache = {}
@@ -51,10 +51,11 @@ class VGG16(nn.Module):
             nn.ReLU(True),
             nn.Linear(4096, 4096),
             nn.ReLU(True),
-            nn.Linear(4096, 1000),
+            nn.Linear(4096, n_labels),
             nn.Softmax(dim=1)
         )
 
+        self.weights_data = weights_data
         self.__initialize_weights(gpu)
         self.gpu = gpu
         self.beta = beta
@@ -276,9 +277,12 @@ class VGG16(nn.Module):
         return x    
     
     def __initialize_weights(self, gpu):
-        dir_path = os.path.dirname(os.path.realpath(__file__))
-        weights_data = load_dict_from_hdf5(dir_path + "/vgg16_weights_ptch.h5", gpu)
-
+        if self.weight_data is None:
+            dir_path = os.path.dirname(os.path.realpath(__file__))
+            weights_data = load_dict_from_hdf5(dir_path + "/vgg16_weights_ptch.h5", gpu)
+        else:
+            weights_data = self.weights_data
+            
         self.conv1_1_op[0].weight.data = weights_data['conv1_1_W:0']
         self.conv1_1_op[0].bias.data = weights_data['conv1_1_b:0']
         self.conv1_2_op[0].weight.data = weights_data['conv1_2_W:0']
