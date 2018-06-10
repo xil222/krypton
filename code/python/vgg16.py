@@ -277,7 +277,7 @@ class VGG16(nn.Module):
         return x    
     
     def __initialize_weights(self, gpu):
-        if self.weight_data is None:
+        if self.weights_data is None:
             dir_path = os.path.dirname(os.path.realpath(__file__))
             weights_data = load_dict_from_hdf5(dir_path + "/vgg16_weights_ptch.h5", gpu)
         else:
