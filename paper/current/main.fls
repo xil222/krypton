@@ -283,8 +283,8 @@ INPUT /usr/local/texlive/2016/texmf-dist/tex/latex/libertine/TS1LinuxLibertineT-
 INPUT /usr/local/texlive/2016/texmf-dist/fonts/tfm/public/libertine/LinLibertineT-tlf-ts1.tfm
 INPUT /usr/local/texlive/2016/texmf-dist/fonts/tfm/public/libertine/LinLibertineTB-tlf-t1.tfm
 INPUT /usr/local/texlive/2016/texmf-dist/fonts/tfm/public/libertine/LinLibertineTB-tlf-t1.tfm
-INPUT /usr/local/texlive/2016/texmf-dist/fonts/tfm/public/libertine/LinLibertineTI-tlf-t1.tfm
 INPUT /usr/local/texlive/2016/texmf-dist/fonts/tfm/public/libertine/LinLibertineT-tlf-sc-t1.tfm
+INPUT /usr/local/texlive/2016/texmf-dist/fonts/tfm/public/libertine/LinLibertineTI-tlf-t1.tfm
 INPUT /usr/local/texlive/2016/texmf-dist/fonts/tfm/public/libertine/LinLibertineT-tlf-t1.tfm
 INPUT /usr/local/texlive/2016/texmf-dist/fonts/tfm/public/libertine/LinLibertineTB-tlf-t1.tfm
 INPUT /usr/local/texlive/2016/texmf-dist/fonts/tfm/public/libertine/LinLibertineT-tlf-sc-t1.tfm
@@ -330,8 +330,12 @@ INPUT /usr/local/texlive/2016/texmf-dist/fonts/tfm/public/libertine/LinLibertine
 INPUT /usr/local/texlive/2016/texmf-dist/fonts/tfm/public/libertine/LinLibertineT-tlf-t1.tfm
 INPUT optimizer.tex
 INPUT optimizer.tex
+INPUT /usr/local/texlive/2016/texmf-dist/fonts/tfm/public/libertine/LinBiolinumT-tlf-t1.tfm
+INPUT /usr/local/texlive/2016/texmf-dist/fonts/tfm/public/libertine/LinBiolinumTI-tlf-t1.tfm
 INPUT experiments.tex
 INPUT experiments.tex
 INPUT main.bbl
 INPUT main.bbl
+INPUT appendix.tex
+INPUT appendix.tex
 INPUT main.aux

@@ -64,7 +64,7 @@
 
 
 \begin{abstract}
-Deep Convolution Neural Networks (CNN) have revolutionized the field of computer vision with even surpassing human level accuracy in some of the image recognition tasks such as ImageNet challenge. Thus they are now being deployed in many real-world use cases using a paradigm called \textit{transfer learning}. However one of the major criticisms pointed against Deep CNNs is the black-box nature of how they make predictions. This is a critical issue when applying CNN based approaches to critical applications such as in health care where the explainability of the predictions is also very important. For interpreting CNN predictions several approaches has been proposed and one of the widely used method in image classification tasks is occlusion experiments. In occlusion experiments one would mask the regions of the input image using a small grey or black patch and record the change in the predicted label probability. By systematically changing the position of the patch location, a sensitivity map can be generated from which the regions in the input image which influence the predicted class label most can be identified. However, this method requires performing multiple forward passes of CNN inference for explaining a single prediction and hence very time consuming.
+Deep Convolution Neural Networks (CNN) have revolutionized the field of computer vision with even surpassing human level accuracy in some of the image recognition tasks. Thus they are now being deployed in many real-world use cases ranging from health care, autonomous vehicles, and e-commerce applications. However one of the major criticisms pointed against Deep CNNs is the black-box nature of how they make predictions. This is a critical issue when applying CNN based approaches to critical applications such as in health care where the explainability of the predictions is also very important. For interpreting CNN predictions several approaches have been proposed and one of the widely used method in image classification tasks is occlusion experiments. In occlusion experiments one would mask the regions of the input image using a small gray or black patch and record the change in the predicted label probability. By systematically changing the position of the patch location, a sensitivity map can be generated from which the regions in the input image which influence the predicted class label most can be identified. However, this method requires performing multiple forward passes of CNN inference for explaining a single prediction and hence is very time consuming.
 We present \system, the first data system to elevate occlusion experiments to a declarative level and enable automated \textit{incremental} and \textit{approximate} inference optimizations. Experiments with real-world datasets and deep CNNs show that \system~can enable up to 10x speedups.
 \end{abstract}
 
@@ -82,4 +82,6 @@ We present \system, the first data system to elevate occlusion experiments to a 
 
 \bibliographystyle{unsrt}
 \bibliography{main}
+
+\input{appendix}
 \end{document}
