@@ -103,4 +103,10 @@ Luisa~M Zintgraf, Taco~S Cohen, Tameem Adel, and Max Welling.
   analysis.
 \newblock {\em arXiv preprint arXiv:1702.04595}, 2017.
 
+\bibitem{wang2004image}
+Zhou Wang, Alan~C Bovik, Hamid~R Sheikh, and Eero~P Simoncelli.
+\newblock Image quality assessment: from error visibility to structural
+  similarity.
+\newblock {\em IEEE transactions on image processing}, 13(4):600--612, 2004.
+
 \end{thebibliography}

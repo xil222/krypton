@@ -1,5 +1,6 @@
+%!TEX root = <main.tex>
 \section{Preliminaries and Overview}
-In this section we formalize the internals of some of the layers in a Deep CNN which will be later used to propose our incremental inference approach in Section 4. We then formally state the problem, explain our assumptions, and give an overview of~\system.
+In this section we formalize the internals of some of the layers in a Deep CNN which will be later used to propose our incremental inference approach in Section 4. Next we briefly explain the Structural Similarity Index (SSIM) which is used to quantify the quality of the generated sensitivity heat map with respect to the original in the context of approximate inference. Finally we formally state the problem, explain our assumptions, and give an overview of~\system.
 
 \subsection{Deep CNN Internals}
 The output activations of the layers in a Deep CNN, except for fully-connected ones, are arranged into three dimensional volumes which has a width, height, and depth.
@@ -64,7 +65,7 @@ W_{out} = (W_{in} - W_k + 2\times P_x)/S_x + 1 \\
 H_{out} = (H_{in} - H_k + 2\times P_y)/S_y + 1
 \end{align}
 
-\subsection{Estimating the Computational Cost of Deep CNNs}
+\noindent \textbf{Estimating the Computational Cost of Deep CNNs}
 Deep CNNs are highly compute intensive and out of the different types of layers, Conv layers contributes to $90\%$ (or more) of the computations. One of the widely used way to estimate the computational cost of a Deep CNN is to estimate the number of fused multiply add (FMA) floating point operations (FLOPs) required by convolution layers for a single forward inference and ignore the computational cost of other layers (e.g. Pooling, Fully-Connected).
 
 For example, applying a convolution filter having the dimensions of ($C^l_{in}$, $H^l_{k}$, $W^l_{k}$) to a single spatial context will require $C^l_{in} \times H^l_{k} \times W^l_{k}$ many FLOPs, each corresponding to a single element-wise multiplication. Thus, the total amount of computations $Q_l$ required by that layer in order to produce an output $\mathcal{O}$ having dimensions $C^l_{out} \times H^l_{out} \times W^l_{out}$, and the total amount of computations $Q$ required to process the entire set of convolution layers $L$ in the CNN can be calculated as per equation.~\ref{eqn:full_local} and equation.~\ref{eqn:full_all}. However, in the case incremental updates effectively only a smaller spatial patch having a width $W^l_p$ ($W^l_p<=W^l_{out}$) and height $H^l_p$ ($H^l_p<=H^l_{out}$) is needed to be recomputed. The amount of computations required for the incremental computation $Q^l_{inc}$ and total amount of incremental computations $Q_{inc}$ required for the entire set of convolution layers $L$ will be smaller than the above full computation values and can be calculated as per equation.~\ref{eqn:inc_local} and equation.~\ref{eqn:inc_all}.
@@ -83,5 +84,17 @@ Q_{inc} =&~ \sum_{l \in L} Q^l_{inc}\\
 \label{eqn:redundancy_ratio}
 R =&~ \frac{Q}{Q_{inc}}
 \end{align}
+
+\subsection{Estimating the Quality of Generated Approximate Heat Maps}
+
+When applying approximate inference optimizations, \system~ sacrifices the the accuracy of the generated heat map in favor of lesser runtime.
+To measure this drop of accuracy we use Structural Similarity (SSIM) Index~\cite{wang2004image}, which is one of the widely used approaches to measure the human perceived difference between two images.
+When applying SSIM index, we treat the original heat map as the reference image with no distortions and the perceived image similarity of the \system~generated heat map is calculated with reference to it.
+The generated SSIM index is a value between $-1$ and $1$, where $1$ corresponds to perfect similarity.
+It is important to note that, even though SSIM index value of 1 corresponds to perfect similarity, other values doesn't necessarily imply same level of perceived quality across different image pairs.
+However, if the original images are closely similar, such as in chest X-ray images, it can be assumed that this condition will hold.
+Typically SSIM index values above $0.9$ are used in practical applications such as image compression and video encoding as they produce very small distortions at the human perception level.
+For more details on SSIM index method, we refer the reader to the original SSIM index paper~\cite{wang2004image}.
+
 
 \subsection{Problem Statement and Assumptions}
