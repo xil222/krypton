@@ -377,6 +377,9 @@ INPUT /usr/share/texlive/texmf-dist/fonts/tfm/public/newtx/nxlmia.tfm
 INPUT /usr/share/texlive/texmf-dist/fonts/tfm/public/newtx/ntxsym.tfm
 INPUT /usr/share/texlive/texmf-dist/fonts/tfm/public/newtx/ntxsyc.tfm
 INPUT /usr/share/texlive/texmf-dist/fonts/tfm/public/newtx/ntxexa.tfm
+INPUT /home/snakanda/Work/Krypton/paper/current/images/cnn_simplified.pdf
+INPUT /home/snakanda/Work/Krypton/paper/current/images/cnn_simplified.pdf
+INPUT /home/snakanda/Work/Krypton/paper/current/images/cnn_simplified.pdf
 INPUT /usr/share/texlive/texmf-dist/fonts/tfm/public/libertine/LinLibertineT-tlf-t1.tfm
 INPUT /usr/share/texlive/texmf-dist/fonts/vf/public/newtx/ntxsy.vf
 INPUT /usr/share/texlive/texmf-dist/fonts/tfm/public/newtx/txsys.tfm
@@ -459,10 +462,10 @@ INPUT /home/snakanda/Work/Krypton/paper/current/experiments.tex
 INPUT /home/snakanda/Work/Krypton/paper/current/experiments.tex
 INPUT /home/snakanda/Work/Krypton/paper/current/main.bbl
 INPUT /home/snakanda/Work/Krypton/paper/current/main.bbl
-INPUT /home/snakanda/Work/Krypton/paper/current/appendix.tex
-INPUT /home/snakanda/Work/Krypton/paper/current/appendix.tex
 INPUT /usr/share/texlive/texmf-dist/fonts/vf/public/libertine/LinBiolinumTI-tlf-t1.vf
 INPUT /usr/share/texlive/texmf-dist/fonts/tfm/public/libertine/LinBiolinumTI-tlf-t1--base.tfm
+INPUT /home/snakanda/Work/Krypton/paper/current/appendix.tex
+INPUT /home/snakanda/Work/Krypton/paper/current/appendix.tex
 INPUT /home/snakanda/Work/Krypton/paper/current/main.aux
 INPUT /home/snakanda/Work/Krypton/paper/current/main.out
 INPUT /home/snakanda/Work/Krypton/paper/current/main.out

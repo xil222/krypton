@@ -6,6 +6,10 @@ In this section we formalize the internals of some of the layers in a Deep CNN w
 The output activations of the layers in a Deep CNN, except for fully-connected ones, are arranged into three dimensional volumes which has a width, height, and depth.
 For example an RGB input image of 224$\times$224 spatial size can be considered as an input volume having a width and height of 224 and a depth of 3 (corresponding to 3 color channels). Every non fully-connected layer will take in an input activation volume and transform it into another activation volume, where as a fully-connected layer will transform an input volume into an output vector. For our purpose these transformations can be broadly divided into three subcategories based on how they spatially operate:
 
+\begin{figure*}[t]
+\includegraphics[width=\textwidth]{images/cnn_simplified}
+\end{figure*}
+
 \begin{itemize}
 	\item Transformations that operate on individual spatial locations.
 	\begin{itemize}
@@ -88,7 +92,7 @@ R =&~ \frac{Q}{Q_{inc}}
 \subsection{Estimating the Quality of Generated Approximate Heat Maps}
 
 When applying approximate inference optimizations, \system~ sacrifices the the accuracy of the generated heat map in favor of lesser runtime.
-To measure this drop of accuracy we use Structural Similarity (SSIM) Index~\cite{wang2004image}, which is one of the widely used approaches to measure the human perceived difference between two images.
+To measure this drop of accuracy we use Structural Similarity (SSIM) Index~\cite{wang2004image}, which is one of the widely used approaches to measure the \textit{human perceived difference} between two images.
 When applying SSIM index, we treat the original heat map as the reference image with no distortions and the perceived image similarity of the \system~generated heat map is calculated with reference to it.
 The generated SSIM index is a value between $-1$ and $1$, where $1$ corresponds to perfect similarity.
 It is important to note that, even though SSIM index value of 1 corresponds to perfect similarity, other values doesn't necessarily imply same level of perceived quality across different image pairs.
