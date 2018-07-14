@@ -1,5 +1,5 @@
-This is BibTeX, Version 0.99d (TeX Live 2017/Debian)
-Capacity: max_strings=100000, hash_size=100000, hash_prime=85009
+This is BibTeX, Version 0.99d (TeX Live 2016)
+Capacity: max_strings=35307, hash_size=35307, hash_prime=30011
 The top-level auxiliary file: main.aux
 The style file: unsrt.bst
 Database file #1: main.bib
@@ -8,45 +8,45 @@ Repeated entry---line 164 of file main.bib
  :                      ,
 I'm skipping whatever remains of this entry
 Warning--empty journal in wang2017deep
-You've used 17 entries,
+You've used 18 entries,
             1791 wiz_defined-function locations,
-            540 strings with 7113 characters,
-and the built_in function-call counts, 4592 in all, are:
-= -- 397
-> -- 246
+            544 strings with 7358 characters,
+and the built_in function-call counts, 4701 in all, are:
+= -- 407
+> -- 247
 < -- 5
-+ -- 88
++ -- 89
 - -- 71
 * -- 304
-:= -- 720
-add.period$ -- 53
-call.type$ -- 17
-change.case$ -- 17
+:= -- 731
+add.period$ -- 56
+call.type$ -- 18
+change.case$ -- 18
 chr.to.int$ -- 0
-cite$ -- 18
-duplicate$ -- 210
-empty$ -- 413
+cite$ -- 19
+duplicate$ -- 215
+empty$ -- 431
 format.name$ -- 71
-if$ -- 1031
+if$ -- 1060
 int.to.chr$ -- 0
-int.to.str$ -- 17
+int.to.str$ -- 18
 missing$ -- 17
-newline$ -- 88
+newline$ -- 93
 num.names$ -- 17
-pop$ -- 58
+pop$ -- 66
 preamble$ -- 1
 purify$ -- 0
 quote$ -- 0
-skip$ -- 120
+skip$ -- 123
 stack$ -- 0
 substring$ -- 294
-swap$ -- 70
+swap$ -- 71
 text.length$ -- 5
 text.prefix$ -- 0
 top$ -- 0
 type$ -- 0
 warning$ -- 1
 while$ -- 41
-width$ -- 19
-write$ -- 183
+width$ -- 20
+write$ -- 192
 (There was 1 error message)

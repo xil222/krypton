@@ -5,6 +5,10 @@ Many of these successful pre-trained CNNs from computer vision challenges have b
 In transfer learning, instead of training a CNN from scratch, one uses a pre-trained Deep CNN, e.g., ImageNet trained VGG, and fine tune it for the target problem using the target training dataset.
 This approach avoids the need for a large training datasets, computational power and time which is otherwise a bottleneck for training a CNN from scratch.
 As a result, this paradigm has enabled the wide adoption of deep CNN technology in variety of real world image recognition tasks in several domains including health care \cite{kermany2018identifying, islam2017abnormality}, agriculture \cite{mohanty2016using}, security \cite{arbabzadah2016identifying}, and sociology \cite{wang2017deep}.
+Remarkably, United States Food and Drug Administration Agency has already approved the use of deep CNN based technologies for identifying diabetic retinopathy, an eye disease found in adults with diabetes.
+It is expected that above type of decision support systems will help the human radiologists in fulfilling their workloads efficiently and also provide remedy to the shortage of qualified radiologists globally \cite{radiologistshortage}.
+However, one of the major criticisms for deep CNNs, and deep neural networks in general, is the black-box nature of how they make predictions.
+In order to apply deep CNN based techniques in critical applications such as health care, the decisions should be explainable so that the practitioners can use their human judgment to decide whether to rely on those predictions or not \cite{jung2017deep}.
 
 % \begin{figure}[ht]
 %   \includegraphics[width=0.9\columnwidth]{./images/occlusion_maps}
@@ -12,11 +16,14 @@ As a result, this paradigm has enabled the wide adoption of deep CNN technology 
 %   \label{fig:occlusion_maps}
 % \end{figure}
 
-One of the major criticisms for deep CNNs, and deep neural networks in general, is the black-box nature of how they make predictions.
-In order to apply deep CNN based techniques in critical applications such as health care, the decisions should be explainable so that the practitioners can use their human judgment to decide whether to rely on those predictions or not \cite{jung2017deep}.
+\textbf{\textit{Example:}} Consider a radiologist who is examining Optical Coherence Tomography (OCT) images of the retina to identify potential diabetic retinopathy patients.
+The radiologist is recently given access to a deep CNN based clinical decision support system (CDSS) to identify potential images with diabetic retinopathy. 
+It predicts the probability whether a retina image has diabetic retinopathy.
+She uses the CDSS for two main purposes: 1) as a cross checker while manually inspecting the retinal images, and 2) to   
+
 In order to improve the explainability of deep CNN predictions several approaches have been proposed.
-One of the most widely used approach in image classification tasks is occlusion experiments \cite{zeiler2014visualizing}.
-In occlusion experiments, a square patch, usually of gray or black color, is used to occlude parts of the image and record the variation in the predicted label probability.
+One of the most widely used approach in image recognition tasks is occlusion experiments \cite{zeiler2014visualizing}.
+In occlusion experiments, a square patch, usually of gray or black color, is used to occlude parts of the image and record the change in the predicted label probability.
 By systematically striding this patch horizontally and vertically one or two pixels at a time over the image, a sensitivity heatmap for the predicted label can be generated.
 Using this heatmap, the regions in the image which are highly sensitive (or highly contributing) to the predicted class can be identified.
 This localization of highly sensitive regions then enables the practitioners to get an idea on the the prediction process of the deep CNN (see Figure. \ref{fig:occlusion_maps}).

@@ -52,6 +52,13 @@ Yilun Wang and Michal Kosinski.
   sexual orientation from facial images.
 \newblock 2017.
 
+\bibitem{radiologistshortage}
+Radiologists are often in short supply and overworked – deep learning to the
+  rescue.
+\newblock
+  \url{https://government.diginomica.com/2017/12/20/radiologists-often-short-supply-overworked-deep-learning-rescue}.
+\newblock Accessed September 31, 2018.
+
 \bibitem{jung2017deep}
 Kyu-Hwan Jung, Hyunho Park, and Woochan Hwang.
 \newblock Deep learning for medical image analysis: Applications to computed
