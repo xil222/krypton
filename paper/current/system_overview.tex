@@ -1,6 +1,6 @@
 %!TEX root = <main.tex>
-\section{Preliminaries and Overview}
-In this section we formalize the internals of some of the layers in a Deep CNN which will be later used to propose our incremental inference approach in Section 4. Next we briefly explain the Structural Similarity Index (SSIM) which is used to quantify the quality of the generated sensitivity heat map with respect to the original in the context of approximate inference. Finally we formally state the problem, explain our assumptions, and give an overview of~\system.
+\section{Preliminaries and Overview}\label{sec:preliminaries}
+In this section we formalize the internals of some of the layers in a Deep CNN for the purpose of proposing our incremental inference approach in Section 4. Next we briefly explain the Structural Similarity Index (SSIM) which is used to quantify the quality of the generated sensitivity heat map with respect to the original in the context of approximate inference. Finally we formally state the problem, explain our assumptions.
 
 \subsection{Deep CNN Internals}
 The output activations of the layers in a Deep CNN, except for fully-connected ones, are arranged into three dimensional volumes which has a width, height, and depth.
@@ -8,7 +8,7 @@ For example an RGB input image of 224$\times$224 spatial size can be considered 
 
 \begin{figure*}[t]
 \includegraphics[width=\textwidth]{images/cnn_simplified}
-\caption{Simplified representation of representative layers of a Deep CNN.}
+\caption{Simplified representation of selected layers of a Deep CNN.}
 
 \end{figure*}
 
@@ -30,36 +30,34 @@ For example an RGB input image of 224$\times$224 spatial size can be considered 
 With incremental spatial updates in the input, both types of transformations that operate at individual spatial locations and transformations that operate at a local spatial contexts provide opportunities for exploiting redundancy. Extending the transformations that operate at individual spatial locations to become redundancy aware is straightforward. However, with transformations that operate on a local spatial context such as convolution and pooling, this extension is non-trivial due to the overlapping nature of the spatial contexts corresponding to individual transformations. We next formally define the transformations of convolution and pooling layers and also the relationship between input and output dimensions for these layers which will be later used in Section. 4 to introduce our incremental inference approach.
 
 \vspace{2mm}
-\noindent \textbf{Convolutional Layers.} Convolutional layers are the most important layers in a CNN architecture that also contributes to most of the computational cost. Each convolutional layer can have several (say $C_{out}$) three dimensional filter kernels organized into a four dimensional array $\mathcal{K}$ with each having a smaller spatial width $W_k$ and height $H_k$ compared to the width $W_{in}$ and height $H_{in}$ of the input volume $\mathcal{I}$, but has the same depth $C_{in}$. During inference, each filter kernel is slided along the width and height dimensions of the input and a two dimensional activation map is produced by taking element-wise product between the kernel and the input and adding a bias value $\mathcal{B}[c]$ for some c $\in$ $[0, C_{out}-1]$. These two dimensional activation maps are then stacked together along the depth dimension to produce an output volume $\mathcal{O}$ having the dimensions of ($C_{out}$,$H_{out}$,$W_{out}$). This can be formally defined as follows:
+\noindent \textbf{Transformations that operate on a local spatial context.} The two types of transformations that operate on a local spatial context in a deep CNN are convolution and max pooling layers. Convolution layers are the most important type of layer in a CNN architecture that also contributes to most of the computational cost. Each convolutional layer can have several (say $C_{out}$) three dimensional filter kernels organized into a four dimensional array $\mathcal{K}_{conv}$ with each having a smaller spatial width $W_k$ and height $H_k$ compared to the width $W_{in}$ and height $H_{in}$ of the input volume $\mathcal{I}$, but has the same depth $C_{in}$. During inference, each filter kernel is slided along the width and height dimensions of the input and a two dimensional activation map is produced by taking element-wise product between the kernel and the input and adding a bias value $\mathcal{B}[c]$ for some c $\in$ $[0, C_{out}-1]$. These two dimensional activation maps are then stacked together along the depth dimension to produce an output volume $\mathcal{O}$ having the dimensions of ($C_{out}$,$H_{out}$,$W_{out}$). This can be formally defined as follows:
 
 \vspace{-2mm}
 \begin{align}
 \text{Input Volume}:&~ \mathcal{I} \in \mathcal{\rm I\!R}^{C_{in} \times H_{in} \times W_{in}}\\
-\text{Filters}:&~ \mathcal{K} \in \mathcal{\rm I\!R}^{C_{out} \times C_{in} \times H_{k} \times W_{k}}\\
-\text{Bias Vector}:&~ \mathcal{B} \in \mathcal{\rm I\!R}^{C_{out}}\\
+\text{Conv. Filters}:&~ \mathcal{K}_{conv} \in \mathcal{\rm I\!R}^{C_{out} \times C_{in} \times H_{k} \times W_{k}}\\
+\text{Conv. Bias Vector}:&~ \mathcal{B}_{conv} \in \mathcal{\rm I\!R}^{C_{out}}\\
 \text{Output Volume}:&~ \mathcal{O} \in \mathcal{\rm I\!R}^{C_{out} \times H_{out} \times W_{out}}
 \end{align}
 
 \begin{equation}
 \label{eqn:conv_operator}
 \begin{split}
-\mathcal{O}[c,y,x] &= \sum_{k=0}^{C_{in}} \sum_{j=0}^{H_k-1} \sum_{i=0}^{W_k-1} \mathcal{K}[c, k, j, i] \\ & \quad \quad \quad \times \mathcal{I}[k,y-\floor{\frac{H_k}{2}}+j,x-\floor{\frac{W_k}{2}}+i] + \mathcal{B}[c]
+\mathcal{O}[c,y,x] &= \sum_{k=0}^{C_{in}} \sum_{j=0}^{H_k-1} \sum_{i=0}^{W_k-1} \mathcal{K}_{conv}[c, k, j, i] \\ & \quad \quad \quad \times \mathcal{I}[k,y-\floor{\frac{H_k}{2}}+j,x-\floor{\frac{W_k}{2}}+i] + \mathcal{B}[c]
 \end{split}
 \end{equation}
 
-\noindent \textbf{Pooling Layers.} The main objective of having pooling layers in CNNs is to reduce the spatial size of output volumes. Pooling can also be thought as a convolution operation with a fixed (i.e. not learned) two dimensional filter kernel $\mathcal{K}$ having a width of $W_k$ and height of $H_k$, which unlike convolution, operates independently on every depth slice of the input volume. The two main variations of pooling layers are max pooling (takes the maximum value from the local spatial context) and average (takes the average value from the local spatial context) pooling. A Pooling layer takes a three dimensional activation volume $\mathcal{O}$ having a depth of $C$, width of $W_{in}$, and height of $H_{in}$ as input and produces another three dimensional activation volume $\mathcal{O}$ which has the same depth of $C$, width of $W_{out}$, and height of $H_{out}$ as the output. Pooling kernel is generally slided with more than one pixel at a time and hence $W_{out}$ and $H_{out}$ are generally smaller than $W_{in}$ and $H_{in}$. Pooling operation can be formally defined as follows:
+The main objective of having pooling layers in CNNs is to reduce the spatial size of output volumes. Pooling can also be thought as a convolution operation with a fixed (i.e. not learned) two dimensional filter kernel $\mathcal{K}_{pool}$ having a width of $W_k$ and height of $H_k$, which unlike convolution, operates independently on every depth slice of the input volume. The two main variations of pooling layers are max pooling (takes the maximum value from the local spatial context) and average (takes the average value from the local spatial context) pooling. A Pooling layer takes a three dimensional activation volume $\mathcal{O}$ having a depth of $C$, width of $W_{in}$, and height of $H_{in}$ as input and produces another three dimensional activation volume $\mathcal{O}$ which has the same depth of $C$, width of $W_{out}$, and height of $H_{out}$ as the output. Pooling kernel is generally slided with more than one pixel at a time and hence $W_{out}$ and $H_{out}$ are generally smaller than $W_{in}$ and $H_{in}$. Pooling operation can be formally defined as follows:
 
 \vspace{-2mm}
 \begin{align}
-\text{Input Volume}:&~ \mathcal{I} \in \mathcal{\rm I\!R}^{C \times H_{in} \times W_{in}}\\
-\text{Filter}:&~ \mathcal{K} \in \mathcal{\rm I\!R}^{H_{k} \times W_{k}}\\
-\text{Output Volume}:&~ \mathcal{O} \in \mathcal{\rm I\!R}^{C \times H_{out} \times W_{out}}
+\text{Pool Filters}:&~ \mathcal{K}_{pool} \in \mathcal{\rm I\!R}^{H_{k} \times W_{k}}
 \end{align}
 
 \begin{equation}
 \label{eqn:pool_operator}
 \begin{split}
-\mathcal{O}[c,y,x] &= \sum_{j=0}^{H_k-1} \sum_{i=0}^{W_k-1} \mathcal{K}[j, i] \\ & \quad \quad \quad \times \mathcal{I}[c,y-\floor{\frac{H_k}{2}}+j,x-\floor{\frac{W_k}{2}}+i]
+\mathcal{O}[c,y,x] &= \sum_{j=0}^{H_k-1} \sum_{i=0}^{W_k-1} \mathcal{K}_{pool}[j, i] \\ & \quad \quad \quad \times \mathcal{I}[c,y-\floor{\frac{H_k}{2}}+j,x-\floor{\frac{W_k}{2}}+i]
 \end{split}
 \end{equation}
 
@@ -100,7 +98,7 @@ The generated SSIM index is a value between $-1$ and $1$, where $1$ corresponds 
 It is important to note that, even though SSIM index value of 1 corresponds to perfect similarity, other values doesn't necessarily imply same level of perceived quality across different image pairs.
 However, if the original images are closely similar, such as in chest X-ray images, it can be assumed that this condition will hold.
 Typically SSIM index values above $0.9$ are used in practical applications such as image compression and video encoding as they produce very small distortions at the human perception level.
-For more details on SSIM index method, we refer the reader to the original SSIM index paper~\cite{wang2004image}.
+For more details on SSIM Index method, we refer the reader to the original SSIM Index paper~\cite{wang2004image}.
 
 
 \subsection{Problem Statement and Assumptions}

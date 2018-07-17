@@ -312,10 +312,6 @@ INPUT /usr/local/texlive/2016/texmf-dist/fonts/tfm/public/newtx/ntxexa.tfm
 INPUT introduction.tex
 INPUT introduction.tex
 INPUT /usr/local/texlive/2016/texmf-dist/fonts/tfm/public/libertine/LinLibertineTBI-tlf-t1.tfm
-INPUT background.tex
-INPUT background.tex
-INPUT system_overview.tex
-INPUT system_overview.tex
 INPUT /usr/local/texlive/2016/texmf-dist/fonts/tfm/public/libertine/LinLibertineT-tlf-ot1.tfm
 INPUT /usr/local/texlive/2016/texmf-dist/fonts/tfm/public/newtx/nxlmi.tfm
 INPUT /usr/local/texlive/2016/texmf-dist/fonts/tfm/public/newtx/ntxsy.tfm
@@ -326,7 +322,11 @@ INPUT /usr/local/texlive/2016/texmf-dist/fonts/tfm/public/newtx/nxlmia.tfm
 INPUT /usr/local/texlive/2016/texmf-dist/fonts/tfm/public/newtx/ntxsym.tfm
 INPUT /usr/local/texlive/2016/texmf-dist/fonts/tfm/public/newtx/ntxsyc.tfm
 INPUT /usr/local/texlive/2016/texmf-dist/fonts/tfm/public/newtx/ntxexa.tfm
+INPUT background.tex
+INPUT background.tex
 INPUT /usr/local/texlive/2016/texmf-dist/fonts/tfm/public/libertine/LinLibertineT-tlf-t1.tfm
+INPUT system_overview.tex
+INPUT system_overview.tex
 INPUT images/cnn_simplified.pdf
 INPUT /usr/local/texlive/2016/texmf-dist/fonts/tfm/public/libertine/LinLibertineT-tlf-t1.tfm
 INPUT /usr/local/texlive/2016/texmf-dist/fonts/tfm/public/libertine/LinLibertineT-tlf-t1.tfm
