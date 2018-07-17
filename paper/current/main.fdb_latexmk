@@ -1,16 +1,16 @@
 # Fdb version 3
-["bibtex main"] 1531863047 "main.aux" "main.bbl" "main" 1531865904
+["bibtex main"] 1531863047 "main.aux" "main.bbl" "main" 1531867260
   "/usr/share/texlive/texmf-dist/bibtex/bst/base/unsrt.bst" 1480098433 18030 1376b4b231b50c66211e47e42eda2875 ""
-  "main.aux" 1531865904 5977 dd80c8cd5fcac2434175aa9fd802a04d ""
+  "main.aux" 1531867260 5977 dd80c8cd5fcac2434175aa9fd802a04d ""
   "main.bcf" 0 -1 0 ""
   "main.bib" 1531862160 7772 770412e3717e1b17d1f89294979fb336 ""
   (generated)
-  "main.blg"
   "main.bbl"
-["pdflatex"] 1531865903 "main.tex" "/home/snakanda/Work/Krypton/paper/current/main.pdf" "main" 1531865904
+  "main.blg"
+["pdflatex"] 1531867259 "main.tex" "/home/snakanda/Work/Krypton/paper/current/main.pdf" "main" 1531867260
   "./images/krypton_overview.pdf" 1531860440 314706 771202abd56be59c42113d266b5128f7 ""
   "/etc/texmf/web2c/texmf.cnf" 1531415254 475 c0e671620eb5563b2130f56340a5fde8 ""
-  "/home/snakanda/Work/Krypton/paper/current/main.aux" 1531865904 5977 dd80c8cd5fcac2434175aa9fd802a04d ""
+  "/home/snakanda/Work/Krypton/paper/current/main.aux" 1531867260 5977 dd80c8cd5fcac2434175aa9fd802a04d ""
   "/usr/share/texlive/texmf-dist/fonts/enc/dvips/base/8r.enc" 1480098666 4850 80dc9bab7f31fb78a000ccfed0e27cab ""
   "/usr/share/texlive/texmf-dist/fonts/enc/dvips/libertine/lbtn_25tcsq.enc" 1490133665 2921 8ca0eb0831f9bc5da080d3697cfe67bf ""
   "/usr/share/texlive/texmf-dist/fonts/enc/dvips/libertine/lbtn_76gpa5.enc" 1490133665 2933 9ad527ce78d7c5fa0a642dead095f172 ""
@@ -257,16 +257,16 @@
   "images/cnn_simplified.pdf" 1531865650 58158 9bc83c58f9d9d368d074d8b068c16c06 ""
   "images/krypton_overview.pdf" 1531860440 314706 771202abd56be59c42113d266b5128f7 ""
   "introduction.tex" 1531863043 9527 eec2be5a8533577961665c6dbfdc9406 ""
-  "main.aux" 1531865904 5977 dd80c8cd5fcac2434175aa9fd802a04d ""
+  "main.aux" 1531867260 5977 dd80c8cd5fcac2434175aa9fd802a04d ""
   "main.bbl" 1531863047 5015 bd88afb5a9e1f2ea1282fb65f205e488 "bibtex main"
-  "main.out" 1531865904 2619 a3fcf139411589be807e4b0d7dca274e ""
-  "main.tex" 1531854533 3599 81f9e83b46aaf0ed8dfeb03f1f020c18 ""
+  "main.out" 1531867260 2619 a3fcf139411589be807e4b0d7dca274e ""
+  "main.tex" 1531867257 3601 3cdb5a17a94a276fd25af6ae9f1de9bc ""
   "optimizer.tex" 1531854533 264 ccdb4f48d995fc68831a75c569ae2a11 ""
   "system_overview.tex" 1531854533 11321 9f85a7c5ad956050a17d6b5052f9b35e ""
   (generated)
-  "main.aux"
-  "/home/snakanda/Work/Krypton/paper/current/main.log"
-  "/home/snakanda/Work/Krypton/paper/current/main.pdf"
-  "main.log"
-  "main.pdf"
   "main.out"
+  "/home/snakanda/Work/Krypton/paper/current/main.pdf"
+  "/home/snakanda/Work/Krypton/paper/current/main.log"
+  "main.aux"
+  "main.pdf"
+  "main.log"
