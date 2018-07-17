@@ -1,28 +1,28 @@
 %!TEX root = <main.tex>
 \section{Introduction}
-Deep convolutional neural networks (CNNs) \cite{alexnet, vggnet} have revolutionized the computer vision field with even resulting near-human accuracies for some image recognition challenges.
-Many of these successful pre-trained CNNs from computer vision challenges have been successfully repurposed to be used in other real-world image recognition tasks, using a paradigm called \textit{transfer learning} \cite{transfer-learning-factors}.
+Deep convolutional neural networks (CNNs) \cite{alexnet, vggnet, resnet, inception} have revolutionized the computer vision field with even surpassing human level accuracies for some image recognition challenges such as ImageNet challenge~\cite{imagenet}.
+Many of these successful pre-trained CNNs from computer vision challenges have been successfully re-purposed to be used in other real-world image recognition tasks, using a paradigm called \textit{transfer learning} \cite{transfer-learning-factors}.
 In transfer learning, instead of training a CNN from scratch, one uses a pre-trained Deep CNN, e.g., ImageNet trained VGG, and fine tune it for the target problem using the target training dataset.
 This approach avoids the need for a large training datasets, computational power and time which is otherwise a bottleneck for training a CNN from scratch.
 As a result, this paradigm has enabled the wide adoption of deep CNN technology in variety of real world image recognition tasks in several domains including health care \cite{kermany2018identifying, islam2017abnormality}, agriculture \cite{mohanty2016using}, security \cite{arbabzadah2016identifying}, and sociology \cite{wang2017deep}.
 Remarkably, United States Food and Drug Administration Agency has already approved the use of deep CNN based technologies for identifying diabetic retinopathy, an eye disease found in adults with diabetes.
-It is expected that above type of decision support systems will help the human radiologists in fulfilling their workloads efficiently and also provide remedy to the shortage of qualified radiologists globally \cite{radiologistshortage}.
+It is also expected that above type of decision support systems will help the human radiologists in fulfilling their workloads efficiently and also provide a remedy to the shortage of qualified radiologists globally \cite{radiologistshortage}.
 
-However, one of the major criticisms for deep CNNs, and deep neural networks in general, is the black-box nature of how they make predictions.
+However, despite their many success stories, one of the major criticisms for deep CNNs and deep neural networks in general is the black-box nature of how they make predictions.
 In order to apply deep CNN based techniques in critical applications such as health care, the decisions should be explainable so that the practitioners can use their human judgment to decide whether to rely on those predictions or not \cite{jung2017deep}.
 
-% \begin{figure}[ht]
-%   \includegraphics[width=0.9\columnwidth]{./images/occlusion_maps}
-%   \caption{Occlusion Experiments (source: \cite{zeiler2014visualizing}).}
-%   \label{fig:occlusion_maps}
-% \end{figure}
+\begin{figure}[t]
+  \includegraphics[width=\columnwidth]{./images/krypton_overview}
+  \caption{(A) Simplified representation depicting how OCT images are used for predicting Diabetic Retinopathy using CNNs. (B) Occluding parts of the OCT image changes the predicted probability for the disease. (C) By systematically moving patch along vertical and horizontal axes an output heat map is generated where each individual value corresponds to the predicted disease probability when the occlusion patch was placed on that position.}
+  \label{fig:krypton_overview}
+\end{figure}
 
 In order to improve the explainability of deep CNN predictions several approaches have been proposed.
 One of the most widely used approach in image recognition tasks is occlusion experiments \cite{zeiler2014visualizing}.
-In occlusion experiments, a square patch, usually of gray or black color, is used to occlude parts of the image and record the change in the predicted label probability.
-By systematically striding this patch horizontally and vertically one or two pixels at a time over the image, a sensitivity heatmap for the predicted label can be generated.
-Using this heatmap, the regions in the image which are highly sensitive (or highly contributing) to the predicted class can be identified.
-This localization of highly sensitive regions then enables the practitioners to get an idea on the the prediction process of the deep CNN (see Figure. \ref{fig:occlusion_maps}).
+In occlusion experiments, as shown in Figure~\ref{fig:krypton_overview} (B), a square patch usually of gray or black color is used to occlude parts of the image and record the change in the predicted label probability.
+By systematically striding this patch horizontally and vertically one or two pixels at a time over the image a sensitivity heat map for the predicted label similar to one in Figure~\ref{fig:krypton_overview} (C) can be generated.
+Using this heat map, the regions in the image which are highly sensitive (or highly contributing) to the predicted class can be identified (corresponds to red color regions in the sensitivity heat map shown in Figure~\ref{fig:krypton_overview} (C)).
+This localization of highly sensitive regions then enables the practitioners to get an idea of the the prediction process of the deep CNN.
 
 \textbf{\textit{Example:}} Consider a radiologist who is examining Optical Coherence Tomography (OCT) images of the retina to identify potential diabetic retinopathy patients.
 The radiologist is recently given access to a deep CNN based clinical decision support system (CDSS) to identify potential images with diabetic retinopathy. 
