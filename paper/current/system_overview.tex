@@ -97,8 +97,37 @@ When applying SSIM index, we treat the original heat map as the reference image 
 The generated SSIM index is a value between $-1$ and $1$, where $1$ corresponds to perfect similarity.
 It is important to note that, even though SSIM index value of 1 corresponds to perfect similarity, other values doesn't necessarily imply same level of perceived quality across different image pairs.
 However, if the original images are closely similar, such as in chest X-ray images, it can be assumed that this condition will hold.
-Typically SSIM index values above $0.9$ are used in practical applications such as image compression and video encoding as they produce very small distortions at the human perception level.
+Typically SSIM index values above $0.9$ are used in practical applications such as image compression and video encoding as at the human perception level they produce indistinguishable distortions.
 For more details on SSIM Index method, we refer the reader to the original SSIM Index paper~\cite{wang2004image}.
 
 
 \subsection{Problem Statement and Assumptions}
+
+We are given a fine-tuned CNN $f$, an image $\mathcal{I}_{img}$ on which the occlusion experiment needs to be run, the predicted class label $L$ for the image $\mathcal{I}_{img}$, an occluding patch $\mathcal{P}$ in RGB format, and patch striding amount $S_{patch}$ which will be used to move the occlusion patch on the image at a time in horizontal or vertical direction. The occlusion experiment workload is to generate a 2D heat map $M$ where each individual value in $M$ corresponds to the predicted probability for $L$ by $f$ when $\mathcal{P}$ is superimposed on $\mathcal{I}_{img}$ corresponding to the position of that particular value. More precisely, we can state the workload using the following set of logical statements:
+
+
+\begin{align}
+\label{eqn:mheight}
+H_M =&~ \lfloor(\texttt{height}(\mathcal{I}_{img}) - \texttt{height}(\mathcal{P}) + 1)/S_{patch}\rfloor\\
+\label{eqn:mwidth}
+W_M =&~ \lfloor(\texttt{width}(\mathcal{I}_{img}) - \texttt{width}(\mathcal{P}) + 1)/S_{patch}\rfloor\\
+M \in&~ \mathcal{\rm I\!R}^{H_M \times W_M}\\
+\forall~ x,y \in&~ H_M \times W_M:\\
+\label{eqn:patchimpose}
+& \mathcal{I}_{img}^{x,y} \leftarrow ~\mathcal{P} ~\circ_{x,y} ~ \mathcal{I}_{img}\\
+\label{eqn:outputval}
+& M[x,y] \leftarrow f(\mathcal{I}_{img}^{x,y},L)
+\end{align}
+
+Step (\ref{eqn:mheight}), and (\ref{eqn:mwidth}) calculates the dimensions of the generated heat map $M$ which is dependent upon the dimensions of $\mathcal{I}_{img}$, $P$, and the value $S_{patch}$.
+Step (\ref{eqn:patchimpose}) superimposes $\mathcal{P}$ on $\mathcal{I}_{img}$ with its top left corner placed on the (x,y) location of $\mathcal{I}_{img}$.
+Step (\ref{eqn:outputval}) calculates the output value at the (x,y) location by performing CNN inference for $\mathcal{I}_{img}^{x,y}$ using $f$ and taking the predicted probability for the label $L$.
+
+We make few simplifying assumptions in this paper for tractability sake.
+First we assume that $f$ is a fine-tuned CNN from a roaster of well-known CNNs (currently, VGG, ResNet, and Inception).
+This is a reasonable start, since most recent fine-tuning based transfer learning applications used only such well-known CNNs from model zoos \cite{caffemodelzoo, tfmodelzoo}.
+Nevertheless, our work is orthogonal to the specifics of a particular architecture and the proposed approaches can be easily extended to any architecture.
+We leave support for arbitrary CNNs to future work.
+Second we assume that the images of a particular occlusion experiment use case are mostly similar such as in OCT retina images, chest X-ray images, and hand \& wrist X-ray images.
+This assumption is required in the context of \textit{approximate inference} optimizations, in which \system~ uses an initial set of images to tune it's configuration parameters to produce subsequent occlusion heat maps with the user required quality metric.
+However, if the images are drastically different the chances are that the system configurations tuned for one set of images doesn't map to other images well, and in such situations \system\'s approximate inference optimizations can be disabled.

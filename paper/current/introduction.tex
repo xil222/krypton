@@ -54,7 +54,7 @@ The system will then automatically tune it's \textit{approximate inference} conf
 
 Finally, we have implemented \system~ on top of PyTorch deep learning toolkit by extending it by adding custom implementations of incremental and approximate inference operators.
 It currently supports VGG16, ResNet18, and InceptionV3 both on CPU and GPU environments, which are three widely used deep CNN architectures for transfer learning applications.
-We evaluate our system on three real-world datasets, 1) diabetic retinopathy (DR), 2) chest X-ray (CX), and 3) bone age X-Ray (BX), and show that \system~ can result in up to 10x speedups with hardly distinguishable quality differences in the generated occlusion heat maps. While we have implemented \system~ on top of PyTorch toolkit, our work is largely orthogonal to choice of the deep learning toolkit; one could replace PyTorch with TensorFlow, Caffe2, CNTK, MXNet, or implement from scratch using C/CUDA and still benefit from our optimizations.
+We evaluate our system on three real-world datasets, 1) diabetic retinopathy (DR), 2) chest X-ray (CX), and 3) hand \& wrist X-Ray (HX), and show that \system~ can result in up to 10x speedups with hardly distinguishable quality differences in the generated occlusion heat maps. While we have implemented \system~ on top of PyTorch toolkit, our work is largely orthogonal to choice of the deep learning toolkit; one could replace PyTorch with TensorFlow, Caffe2, CNTK, MXNet, or implement from scratch using C/CUDA and still benefit from our optimizations.
 Overall, this paper makes the following contributions:
 
 \begin{itemize}

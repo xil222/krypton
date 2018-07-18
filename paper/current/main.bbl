@@ -123,4 +123,14 @@ Zhou Wang, Alan~C Bovik, Hamid~R Sheikh, and Eero~P Simoncelli.
   similarity.
 \newblock {\em IEEE transactions on image processing}, 13(4):600--612, 2004.
 
+\bibitem{caffemodelzoo}
+Cafee model zoo.
+\newblock \url{https://github.com/BVLC/caffe/wiki/Model-Zoo}.
+\newblock Accessed September 31, 2018.
+
+\bibitem{tfmodelzoo}
+Models and examples built with tensorflow.
+\newblock \url{https://github.com/tensorflow/models}.
+\newblock Accessed September 31, 2018.
+
 \end{thebibliography}
