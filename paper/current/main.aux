@@ -52,16 +52,18 @@
 \newlabel{eqn:pool_operator}{{7}{4}{Deep CNN Internals}{equation.3.7}{}}
 \citation{wang2004image}
 \citation{wang2004image}
+\citation{caffemodelzoo,tfmodelzoo}
 \newlabel{eqn:full_local}{{10}{5}{Deep CNN Internals}{equation.3.10}{}}
 \newlabel{eqn:full_all}{{11}{5}{Deep CNN Internals}{equation.3.11}{}}
 \newlabel{eqn:inc_local}{{12}{5}{Deep CNN Internals}{equation.3.12}{}}
 \newlabel{eqn:inc_all}{{13}{5}{Deep CNN Internals}{equation.3.13}{}}
 \newlabel{eqn:redundancy_ratio}{{14}{5}{Deep CNN Internals}{equation.3.14}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {3}{\ignorespaces Maximum attainable redundancy ratios of popular CNN architectures when a square occlusion patch of different sizes is placed on the center of the image.\relax }}{5}{figure.caption.6}}
-\newlabel{fig:redundancy_ratio}{{3}{5}{Maximum attainable redundancy ratios of popular CNN architectures when a square occlusion patch of different sizes is placed on the center of the image.\relax }{figure.caption.6}{}}
 \@writefile{toc}{\contentsline {subsection}{\numberline {3.2}Estimating the Quality of Generated Approximate Heat Maps}{5}{subsection.3.2}}
 \@writefile{toc}{\contentsline {subsection}{\numberline {3.3}Problem Statement and Assumptions}{5}{subsection.3.3}}
-\citation{caffemodelzoo,tfmodelzoo}
+\newlabel{eqn:mheight}{{15}{5}{Problem Statement and Assumptions}{equation.3.15}{}}
+\newlabel{eqn:mwidth}{{16}{5}{Problem Statement and Assumptions}{equation.3.16}{}}
+\newlabel{eqn:patchimpose}{{19}{5}{Problem Statement and Assumptions}{equation.3.19}{}}
+\newlabel{eqn:outputval}{{20}{5}{Problem Statement and Assumptions}{equation.3.20}{}}
 \bibstyle{unsrt}
 \bibdata{main}
 \bibcite{alexnet}{{1}{}{{}}{{}}}
@@ -91,14 +93,12 @@
 \newlabel{tocindent2}{10.34999pt}
 \newlabel{tocindent3}{18.198pt}
 \providecommand\NAT@force@numbers{}\NAT@force@numbers
-\newlabel{eqn:mheight}{{15}{6}{Problem Statement and Assumptions}{equation.3.15}{}}
-\newlabel{eqn:mwidth}{{16}{6}{Problem Statement and Assumptions}{equation.3.16}{}}
-\newlabel{eqn:patchimpose}{{19}{6}{Problem Statement and Assumptions}{equation.3.19}{}}
-\newlabel{eqn:outputval}{{20}{6}{Problem Statement and Assumptions}{equation.3.20}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {3}{\ignorespaces Maximum attainable redundancy ratios of popular CNN architectures when a square occlusion patch of different sizes is placed on the center of the image.\relax }}{6}{figure.caption.6}}
+\newlabel{fig:redundancy_ratio}{{3}{6}{Maximum attainable redundancy ratios of popular CNN architectures when a square occlusion patch of different sizes is placed on the center of the image.\relax }{figure.caption.6}{}}
 \@writefile{toc}{\contentsline {section}{\numberline {4}Optimizations}{6}{section.4}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {4.1}Incremental Computation}{6}{subsection.4.1}}
-\newlabel{sec:inc_computation}{{4.1}{6}{Incremental Computation}{subsection.4.1}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {4.2}Approximate Computation}{6}{subsection.4.2}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.1}Incremental Inference}{6}{subsection.4.1}}
+\newlabel{sec:inc_computation}{{4.1}{6}{Incremental Inference}{subsection.4.1}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.2}Approximate Inference}{6}{subsection.4.2}}
 \@writefile{toc}{\contentsline {subsubsection}{\numberline {4.2.1}Adaptive Drill-Down}{6}{subsubsection.4.2.1}}
 \@writefile{toc}{\contentsline {subsubsection}{\numberline {4.2.2}Patch Propagation Thresholding}{6}{subsubsection.4.2.2}}
 \@writefile{toc}{\contentsline {subsection}{\numberline {4.3}System Tuning}{6}{subsection.4.3}}

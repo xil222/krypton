@@ -1,16 +1,16 @@
 # Fdb version 3
-["bibtex main"] 1532032351 "main.aux" "main.bbl" "main" 1532032408
+["bibtex main"] 1532038214 "main.aux" "main.bbl" "main" 1532040229
   "/usr/share/texlive/texmf-dist/bibtex/bst/base/unsrt.bst" 1480098433 18030 1376b4b231b50c66211e47e42eda2875 ""
-  "main.aux" 1532032408 7163 73c90e903ad32905264d21278c0407ba ""
+  "main.aux" 1532040228 7157 c422a9814d30c1934e8b5a0acae3bfdf ""
   "main.bcf" 0 -1 0 ""
   "main.bib" 1531943928 8111 9abe602eb100465cc873b72c9d5d19f5 ""
   (generated)
   "main.blg"
   "main.bbl"
-["pdflatex"] 1532032408 "main.tex" "/home/snakanda/Work/Krypton/paper/current/main.pdf" "main" 1532032408
+["pdflatex"] 1532040225 "main.tex" "/home/snakanda/Work/Krypton/paper/current/main.pdf" "main" 1532040229
   "./images/krypton_overview.pdf" 1531942746 317423 6bfe981de6a99e9c12ac4a3a49497432 ""
   "/etc/texmf/web2c/texmf.cnf" 1531415254 475 c0e671620eb5563b2130f56340a5fde8 ""
-  "/home/snakanda/Work/Krypton/paper/current/main.aux" 1532032408 7163 73c90e903ad32905264d21278c0407ba ""
+  "/home/snakanda/Work/Krypton/paper/current/main.aux" 1532040228 7157 c422a9814d30c1934e8b5a0acae3bfdf ""
   "/usr/share/texlive/texmf-dist/fonts/enc/dvips/base/8r.enc" 1480098666 4850 80dc9bab7f31fb78a000ccfed0e27cab ""
   "/usr/share/texlive/texmf-dist/fonts/enc/dvips/inconsolata/i4-t1-4.enc" 1480098667 7311 f1482de29b79cbe9ecc4861d6c55e906 ""
   "/usr/share/texlive/texmf-dist/fonts/enc/dvips/libertine/lbtn_25tcsq.enc" 1490133665 2921 8ca0eb0831f9bc5da080d3697cfe67bf ""
@@ -264,16 +264,16 @@
   "images/krypton_overview.pdf" 1531942746 317423 6bfe981de6a99e9c12ac4a3a49497432 ""
   "images/redundancy_ratio.pdf" 1532031334 17573 7af7b17bbf8bc47cbb7651b57e379234 ""
   "introduction.tex" 1531945245 9532 40fd2ac4926bc8ca8b5e938670f89dd4 ""
-  "main.aux" 1532032408 7163 73c90e903ad32905264d21278c0407ba ""
-  "main.bbl" 1532032351 5316 abeedfa20f68b9c1b842b8a1ec1ec64c "bibtex main"
-  "main.out" 1532032408 2619 d0e3bc819bce27040eb8d2b96f76c750 ""
+  "main.aux" 1532040228 7157 c422a9814d30c1934e8b5a0acae3bfdf ""
+  "main.bbl" 1532038214 5316 abeedfa20f68b9c1b842b8a1ec1ec64c "bibtex main"
+  "main.out" 1532040228 2599 3845863bfe07490de8bf5fdc46dbc243 ""
   "main.tex" 1532032043 3601 3cdb5a17a94a276fd25af6ae9f1de9bc ""
-  "optimizer.tex" 1531854533 264 ccdb4f48d995fc68831a75c569ae2a11 ""
-  "system_overview.tex" 1532032397 17456 cb777b1b72ff071da23fd9e9b3dbd76f ""
+  "optimizer.tex" 1532040209 2183 7368a01b2a46f9d6fdeafade94b319fa ""
+  "system_overview.tex" 1532037243 16324 c335aefe461663d6bb71006c41aaa4ac ""
   (generated)
   "main.aux"
-  "/home/snakanda/Work/Krypton/paper/current/main.pdf"
-  "main.pdf"
-  "main.out"
   "main.log"
+  "main.out"
+  "/home/snakanda/Work/Krypton/paper/current/main.pdf"
   "/home/snakanda/Work/Krypton/paper/current/main.log"
+  "main.pdf"

@@ -124,7 +124,7 @@ Deep CNNs are highly compute intensive and out of the different types of layers,
 
 For example, applying a convolution filter having the dimensions of ($C^l_{in}$, $H^l_{k}$, $W^l_{k}$) to a single spatial context will require $C^l_{in} \times H^l_{k} \times W^l_{k}$ many FLOPs, each corresponding to a single element-wise multiplication. Thus, the total amount of computations $Q_l$ required by that layer in order to produce an output $\mathcal{O}$ having dimensions $C^l_{out} \times H^l_{out} \times W^l_{out}$, and the total amount of computations $Q$ required to process the entire set of convolution layers $L$ in the CNN can be calculated as per equation.~\ref{eqn:full_local} and equation.~\ref{eqn:full_all}. However, in the case incremental updates effectively only a smaller spatial patch having a width $W^l_p$ ($W^l_p<=W^l_{out}$) and height $H^l_p$ ($H^l_p<=H^l_{out}$) is needed to be recomputed. The amount of computations required for the incremental computation $Q^l_{inc}$ and total amount of incremental computations $Q_{inc}$ required for the entire set of convolution layers $L$ will be smaller than the above full computation values and can be calculated as per equation.~\ref{eqn:inc_local} and equation.~\ref{eqn:inc_all}.
 
-Based on the above quantities we define a new metric named \textbf{redundancy ratio} $R$, which is the ratio between total full computational cost $Q$ and total incremental computation cost $Q_{inc}$ (see equation.~\ref{eqn:redundancy_ratio}). This ratio essentially acts as a surrogate for the theoretical upper-bound for computational and runtime savings that can be achieved by applying incremental computations to deep CNNs. Figure \ref{fig:redundancy_ratio} shows how the maximum attainable redundancy ratio changes for popular CNN architectures when a square occlusion patch of different sizes is placed on the center\footnote{If the occlusion patch is placed towards to a corner of the input image the redundancy ratio will be slightly higher. But placing the occlusion on the center gives us a worst case estimate.} of the input image. VGG 16 layer version results in the maximum redundancy ratio and Inception V3 model has the lowest redundancy ratio. Most CNN architectures results in a redundancy ratio between 2-3 except VGG 16, VGG 19, and Squeezenet 1.0 CNNs which results in higher redundancy ratios. The attainable redundancy ratio of a CNN is determined by the aspects of it's internal architecture such as the size of the filter kernels and the filter stride values.
+Based on the above quantities we define a new metric named \textbf{redundancy ratio} $R$, which is the ratio between total full computational cost $Q$ and total incremental computation cost $Q_{inc}$ (see equation.~\ref{eqn:redundancy_ratio}). This ratio essentially acts as a surrogate for the theoretical upper-bound for computational and runtime savings that can be achieved by applying incremental computations to deep CNNs.
 
 \begin{align}
 \label{eqn:full_local}
@@ -138,12 +138,6 @@ Q_{inc} =&~ \sum_{l \in L} Q^l_{inc}\\
 \label{eqn:redundancy_ratio}
 R =&~ \frac{Q}{Q_{inc}}
 \end{align}
-
-\begin{figure}[t]
-\includegraphics[width=\columnwidth]{images/redundancy_ratio}
-\caption{Maximum attainable redundancy ratios of popular CNN architectures when a square occlusion patch of different sizes is placed on the center of the image.}
-\label{fig:redundancy_ratio}
-\end{figure}
 
 
 \subsection{Estimating the Quality of Generated Approximate Heat Maps}
@@ -169,7 +163,7 @@ W_M =&~ \lfloor(\texttt{width}(\mathcal{I}_{img}) - \texttt{width}(\mathcal{P}) 
 \label{eqn:mwidth}
 H_M =&~ \lfloor(\texttt{height}(\mathcal{I}_{img}) - \texttt{height}(\mathcal{P}) + 1)/S_{y}\rfloor\\
 M \in&~ \mathcal{\rm I\!R}^{H_M \times W_M}\\
-\forall~ x,y \in&~ H_M \times W_M:\\
+\forall~ x,y \in&~ [0, H_M] \times [0, W_M]:\\
 \label{eqn:patchimpose}
 & \mathcal{I}_{img}^{x,y} \leftarrow ~\mathcal{P} ~\circ_{x,y} ~ \mathcal{I}_{img}\\
 \label{eqn:outputval}

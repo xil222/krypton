@@ -1,9 +1,23 @@
 %!TEX root = <main.tex>
 \section{Optimizations}
 
-\subsection{Incremental Computation}\label{sec:inc_computation}
+In this section we explain \textit{incremental inference} and \textit{approximate inference} in detail.
+In \system~ these optimizations are applied on top of the current dominant approach of performing occlusion experiment by performing CNN inference on batches of images where each image corresponds to an occluded instance of the original image.
+Performing CNN inference on batches of images is important as it reduces per image inference time by amortizing the fixed overheads.
+This simple optimization alone can give up to ~1.4X speedups on CPU environments and ~2X speedups on the GPU environment.
+Finally we explain how \system~ configures it's internal system configurations for \textit{approximate inference} by using a sample image set during the initial tuning stage. 
 
-\subsection{Approximate Computation}
+\subsection{Incremental Inference}\label{sec:inc_computation}
+
+\begin{figure}[t]
+\includegraphics[width=\columnwidth]{images/redundancy_ratio}
+\caption{Maximum attainable redundancy ratios of popular CNN architectures when a square occlusion patch of different sizes is placed on the center of the image.}
+\label{fig:redundancy_ratio}
+\end{figure}
+
+Figure \ref{fig:redundancy_ratio} shows how the maximum attainable redundancy ratio changes for popular CNN architectures when a square occlusion patch of different sizes is placed on the center\footnote{If the occlusion patch is placed towards to a corner of the input image the redundancy ratio will be slightly higher. But placing the occlusion on the center gives us a worst case estimate.} of the input image. VGG 16 layer version results in the maximum redundancy ratio and Inception V3 model has the lowest redundancy ratio. Most CNN architectures results in a redundancy ratio between 2-3 except VGG 16, VGG 19, and Squeezenet 1.0 CNNs which results in higher redundancy ratios. The attainable redundancy ratio of a CNN is determined by the aspects of it's internal architecture such as the size of the filter kernels and the filter stride values.
+
+\subsection{Approximate Inference}
 
 \subsubsection{Adaptive Drill-Down}
 
