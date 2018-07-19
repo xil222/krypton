@@ -29,6 +29,55 @@ For example an RGB input image of 224$\times$224 spatial size can be considered 
 
 With incremental spatial updates in the input, both types of transformations that operate at individual spatial locations and transformations that operate at a local spatial contexts provide opportunities for exploiting redundancy. Extending the transformations that operate at individual spatial locations to become redundancy aware is straightforward. However, with transformations that operate on a local spatial context such as convolution and pooling, this extension is non-trivial due to the overlapping nature of the spatial contexts corresponding to individual transformations. We next formally define the transformations of convolution and pooling layers and also the relationship between input and output dimensions for these layers which will be later used in Section. 4 to introduce our incremental inference approach.
 
+\begin{table}[t]
+  \centering
+  \caption{Symbols used in the Preliminaries Section}
+  \scalebox{0.8}{\begin{tabular}{p{2cm}p{7.5cm}}
+    \toprule
+    \textbf{Symbol} & \textbf{Meaning}\\
+    \midrule \midrule
+    $\mathcal{I} (\mathcal{I}_{img})$ & Input activation volume (Input Image)\\
+    \midrule
+    $\mathcal{O}$ & Output activation volume\\
+    \midrule
+    $C_{in},H_{in},W_{in}$ & Depth, height, and width of Input\\
+    \midrule
+    $C_{out},H_{out},W_{out}$ & Depth, height, and width of Output\\
+    \midrule
+    $\mathcal{K}_{conv}$ & Convolution filter kernels\\
+    \midrule
+    $\mathcal{B}_{conv}$ & Convolution bias value vector\\
+    \midrule
+    $\mathcal{K}_{pool}$ & Pooling filter kernel\\
+    \midrule
+    $H_{k},W_{k}$ & Height and width of filter kernel\\
+    \midrule
+    $S (S_x,S_y)$ & Filter kernel or occlusion patch striding amount ($S_x$ and $S_y$ corresponds to width and height dimensions)\\
+    \midrule
+    $P (P_x,P_y)$ & Padding amount ($P_x$ and $P_y$ corresponds to padding along width and height dimensions)\\
+    \midrule
+    $Q (Q_{inc})$ & Total FLOPS count with full (incremental) inference\\
+    \midrule
+    $R$ & Redundancy ratio\\
+    \midrule
+    $\mathcal{P}$ & Occluding patch\\
+    \midrule
+    $\mathcal{I}^{x,y}_{img}$ & Modified image by superimposing $\mathcal{P}$ on top of $\mathcal{I}_{img}$ such that the top left corner of $\mathcal{P}$ is positioned at $x,y$ location of $\mathcal{I}_{img}$\\
+    \midrule
+    $M$ & Heat map produced by the occlusion experiment\\
+    \midrule
+    $H_M,W_M$ & Height and width of $M$\\
+    \midrule
+    $f$ & Fine-tuned CNN\\
+    \midrule
+    $L$ & Class label predicted by $f$ for the original image $\mathcal{I}_{img}$\\
+    \bottomrule
+  \end{tabular}}
+\label{table:preliminaries_symbols}
+\vspace{-2mm}
+\end{table}
+
+
 \vspace{2mm}
 \noindent \textbf{Transformations that operate on a local spatial context.} The two types of transformations that operate on a local spatial context in a deep CNN are convolution and max pooling layers. Convolution layers are the most important type of layer in a CNN architecture that also contributes to most of the computational cost. Each convolutional layer can have several (say $C_{out}$) three dimensional filter kernels organized into a four dimensional array $\mathcal{K}_{conv}$ with each having a smaller spatial width $W_k$ and height $H_k$ compared to the width $W_{in}$ and height $H_{in}$ of the input volume $\mathcal{I}$, but has the same depth $C_{in}$. During inference, each filter kernel is slided along the width and height dimensions of the input and a two dimensional activation map is produced by taking element-wise product between the kernel and the input and adding a bias value $\mathcal{B}[c]$ for some c $\in$ $[0, C_{out}-1]$. These two dimensional activation maps are then stacked together along the depth dimension to produce an output volume $\mathcal{O}$ having the dimensions of ($C_{out}$,$H_{out}$,$W_{out}$). This can be formally defined as follows:
 
@@ -89,6 +138,7 @@ Q_{inc} =&~ \sum_{l \in L} Q^l_{inc}\\
 R =&~ \frac{Q}{Q_{inc}}
 \end{align}
 
+
 \subsection{Estimating the Quality of Generated Approximate Heat Maps}
 
 When applying approximate inference optimizations, \system~ sacrifices the the accuracy of the generated heat map in favor of lesser runtime.
@@ -103,14 +153,14 @@ For more details on SSIM Index method, we refer the reader to the original SSIM 
 
 \subsection{Problem Statement and Assumptions}
 
-We are given a fine-tuned CNN $f$, an image $\mathcal{I}_{img}$ on which the occlusion experiment needs to be run, the predicted class label $L$ for the image $\mathcal{I}_{img}$, an occluding patch $\mathcal{P}$ in RGB format, and patch striding amount $S_{patch}$ which will be used to move the occlusion patch on the image at a time in horizontal or vertical direction. The occlusion experiment workload is to generate a 2D heat map $M$ where each individual value in $M$ corresponds to the predicted probability for $L$ by $f$ when $\mathcal{P}$ is superimposed on $\mathcal{I}_{img}$ corresponding to the position of that particular value. More precisely, we can state the workload using the following set of logical statements:
+We are given a fine-tuned CNN $f$, an image $\mathcal{I}_{img}$ on which the occlusion experiment needs to be run, the predicted class label $L$ for the image $\mathcal{I}_{img}$, an occluding patch $\mathcal{P}$ in RGB format, and patch striding amounts $S_{x}$ and $S_{y}$ which will be used to move the occlusion patch on the image at a time in horizontal and vertical direction. The occlusion experiment workload is to generate a 2D heat map $M$ where each individual value in $M$ corresponds to the predicted probability for $L$ by $f$ when $\mathcal{P}$ is superimposed on $\mathcal{I}_{img}$ corresponding to the position of that particular value. More precisely, we can state the workload using the following set of logical statements:
 
 
 \begin{align}
 \label{eqn:mheight}
-H_M =&~ \lfloor(\texttt{height}(\mathcal{I}_{img}) - \texttt{height}(\mathcal{P}) + 1)/S_{patch}\rfloor\\
+W_M =&~ \lfloor(\texttt{width}(\mathcal{I}_{img}) - \texttt{width}(\mathcal{P}) + 1)/S_{x}\rfloor\\
 \label{eqn:mwidth}
-W_M =&~ \lfloor(\texttt{width}(\mathcal{I}_{img}) - \texttt{width}(\mathcal{P}) + 1)/S_{patch}\rfloor\\
+H_M =&~ \lfloor(\texttt{height}(\mathcal{I}_{img}) - \texttt{height}(\mathcal{P}) + 1)/S_{y}\rfloor\\
 M \in&~ \mathcal{\rm I\!R}^{H_M \times W_M}\\
 \forall~ x,y \in&~ H_M \times W_M:\\
 \label{eqn:patchimpose}
