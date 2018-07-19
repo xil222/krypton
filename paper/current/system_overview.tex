@@ -9,7 +9,6 @@ For example an RGB input image of 224$\times$224 spatial size can be considered 
 \begin{figure*}[t]
 \includegraphics[width=\textwidth]{images/cnn_simplified}
 \caption{Simplified representation of selected layers of a Deep CNN.}
-
 \end{figure*}
 
 \begin{itemize}
@@ -58,6 +57,8 @@ With incremental spatial updates in the input, both types of transformations tha
     \midrule
     $Q (Q_{inc})$ & Total FLOPS count with full (incremental) inference\\
     \midrule
+    $L$ & Set of convolution layers in a CNN\\
+    \midrule
     $R$ & Redundancy ratio\\
     \midrule
     $\mathcal{P}$ & Occluding patch\\
@@ -70,7 +71,7 @@ With incremental spatial updates in the input, both types of transformations tha
     \midrule
     $f$ & Fine-tuned CNN\\
     \midrule
-    $L$ & Class label predicted by $f$ for the original image $\mathcal{I}_{img}$\\
+    $C$ & Class label predicted by $f$ for the original image $\mathcal{I}_{img}$\\
     \bottomrule
   \end{tabular}}
 \label{table:preliminaries_symbols}
@@ -123,7 +124,7 @@ Deep CNNs are highly compute intensive and out of the different types of layers,
 
 For example, applying a convolution filter having the dimensions of ($C^l_{in}$, $H^l_{k}$, $W^l_{k}$) to a single spatial context will require $C^l_{in} \times H^l_{k} \times W^l_{k}$ many FLOPs, each corresponding to a single element-wise multiplication. Thus, the total amount of computations $Q_l$ required by that layer in order to produce an output $\mathcal{O}$ having dimensions $C^l_{out} \times H^l_{out} \times W^l_{out}$, and the total amount of computations $Q$ required to process the entire set of convolution layers $L$ in the CNN can be calculated as per equation.~\ref{eqn:full_local} and equation.~\ref{eqn:full_all}. However, in the case incremental updates effectively only a smaller spatial patch having a width $W^l_p$ ($W^l_p<=W^l_{out}$) and height $H^l_p$ ($H^l_p<=H^l_{out}$) is needed to be recomputed. The amount of computations required for the incremental computation $Q^l_{inc}$ and total amount of incremental computations $Q_{inc}$ required for the entire set of convolution layers $L$ will be smaller than the above full computation values and can be calculated as per equation.~\ref{eqn:inc_local} and equation.~\ref{eqn:inc_all}.
 
-Based on the above quantities we define a new metric named \textbf{redundancy ratio} $R$, which is the ratio between total full computational cost $Q$ and total incremental computation cost $Q_{inc}$ (see equation.~\ref{eqn:redundancy_ratio}). This ratio essentially acts as a surrogate for the theoretical upper-bound for computational and runtime savings that can be achieved by applying incremental computations to deep CNNs.
+Based on the above quantities we define a new metric named \textbf{redundancy ratio} $R$, which is the ratio between total full computational cost $Q$ and total incremental computation cost $Q_{inc}$ (see equation.~\ref{eqn:redundancy_ratio}). This ratio essentially acts as a surrogate for the theoretical upper-bound for computational and runtime savings that can be achieved by applying incremental computations to deep CNNs. Figure \ref{fig:redundancy_ratio} shows how the maximum attainable redundancy ratio changes for popular CNN architectures when a square occlusion patch of different sizes is placed on the center\footnote{If the occlusion patch is placed towards to a corner of the input image the redundancy ratio will be slightly higher. But placing the occlusion on the center gives us a worst case estimate.} of the input image. VGG 16 layer version results in the maximum redundancy ratio and Inception V3 model has the lowest redundancy ratio. Most CNN architectures results in a redundancy ratio between 2-3 except VGG 16, VGG 19, and Squeezenet 1.0 CNNs which results in higher redundancy ratios. The attainable redundancy ratio of a CNN is determined by the aspects of it's internal architecture such as the size of the filter kernels and the filter stride values.
 
 \begin{align}
 \label{eqn:full_local}
@@ -137,6 +138,12 @@ Q_{inc} =&~ \sum_{l \in L} Q^l_{inc}\\
 \label{eqn:redundancy_ratio}
 R =&~ \frac{Q}{Q_{inc}}
 \end{align}
+
+\begin{figure}[t]
+\includegraphics[width=\columnwidth]{images/redundancy_ratio}
+\caption{Maximum attainable redundancy ratios of popular CNN architectures when a square occlusion patch of different sizes is placed on the center of the image.}
+\label{fig:redundancy_ratio}
+\end{figure}
 
 
 \subsection{Estimating the Quality of Generated Approximate Heat Maps}
@@ -153,7 +160,7 @@ For more details on SSIM Index method, we refer the reader to the original SSIM 
 
 \subsection{Problem Statement and Assumptions}
 
-We are given a fine-tuned CNN $f$, an image $\mathcal{I}_{img}$ on which the occlusion experiment needs to be run, the predicted class label $L$ for the image $\mathcal{I}_{img}$, an occluding patch $\mathcal{P}$ in RGB format, and patch striding amounts $S_{x}$ and $S_{y}$ which will be used to move the occlusion patch on the image at a time in horizontal and vertical direction. The occlusion experiment workload is to generate a 2D heat map $M$ where each individual value in $M$ corresponds to the predicted probability for $L$ by $f$ when $\mathcal{P}$ is superimposed on $\mathcal{I}_{img}$ corresponding to the position of that particular value. More precisely, we can state the workload using the following set of logical statements:
+We are given a fine-tuned CNN $f$, an image $\mathcal{I}_{img}$ on which the occlusion experiment needs to be run, the predicted class label $C$ for the image $\mathcal{I}_{img}$, an occluding patch $\mathcal{P}$ in RGB format, and patch striding amounts $S_{x}$ and $S_{y}$ which will be used to move the occlusion patch on the image at a time in horizontal and vertical directions. The occlusion experiment workload is to generate a 2D heat map $M$ where each individual value in $M$ corresponds to the predicted probability for $C$ by $f$ when $\mathcal{P}$ is superimposed on $\mathcal{I}_{img}$ corresponding to the position of that particular value. More precisely, we can state the workload using the following set of logical statements:
 
 
 \begin{align}
@@ -166,12 +173,12 @@ M \in&~ \mathcal{\rm I\!R}^{H_M \times W_M}\\
 \label{eqn:patchimpose}
 & \mathcal{I}_{img}^{x,y} \leftarrow ~\mathcal{P} ~\circ_{x,y} ~ \mathcal{I}_{img}\\
 \label{eqn:outputval}
-& M[x,y] \leftarrow f(\mathcal{I}_{img}^{x,y},L)
+& M[x,y] \leftarrow f(\mathcal{I}_{img}^{x,y},C)
 \end{align}
 
-Step (\ref{eqn:mheight}), and (\ref{eqn:mwidth}) calculates the dimensions of the generated heat map $M$ which is dependent upon the dimensions of $\mathcal{I}_{img}$, $P$, and the value $S_{patch}$.
+Step (\ref{eqn:mheight}), and (\ref{eqn:mwidth}) calculates the dimensions of the generated heat map $M$ which is dependent on the dimensions of $\mathcal{I}_{img}$, $P$, and the values of $S_{x}$ and $S_{y}$.
 Step (\ref{eqn:patchimpose}) superimposes $\mathcal{P}$ on $\mathcal{I}_{img}$ with its top left corner placed on the (x,y) location of $\mathcal{I}_{img}$.
-Step (\ref{eqn:outputval}) calculates the output value at the (x,y) location by performing CNN inference for $\mathcal{I}_{img}^{x,y}$ using $f$ and taking the predicted probability for the label $L$.
+Step (\ref{eqn:outputval}) calculates the output value at the (x,y) location by performing CNN inference for $\mathcal{I}_{img}^{x,y}$ using $f$ and taking the predicted probability for the label $C$.
 
 We make few simplifying assumptions in this paper for tractability sake.
 First we assume that $f$ is a fine-tuned CNN from a roaster of well-known CNNs (currently, VGG, ResNet, and Inception).
