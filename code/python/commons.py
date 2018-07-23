@@ -39,7 +39,7 @@ def full_inference_e2e(model, file_path, patch_size, stride, logit_index, batch_
     if loader == None:
         loader = transforms.Compose([transforms.Resize([image_size, image_size]), transforms.ToTensor()])
     orig_image = Image.open(file_path).convert('RGB')
-    orig_image = Variable(loader(orig_image).unsqueeze(0), volatile=True)
+    orig_image = Variable(loader(orig_image).unsqueeze(0))
      
     if gpu:
         orig_image = orig_image.cuda()

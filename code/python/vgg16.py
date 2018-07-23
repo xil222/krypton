@@ -477,7 +477,7 @@ class VGG16(nn.Module):
         else:
             tensor = torch.FloatTensor(batch_size, channels, *self.__get_output_shape(p_height, p_width, k_size, stride, in_size, out_size, truncate))
             if self.gpu:
-                tensor = tensor.gpu()
+                tensor = tensor.cuda()
             self.tensor_cache[name] = tensor
             return tensor
 
