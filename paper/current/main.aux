@@ -14,8 +14,7 @@
 \fi}
 \global\let\hyper@last\relax 
 \gdef\HyperFirstAtBeginDocument#1{#1}
-\providecommand\HyField@AuxAddToFields[1]{}
-\providecommand\HyField@AuxAddToCoFields[2]{}
+\providecommand*\HyPL@Entry[1]{}
 \citation{alexnet,vggnet,resnet,inception}
 \citation{imagenet}
 \citation{transfer-learning-factors}
@@ -26,6 +25,7 @@
 \citation{radiologistshortage}
 \citation{jung2017deep}
 \citation{zeiler2014visualizing}
+\HyPL@Entry{0<</S/D>>}
 \@writefile{toc}{\contentsline {section}{Abstract}{1}{section*.1}}
 \@writefile{toc}{\contentsline {section}{\numberline {1}Introduction}{1}{section.1}}
 \@writefile{lof}{\contentsline {figure}{\numberline {1}{\ignorespaces (A) Simplified representation depicting how OCT images are used for predicting Diabetic Retinopathy using CNNs. (B) Occluding parts of the OCT image changes the predicted probability for the disease. (C) By systematically moving patch along vertical and horizontal axes an output heat map is generated where each individual value corresponds to the predicted disease probability when the occlusion patch was placed on that position.\relax }}{1}{figure.caption.3}}
@@ -44,26 +44,26 @@
 \citation{zintgraf2017visualizing}
 \@writefile{toc}{\contentsline {section}{\numberline {3}Preliminaries and Overview}{3}{section.3}}
 \newlabel{sec:preliminaries}{{3}{3}{Preliminaries and Overview}{section.3}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {3.1}Deep CNN Internals}{3}{subsection.3.1}}
-\@writefile{lof}{\contentsline {figure}{\numberline {2}{\ignorespaces Simplified representation of selected layers of a Deep CNN.\relax }}{4}{figure.caption.4}}
-\@writefile{lot}{\contentsline {table}{\numberline {1}{\ignorespaces Symbols used in the Preliminaries Section\relax }}{4}{table.caption.5}}
-\newlabel{table:preliminaries_symbols}{{1}{4}{Symbols used in the Preliminaries Section\relax }{table.caption.5}{}}
-\newlabel{eqn:conv_operator}{{5}{4}{Deep CNN Internals}{equation.3.5}{}}
-\newlabel{eqn:pool_operator}{{7}{4}{Deep CNN Internals}{equation.3.7}{}}
-\citation{wang2004image}
-\citation{wang2004image}
+\@writefile{lot}{\contentsline {table}{\numberline {1}{\ignorespaces Symbols used in the Preliminaries Section\relax }}{3}{table.caption.4}}
+\newlabel{table:preliminaries_symbols}{{1}{3}{Symbols used in the Preliminaries Section\relax }{table.caption.4}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.1}Problem Statement and Assumptions}{3}{subsection.3.1}}
+\newlabel{eqn:mheight}{{1}{3}{Problem Statement and Assumptions}{equation.3.1}{}}
+\newlabel{eqn:mwidth}{{2}{3}{Problem Statement and Assumptions}{equation.3.2}{}}
+\newlabel{eqn:patchimpose}{{5}{3}{Problem Statement and Assumptions}{equation.3.5}{}}
+\newlabel{eqn:outputval}{{6}{3}{Problem Statement and Assumptions}{equation.3.6}{}}
 \citation{caffemodelzoo,tfmodelzoo}
-\newlabel{eqn:full_local}{{10}{5}{Deep CNN Internals}{equation.3.10}{}}
-\newlabel{eqn:full_all}{{11}{5}{Deep CNN Internals}{equation.3.11}{}}
-\newlabel{eqn:inc_local}{{12}{5}{Deep CNN Internals}{equation.3.12}{}}
-\newlabel{eqn:inc_all}{{13}{5}{Deep CNN Internals}{equation.3.13}{}}
-\newlabel{eqn:redundancy_ratio}{{14}{5}{Deep CNN Internals}{equation.3.14}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {3.2}Estimating the Quality of Generated Approximate Heat Maps}{5}{subsection.3.2}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {3.3}Problem Statement and Assumptions}{5}{subsection.3.3}}
-\newlabel{eqn:mheight}{{15}{5}{Problem Statement and Assumptions}{equation.3.15}{}}
-\newlabel{eqn:mwidth}{{16}{5}{Problem Statement and Assumptions}{equation.3.16}{}}
-\newlabel{eqn:patchimpose}{{19}{5}{Problem Statement and Assumptions}{equation.3.19}{}}
-\newlabel{eqn:outputval}{{20}{5}{Problem Statement and Assumptions}{equation.3.20}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.2}Deep CNN Internals}{4}{subsection.3.2}}
+\newlabel{eqn:conv_operator}{{11}{4}{Deep CNN Internals}{equation.3.11}{}}
+\newlabel{eqn:pool_operator}{{13}{4}{Deep CNN Internals}{equation.3.13}{}}
+\citation{wang2004image}
+\citation{wang2004image}
+\@writefile{lof}{\contentsline {figure}{\numberline {2}{\ignorespaces Simplified representation of selected layers of a Deep CNN.\relax }}{5}{figure.caption.5}}
+\newlabel{eqn:full_local}{{16}{5}{Deep CNN Internals}{equation.3.16}{}}
+\newlabel{eqn:full_all}{{17}{5}{Deep CNN Internals}{equation.3.17}{}}
+\newlabel{eqn:inc_local}{{18}{5}{Deep CNN Internals}{equation.3.18}{}}
+\newlabel{eqn:inc_all}{{19}{5}{Deep CNN Internals}{equation.3.19}{}}
+\newlabel{eqn:redundancy_ratio}{{20}{5}{Deep CNN Internals}{equation.3.20}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.3}Estimating the Quality of Generated Approximate Heat Maps}{5}{subsection.3.3}}
 \bibstyle{unsrt}
 \bibdata{main}
 \bibcite{alexnet}{{1}{}{{}}{{}}}
@@ -84,9 +84,9 @@
 \bibcite{mobilenets}{{16}{}{{}}{{}}}
 \bibcite{miller2017explanation}{{17}{}{{}}{{}}}
 \bibcite{zintgraf2017visualizing}{{18}{}{{}}{{}}}
-\bibcite{wang2004image}{{19}{}{{}}{{}}}
-\bibcite{caffemodelzoo}{{20}{}{{}}{{}}}
-\bibcite{tfmodelzoo}{{21}{}{{}}{{}}}
+\bibcite{caffemodelzoo}{{19}{}{{}}{{}}}
+\bibcite{tfmodelzoo}{{20}{}{{}}{{}}}
+\bibcite{wang2004image}{{21}{}{{}}{{}}}
 \newlabel{tocindent-1}{0pt}
 \newlabel{tocindent0}{0pt}
 \newlabel{tocindent1}{6.25499pt}
