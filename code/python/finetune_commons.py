@@ -28,7 +28,7 @@ def ft_train_model(model, criterion, optimizer, dataloaders,device, dataset_size
         print('-' * 10)
 
         # Each epoch has a training and validation phase
-        for phase in ['train', 'test']:
+        for phase in ['train', 'validation']:
             if phase == 'train':
                 model.train()  # Set model to training mode
             else:
@@ -68,16 +68,15 @@ def ft_train_model(model, criterion, optimizer, dataloaders,device, dataset_size
                 phase, epoch_loss, epoch_acc))
 
             # deep copy the model
-            if phase == 'test' and epoch_acc > best_acc:
+            if phase == 'validation' and epoch_acc > best_acc:
                 best_acc = epoch_acc
                 best_model_wts = copy.deepcopy(model.state_dict())
 
-        print()
 
     time_elapsed = time.time() - since
     print('Training complete in {:.0f}m {:.0f}s'.format(
         time_elapsed // 60, time_elapsed % 60))
-    print('Best test Acc: {:4f}'.format(best_acc))
+    print('Best validation Acc: {:4f}'.format(best_acc))
 
     # load best model weights
     model.load_state_dict(best_model_wts)
@@ -91,7 +90,7 @@ def visualize_model(model, dataloaders, class_names, device, num_images=6):
     fig = plt.figure()
 
     with torch.no_grad():
-        for i, (inputs, labels) in enumerate(dataloaders['test']):
+        for i, (inputs, labels) in enumerate(dataloaders['validation']):
             inputs = inputs.to(device)
             labels = labels.to(device)
 
