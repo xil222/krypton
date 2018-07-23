@@ -24,26 +24,39 @@ class VGG16(nn.Module):
         self.tensor_cache = {}
         
         self.conv1_1_op = nn.Sequential(nn.Conv2d(3, 64, kernel_size=3, padding=1), nn.ReLU(inplace=True))
+        self.conv1_1_inc_op = nn.Sequential(nn.Conv2d(3, 64, kernel_size=3, padding=0), nn.ReLU(inplace=True))
         self.conv1_2_op = nn.Sequential(nn.Conv2d(64, 64, kernel_size=3, padding=1), nn.ReLU(inplace=True))
+        self.conv1_2_inc_op = nn.Sequential(nn.Conv2d(64, 64, kernel_size=3, padding=0), nn.ReLU(inplace=True))        
         self.pool1_op = nn.MaxPool2d(kernel_size=2, stride=2)
 
         self.conv2_1_op = nn.Sequential(nn.Conv2d(64, 128, kernel_size=3, padding=1), nn.ReLU(inplace=True))
+        self.conv2_1_inc_op = nn.Sequential(nn.Conv2d(64, 128, kernel_size=3, padding=0), nn.ReLU(inplace=True))
         self.conv2_2_op = nn.Sequential(nn.Conv2d(128, 128, kernel_size=3, padding=1), nn.ReLU(inplace=True))
+        self.conv2_2_inc_op = nn.Sequential(nn.Conv2d(128, 128, kernel_size=3, padding=0), nn.ReLU(inplace=True))
         self.pool2_op = nn.MaxPool2d(kernel_size=2, stride=2)
 
         self.conv3_1_op = nn.Sequential(nn.Conv2d(128, 256, kernel_size=3, padding=1), nn.ReLU(inplace=True))
+        self.conv3_1_inc_op = nn.Sequential(nn.Conv2d(128, 256, kernel_size=3, padding=0), nn.ReLU(inplace=True))
         self.conv3_2_op = nn.Sequential(nn.Conv2d(256, 256, kernel_size=3, padding=1), nn.ReLU(inplace=True))
+        self.conv3_2_inc_op = nn.Sequential(nn.Conv2d(256, 256, kernel_size=3, padding=0), nn.ReLU(inplace=True))
         self.conv3_3_op = nn.Sequential(nn.Conv2d(256, 256, kernel_size=3, padding=1), nn.ReLU(inplace=True))
+        self.conv3_3_inc_op = nn.Sequential(nn.Conv2d(256, 256, kernel_size=3, padding=0), nn.ReLU(inplace=True))
         self.pool3_op = nn.MaxPool2d(kernel_size=2, stride=2)
 
         self.conv4_1_op = nn.Sequential(nn.Conv2d(256, 512, kernel_size=3, padding=1), nn.ReLU(inplace=True))
+        self.conv4_1_inc_op = nn.Sequential(nn.Conv2d(256, 512, kernel_size=3, padding=0), nn.ReLU(inplace=True))
         self.conv4_2_op = nn.Sequential(nn.Conv2d(512, 512, kernel_size=3, padding=1), nn.ReLU(inplace=True))
+        self.conv4_2_inc_op = nn.Sequential(nn.Conv2d(512, 512, kernel_size=3, padding=0), nn.ReLU(inplace=True))
         self.conv4_3_op = nn.Sequential(nn.Conv2d(512, 512, kernel_size=3, padding=1), nn.ReLU(inplace=True))
+        self.conv4_3_inc_op = nn.Sequential(nn.Conv2d(512, 512, kernel_size=3, padding=0), nn.ReLU(inplace=True))
         self.pool4_op = nn.MaxPool2d(kernel_size=2, stride=2)
 
         self.conv5_1_op = nn.Sequential(nn.Conv2d(512, 512, kernel_size=3, padding=1), nn.ReLU(inplace=True))
+        self.conv5_1_inc_op = nn.Sequential(nn.Conv2d(512, 512, kernel_size=3, padding=0), nn.ReLU(inplace=True))
         self.conv5_2_op = nn.Sequential(nn.Conv2d(512, 512, kernel_size=3, padding=1), nn.ReLU(inplace=True))
+        self.conv5_2_inc_op = nn.Sequential(nn.Conv2d(512, 512, kernel_size=3, padding=0), nn.ReLU(inplace=True))        
         self.conv5_3_op = nn.Sequential(nn.Conv2d(512, 512, kernel_size=3, padding=1), nn.ReLU(inplace=True))
+        self.conv5_3_inc_op = nn.Sequential(nn.Conv2d(512, 512, kernel_size=3, padding=0), nn.ReLU(inplace=True))
         self.pool5_op = nn.MaxPool2d(kernel_size=2, stride=2)
 
         self.classifier = nn.Sequential(
@@ -60,6 +73,9 @@ class VGG16(nn.Module):
         self.gpu = gpu
         self.beta = beta
 
+        #used for pytorch based impl.
+        self.cache = {}
+        
     def forward(self, x):
         return self.forward_fused(x)
 
@@ -274,7 +290,112 @@ class VGG16(nn.Module):
 
         x = x.view(x.size(0), -1)
         x = self.classifier(x)
-        return x    
+        return x
+    
+    def forward_pytorch(self, patches, locations, p_height, p_width):
+        if not self.initialized:
+            raise Exception("Not initialized...")
+        
+        image = self.image
+        beta = self.beta
+        batch_size = patches.shape[0]
+        
+        if self.gpu:
+            patches = patches.cuda()
+    
+        in_locations = locations.cpu().data.numpy().tolist()
+
+        #FIXME
+        patch_size = p_height
+          
+        layers = [
+                  self.conv1_1_inc_op, self.conv1_2_inc_op, self.pool1_op,
+                  self.conv2_1_inc_op, self.conv2_2_inc_op, self.pool2_op,
+                  self.conv3_1_inc_op, self.conv3_2_inc_op, self.conv3_3_inc_op, self.pool3_op,
+                  self.conv4_1_inc_op, self.conv4_2_inc_op, self.conv4_3_inc_op, self.pool4_op,
+                  self.conv5_1_inc_op, self.conv5_2_inc_op, self.conv5_3_inc_op, self.pool5_op
+                 ]
+        
+        premat_data = [
+                  image, self.conv1_1.data, self.conv1_2.data, self.pool1.data,
+                  self.conv2_1.data, self.conv2_2.data, self.pool2.data,
+                  self.conv3_1.data, self.conv3_2.data, self.conv3_3.data, self.pool3.data,
+                  self.conv4_1.data, self.conv4_2.data, self.conv4_3.data, self.pool4.data,
+                  self.conv5_1.data, self.conv5_2.data, self.conv5_3.data
+                ]
+        
+        C = [3, 64, 64, 64, 128, 128, 128, 256, 256, 256, 256, 512, 512, 512, 512, 512, 512, 512]
+        sizes = [224, 224, 112, 112, 112, 56, 56, 56, 56, 28, 28, 28, 28, 14, 14, 14, 14, 7]
+        S = [1, 1, 2, 1, 1, 2, 1, 1, 1, 2, 1, 1, 1, 2, 1, 1, 1, 2]
+        P = [1, 1, 0, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0]
+        K = [3, 3, 2, 3, 3, 2, 3, 3, 3, 2, 3, 3, 3, 2, 3, 3, 3, 2]
+
+        prev_size = 224
+        for layer, data, c, size, s, p, k in zip(layers, premat_data, C, sizes, S, P, K):
+            out_p_size = int(min(math.ceil((patch_size + k - 1.0)/s), size))
+    
+            patch_growing = True
+            if out_p_size > round(size*beta):
+                out_p_size = int(round(size*beta))
+                    
+                patch_growing = False
+            
+            in_p_size = k + (out_p_size-1)*s
+            out_locations = self.__get_output_locations(in_locations, out_p_size, s, p, k, prev_size, size, patch_growing)
+            if layer in self.cache:
+                x = self.cache[layer].fill_(0.0)
+            else:
+                x = torch.FloatTensor(batch_size, c, in_p_size, in_p_size).fill_(0.0)
+                self.cache[layer] = x
+
+            if self.gpu:
+                x = x.cuda()
+            
+            for i in range(batch_size):
+                x0 = 0 if s*out_locations[i][0]-p >= 0 else -1*(s*out_locations[i][0]-p)
+                x1 = min(prev_size - s*out_locations[i][0]+p, in_p_size)
+                y0 = 0 if s*out_locations[i][1]-p >= 0 else -1*(s*out_locations[i][1]-p)
+                y1 = min(prev_size - s*out_locations[i][1]+p, in_p_size)
+    
+                temp = data[0,:,:,:].clone()
+                temp[:,in_locations[i][0]:in_locations[i][0]+patch_size,in_locations[i][1]:in_locations[i][1]+patch_size] = patches[i,:,:,:]            
+                x[i,:,x0:x1,y0:y1] = temp[:,max(s*out_locations[i][0]-p,0):max(0, s*out_locations[i][0]-p)+x1-x0,
+                     max(0, s*out_locations[i][1]-p):max(0, s*out_locations[i][1]-p)+y1-y0]
+                
+            patches = layer(x).data
+            in_locations = out_locations
+            patch_size = out_p_size
+            prev_size = size
+            
+        output = self.pool5.data.repeat(batch_size, 1, 1, 1)
+        for i, (x, y) in enumerate(out_locations):
+            output[i,:,x:x+out_p_size,y:y+out_p_size] = patches[i,:,:,:]
+        
+        x = output
+        x = x.view(x.size(0), -1)
+        x = self.classifier(x)
+        return x
+    
+    
+    def __get_output_locations(self, in_locations, out_p_size, stride, padding, ksize, in_size, out_size, patch_growing=True):
+        out_locations = []
+        
+        for x,y in in_locations:
+            if patch_growing:
+                x_out = int(max(math.ceil((padding + x - ksize + 1.0)/stride), 0))
+                y_out = int(max(math.ceil((padding + y - ksize + 1.0)/stride), 0))
+            else:
+                x_out = int(round(x*out_size/in_size))
+                y_out = int(round(y*out_size/in_size))
+            
+            if x_out + out_p_size > out_size:
+                x_out = out_size - out_p_size
+            if y_out + out_p_size > out_size:
+                y_out = out_size - out_p_size
+                
+            out_locations.append((x_out, y_out))
+            
+        return out_locations
     
     def __initialize_weights(self, gpu):
         if self.weights_data is None:
@@ -285,34 +406,60 @@ class VGG16(nn.Module):
             
         self.conv1_1_op[0].weight.data = weights_data['conv1_1_W:0']
         self.conv1_1_op[0].bias.data = weights_data['conv1_1_b:0']
+        self.conv1_1_inc_op[0].weight.data = weights_data['conv1_1_W:0']
+        self.conv1_1_inc_op[0].bias.data = weights_data['conv1_1_b:0']
         self.conv1_2_op[0].weight.data = weights_data['conv1_2_W:0']
         self.conv1_2_op[0].bias.data = weights_data['conv1_2_b:0']
+        self.conv1_2_inc_op[0].weight.data = weights_data['conv1_2_W:0']
+        self.conv1_2_inc_op[0].bias.data = weights_data['conv1_2_b:0']
 
         self.conv2_1_op[0].weight.data = weights_data['conv2_1_W:0']
         self.conv2_1_op[0].bias.data = weights_data['conv2_1_b:0']
+        self.conv2_1_inc_op[0].weight.data = weights_data['conv2_1_W:0']
+        self.conv2_1_inc_op[0].bias.data = weights_data['conv2_1_b:0']
         self.conv2_2_op[0].weight.data = weights_data['conv2_2_W:0']
         self.conv2_2_op[0].bias.data = weights_data['conv2_2_b:0']
+        self.conv2_2_inc_op[0].weight.data = weights_data['conv2_2_W:0']
+        self.conv2_2_inc_op[0].bias.data = weights_data['conv2_2_b:0']
 
         self.conv3_1_op[0].weight.data = weights_data['conv3_1_W:0']
         self.conv3_1_op[0].bias.data = weights_data['conv3_1_b:0']
+        self.conv3_1_inc_op[0].weight.data = weights_data['conv3_1_W:0']
+        self.conv3_1_inc_op[0].bias.data = weights_data['conv3_1_b:0']
         self.conv3_2_op[0].weight.data = weights_data['conv3_2_W:0']
         self.conv3_2_op[0].bias.data = weights_data['conv3_2_b:0']
+        self.conv3_2_inc_op[0].weight.data = weights_data['conv3_2_W:0']
+        self.conv3_2_inc_op[0].bias.data = weights_data['conv3_2_b:0']
         self.conv3_3_op[0].weight.data = weights_data['conv3_3_W:0']
         self.conv3_3_op[0].bias.data = weights_data['conv3_3_b:0']
+        self.conv3_3_inc_op[0].weight.data = weights_data['conv3_3_W:0']
+        self.conv3_3_inc_op[0].bias.data = weights_data['conv3_3_b:0']
 
         self.conv4_1_op[0].weight.data = weights_data['conv4_1_W:0']
         self.conv4_1_op[0].bias.data = weights_data['conv4_1_b:0']
+        self.conv4_1_inc_op[0].weight.data = weights_data['conv4_1_W:0']
+        self.conv4_1_inc_op[0].bias.data = weights_data['conv4_1_b:0']
         self.conv4_2_op[0].weight.data = weights_data['conv4_2_W:0']
         self.conv4_2_op[0].bias.data = weights_data['conv4_2_b:0']
+        self.conv4_2_inc_op[0].weight.data = weights_data['conv4_2_W:0']
+        self.conv4_2_inc_op[0].bias.data = weights_data['conv4_2_b:0']
         self.conv4_3_op[0].weight.data = weights_data['conv4_3_W:0']
         self.conv4_3_op[0].bias.data = weights_data['conv4_3_b:0']
+        self.conv4_3_inc_op[0].weight.data = weights_data['conv4_3_W:0']
+        self.conv4_3_inc_op[0].bias.data = weights_data['conv4_3_b:0']
 
         self.conv5_1_op[0].weight.data = weights_data['conv5_1_W:0']
         self.conv5_1_op[0].bias.data = weights_data['conv5_1_b:0']
+        self.conv5_1_inc_op[0].weight.data = weights_data['conv5_1_W:0']
+        self.conv5_1_inc_op[0].bias.data = weights_data['conv5_1_b:0']
         self.conv5_2_op[0].weight.data = weights_data['conv5_2_W:0']
         self.conv5_2_op[0].bias.data = weights_data['conv5_2_b:0']
+        self.conv5_2_inc_op[0].weight.data = weights_data['conv5_2_W:0']
+        self.conv5_2_inc_op[0].bias.data = weights_data['conv5_2_b:0']
         self.conv5_3_op[0].weight.data = weights_data['conv5_3_W:0']
         self.conv5_3_op[0].bias.data = weights_data['conv5_3_b:0']
+        self.conv5_3_inc_op[0].weight.data = weights_data['conv5_3_W:0']
+        self.conv5_3_inc_op[0].bias.data = weights_data['conv5_3_b:0']
 
         self.classifier[0].weight.data = weights_data['fc6_W:0']
         self.classifier[0].bias.data = weights_data['fc6_b:0']
@@ -328,7 +475,9 @@ class VGG16(nn.Module):
         if name in self.tensor_cache:
             return self.tensor_cache[name]
         else:
-            tensor = torch.FloatTensor(batch_size, channels, *self.__get_output_shape(p_height, p_width, k_size, stride, in_size, out_size, truncate)).cuda()
+            tensor = torch.FloatTensor(batch_size, channels, *self.__get_output_shape(p_height, p_width, k_size, stride, in_size, out_size, truncate))
+            if self.gpu:
+                tensor = tensor.cuda()
             self.tensor_cache[name] = tensor
             return tensor
 

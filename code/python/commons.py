@@ -35,23 +35,24 @@ def full_projection(premat_tensor, in_tensor, out_tensor, locations, p_height, p
     inc_conv_lib.full_projection(premat_tensor, in_tensor, out_tensor, locations, int(p_height), int(p_width))
 
 
-def full_inference_e2e(model, file_path, patch_size, stride, logit_index, batch_size=256, cuda=True, image_size=224, x_size=224, y_size=224):
-    loader = transforms.Compose([transforms.Resize([image_size, image_size]), transforms.ToTensor()])
-    orig_image = Image.open(file_path)
-    orig_image = Variable(loader(orig_image).unsqueeze(0), volatile=True)
+def full_inference_e2e(model, file_path, patch_size, stride, logit_index, batch_size=256, gpu=True, version='v1', image_size=224, x_size=224, y_size=224, n_labels=1000, weights_data=None, loader=None, c=0.0):
+    if loader == None:
+        loader = transforms.Compose([transforms.Resize([image_size, image_size]), transforms.ToTensor()])
+    orig_image = Image.open(file_path).convert('RGB')
+    orig_image = Variable(loader(orig_image).unsqueeze(0))
      
-    if cuda:
+    if gpu:
         orig_image = orig_image.cuda()
     
-    full_model = model(cuda)
+    full_model = model(gpu=gpu, n_labels=n_labels, weights_data=weights_data)
     full_model.eval()
 
     output_width = int(math.ceil((x_size*1.0 - patch_size) / stride))
     total_number = output_width * output_width
 
     logit_values = []
-    image_patch = torch.FloatTensor(3, patch_size, patch_size).fill_(128.0/255)
-    if cuda:
+    image_patch = torch.FloatTensor(3, patch_size, patch_size).fill_(c)
+    if gpu:
         image_patch = image_patch.cuda()
 
     for i in range(0, int(math.ceil(total_number * 1.0 / batch_size))):
@@ -66,24 +67,27 @@ def full_inference_e2e(model, file_path, patch_size, stride, logit_index, batch_
             x,y=int(x),int(y)
             images_batch[idx, :, x:x + patch_size, y:y + patch_size] = image_patch
 
-        x = full_model.forward_fused(images_batch)
+        if version == 'v1':
+            x = full_model.forward_fused(images_batch)
+        else:
+            x = full_model.forward_pytorch(images_batch)
+            
         logit_values.extend(x.cpu().data.numpy()[:, logit_index].flatten().tolist())
 
     x = np.array(logit_values).reshape(output_width, output_width)
-    xmax, xmin = x.max(), x.min()
-    x = 1 - (x - xmin)/(xmax - xmin)
     
     return x
 
 
 def inc_inference_e2e(model, file_path, patch_size, stride, logit_index, batch_size=64, beta=1.0, x0=0, y0=0, image_size=224,
-                      x_size=224, y_size=224, cuda=True, normalize=True):
+                      x_size=224, y_size=224, gpu=True, version='v1', n_labels=1000, weights_data=None, loader=None, c=0.0):
 
-    loader = transforms.Compose([transforms.Resize([image_size, image_size]), transforms.ToTensor()])
-    orig_image = Image.open(file_path)
+    if loader == None:
+        loader = transforms.Compose([transforms.Resize([image_size, image_size]), transforms.ToTensor()])
+    orig_image = Image.open(file_path).convert('RGB')
     orig_image = loader(orig_image).unsqueeze(0)
 
-    if cuda:
+    if gpu:
         orig_image = orig_image.cuda()
 
     x_output_width = int(math.ceil((x_size*1.0 - patch_size) / stride))
@@ -91,14 +95,13 @@ def inc_inference_e2e(model, file_path, patch_size, stride, logit_index, batch_s
 
     total_number = x_output_width * y_output_width
     logit_values = np.zeros((x_output_width, y_output_width), dtype=np.float32)
-    image_patches = torch.cuda.FloatTensor(3, patch_size, patch_size).fill_(128.0/255).repeat(batch_size, 1, 1, 1)
-    if cuda:
-        image_patches = image_patches.cuda()
-        
+
+    image_patches = torch.FloatTensor(3, patch_size, patch_size).fill_(c).repeat(batch_size, 1, 1, 1)
+    
     patch_positions = __generate_positions(x_output_width, y_output_width)
     
     num_batches = int(math.ceil(total_number * 1.0 / batch_size))
-    inc_model = model(beta=beta)
+    inc_model = model(beta=beta, gpu=gpu, n_labels=n_labels, weights_data=weights_data)
     inc_model.forward_materialized(orig_image)
  
     locations = torch.zeros([batch_size, 2], dtype=torch.int32)
@@ -116,9 +119,11 @@ def inc_inference_e2e(model, file_path, patch_size, stride, logit_index, batch_s
             locations[j, 0] = x
             locations[j, 1] = y
 
-        locations_final = locations
-        if cuda: locations_final = locations_final.cuda()
-        logits = inc_model.forward_gpu(image_patches, locations_final, p_height=patch_size, p_width=patch_size)
+        if version == 'v1':
+            logits = inc_model.forward_gpu(image_patches, locations, p_height=patch_size, p_width=patch_size)
+        else:
+            logits = inc_model.forward_pytorch(image_patches, locations, p_height=patch_size, p_width=patch_size)
+            
         logits = logits.cpu().data.numpy()[:, logit_index].flatten().tolist()
 
         for logit, j in zip(logits, range(batch_size)):
@@ -131,21 +136,16 @@ def inc_inference_e2e(model, file_path, patch_size, stride, logit_index, batch_s
     del inc_model
     gc.collect()
 
-    x = logit_values
-    if normalize:
-        xmax, xmin = x.max(), x.min()
-        x = 1 - (x - xmin)/(xmax - xmin)
-    
-    return x
+    return logit_values
 
 
 
-def adaptive_drilldown(model, file_path, patch_size, stride, logit_index, batch_size=128, image_size=224, beta=1.0, percentile=75):
+def adaptive_drilldown(model, file_path, patch_size, stride, logit_index, batch_size=128, image_size=224, beta=1.0, percentile=75, gpu=True, version='v1', n_labels=1000, weights_data=None, loader=None):
     final_out_width = int(math.ceil((image_size*1.0-patch_size)/stride))
     #checking for interested regions
     temp1 = inc_inference_e2e(model, file_path, max(16, patch_size), max(8, patch_size/2), logit_index,
                                     batch_size=batch_size, beta=beta, image_size=image_size, x_size=image_size,
-                              y_size=image_size, normalize=False)
+                              y_size=image_size, gpu=gpu, version=version, n_labels=n_labels, weights_data=weights_data, loader=loader)
     temp1 = cv2.resize(temp1, (final_out_width, final_out_width))
     
     threshold = np.percentile(temp1, percentile)
@@ -159,32 +159,34 @@ def adaptive_drilldown(model, file_path, patch_size, stride, logit_index, batch_
     #drilldown into interested regions
     temp2 = inc_inference_e2e(model, file_path, patch_size, stride, logit_index,
                                     batch_size=batch_size, beta=beta, x0=x0, y0=y0, image_size=image_size,
-                              x_size=x_size, y_size=y_size, normalize=False)
+                              x_size=x_size, y_size=y_size, gpu=gpu, version=version,
+                              n_labels=n_labels, weights_data=weights_data, loader=loader)
 
     temp1[int(x0/stride):int(x1/stride),int(y0/stride):int(y1/stride)] = temp2
 
     #optional gaussian filter
     #temp1 = ndimage.gaussian_filter(temp1, sigma=.75)
     
-    x = temp1
-    xmax, xmin = x.max(), x.min()
-    x = 1 - (x - xmin)/(xmax - xmin)
-    
-    return x
+    return temp1
     
     
-def generate_heatmap(image_file_path, x, show=True, label=""):
-    xmax, xmin = x.max(), x.min()
-    x = (x - xmin)/(xmax - xmin)
+def generate_heatmap(image_file_path, x, show=True, label="", width=224):
 
-    img = Image.open(image_file_path)
+    img = Image.open(image_file_path).convert('RGB')
+    img = img.resize((width,width), Image.ANTIALIAS)
 
+    stride = int(math.floor(1.0*np.asarray(img).shape[0]/x.shape[0]))
+    start = int((width - stride*x.shape[0])//2)
+    img = Image.fromarray(np.asarray(img)[start:start+x.shape[0]*stride,start:start+x.shape[0]*stride,:])
+    
     if show:
         fig, axes = plt.subplots(nrows=1, ncols=2)
         fig.suptitle("Predicted Class: " + label, fontsize=12, y=0.9)
         axes[0].imshow(img, extent=(0,1,0,1))
         axes[1].imshow(img, extent=(0,1,0,1))
-        im = axes[1].imshow(x, cmap=plt.cm.jet, alpha=.7, interpolation='bilinear', extent=(0,1,0,1))
+        #accounting for outliers
+        #vmin, vmax = np.percentile(x, 25),np.percentile(x, 75)
+        im = axes[1].imshow(x, cmap=plt.cm.jet_r, alpha=.7, interpolation='bilinear', extent=(0,1,0,1))
 
         fig.subplots_adjust(right=0.8)
         cbar_ax = fig.add_axes([1., 0.15, 0.02, 0.7])
@@ -200,7 +202,7 @@ def generate_heatmap(image_file_path, x, show=True, label=""):
     ax = fig.gca()
     
     ax.imshow(img, extent=(0,1,0,1))
-    ax.imshow(x, cmap=plt.cm.jet, alpha=.7, interpolation='bilinear', extent=(0,1,0,1))
+    ax.imshow(x, cmap=plt.cm.jet_r, alpha=.7, interpolation='bilinear', extent=(0,1,0,1))
     ax.axis('off')
     canvas.draw()  
     
@@ -333,9 +335,9 @@ def __recursively_save_dict_contents_to_group(h5file, path, dic):
         else:
             raise ValueError('Cannot save %s type' % type(item))
             
-def load_dict_from_hdf5(filename, cuda=True):
+def load_dict_from_hdf5(filename, gpu=True):
     with h5py.File(filename, 'r') as h5file:
-        return __recursively_load_dict_contents_from_group(h5file, '/', cuda)
+        return __recursively_load_dict_contents_from_group(h5file, '/', gpu)
 
 def __recursively_load_dict_contents_from_group(h5file, path, cuda=True):
     ans = {}
