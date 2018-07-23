@@ -14,7 +14,8 @@
 \fi}
 \global\let\hyper@last\relax 
 \gdef\HyperFirstAtBeginDocument#1{#1}
-\providecommand*\HyPL@Entry[1]{}
+\providecommand\HyField@AuxAddToFields[1]{}
+\providecommand\HyField@AuxAddToCoFields[2]{}
 \citation{alexnet,vggnet,resnet,inception}
 \citation{imagenet}
 \citation{transfer-learning-factors}
@@ -25,45 +26,45 @@
 \citation{radiologistshortage}
 \citation{jung2017deep}
 \citation{zeiler2014visualizing}
-\HyPL@Entry{0<</S/D>>}
 \@writefile{toc}{\contentsline {section}{Abstract}{1}{section*.1}}
 \@writefile{toc}{\contentsline {section}{\numberline {1}Introduction}{1}{section.1}}
-\@writefile{lof}{\contentsline {figure}{\numberline {1}{\ignorespaces (A) Simplified representation depicting how OCT images are used for predicting Diabetic Retinopathy using CNNs. (B) Occluding parts of the OCT image changes the predicted probability for the disease. (C) By systematically moving patch along vertical and horizontal axes an output heat map is generated where each individual value corresponds to the predicted disease probability when the occlusion patch was placed on that position.\relax }}{1}{figure.caption.3}}
+\@writefile{lof}{\contentsline {figure}{\numberline {1}{\ignorespaces (A) Simplified representation depicting how OCT images are used for predicting Diabetic Retinopathy using CNNs. (B) Occluding parts of the OCT image changes the predicted probability for the disease. (C) By systematically moving patch along vertical and horizontal axes an output heat map is generated where each individual value corresponds to the predicted disease probability when the occlusion patch was placed on that position.\relax }}{2}{figure.caption.3}}
 \providecommand*\caption@xref[2]{\@setref\relax\@undefined{#1}}
-\newlabel{fig:krypton_overview}{{1}{1}{(A) Simplified representation depicting how OCT images are used for predicting Diabetic Retinopathy using CNNs. (B) Occluding parts of the OCT image changes the predicted probability for the disease. (C) By systematically moving patch along vertical and horizontal axes an output heat map is generated where each individual value corresponds to the predicted disease probability when the occlusion patch was placed on that position.\relax }{figure.caption.3}{}}
+\newlabel{fig:krypton_overview}{{1}{2}{(A) Simplified representation depicting how OCT images are used for predicting Diabetic Retinopathy using CNNs. (B) Occluding parts of the OCT image changes the predicted probability for the disease. (C) By systematically moving patch along vertical and horizontal axes an output heat map is generated where each individual value corresponds to the predicted disease probability when the occlusion patch was placed on that position.\relax }{figure.caption.3}{}}
 \citation{alexnet}
 \citation{vggnet}
 \citation{inception}
 \citation{resnet}
 \citation{squeezenet}
 \citation{mobilenets}
-\@writefile{toc}{\contentsline {section}{\numberline {2}Background}{2}{section.2}}
 \citation{zeiler2014visualizing}
 \citation{miller2017explanation}
 \citation{jung2017deep}
 \citation{zintgraf2017visualizing}
+\@writefile{toc}{\contentsline {section}{\numberline {2}Background}{3}{section.2}}
 \@writefile{toc}{\contentsline {section}{\numberline {3}Preliminaries and Overview}{3}{section.3}}
 \newlabel{sec:preliminaries}{{3}{3}{Preliminaries and Overview}{section.3}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {1}{\ignorespaces Symbols used in the Preliminaries Section\relax }}{3}{table.caption.4}}
-\newlabel{table:preliminaries_symbols}{{1}{3}{Symbols used in the Preliminaries Section\relax }{table.caption.4}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {3.1}Problem Statement and Assumptions}{3}{subsection.3.1}}
-\newlabel{eqn:mheight}{{1}{3}{Problem Statement and Assumptions}{equation.3.1}{}}
-\newlabel{eqn:mwidth}{{2}{3}{Problem Statement and Assumptions}{equation.3.2}{}}
-\newlabel{eqn:patchimpose}{{5}{3}{Problem Statement and Assumptions}{equation.3.5}{}}
-\newlabel{eqn:outputval}{{6}{3}{Problem Statement and Assumptions}{equation.3.6}{}}
 \citation{caffemodelzoo,tfmodelzoo}
+\@writefile{lot}{\contentsline {table}{\numberline {1}{\ignorespaces Symbols used in the Preliminaries Section\relax }}{4}{table.caption.4}}
+\newlabel{table:preliminaries_symbols}{{1}{4}{Symbols used in the Preliminaries Section\relax }{table.caption.4}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.1}Problem Statement and Assumptions}{4}{subsection.3.1}}
+\newlabel{eqn:mheight}{{1}{4}{Problem Statement and Assumptions}{equation.3.1}{}}
+\newlabel{eqn:mwidth}{{2}{4}{Problem Statement and Assumptions}{equation.3.2}{}}
+\newlabel{eqn:patchimpose}{{5}{4}{Problem Statement and Assumptions}{equation.3.5}{}}
+\newlabel{eqn:outputval}{{6}{4}{Problem Statement and Assumptions}{equation.3.6}{}}
 \@writefile{toc}{\contentsline {subsection}{\numberline {3.2}Deep CNN Internals}{4}{subsection.3.2}}
-\newlabel{eqn:conv_operator}{{11}{4}{Deep CNN Internals}{equation.3.11}{}}
-\newlabel{eqn:pool_operator}{{13}{4}{Deep CNN Internals}{equation.3.13}{}}
-\citation{wang2004image}
-\citation{wang2004image}
 \@writefile{lof}{\contentsline {figure}{\numberline {2}{\ignorespaces Simplified representation of selected layers of a Deep CNN.\relax }}{5}{figure.caption.5}}
-\newlabel{eqn:full_local}{{16}{5}{Deep CNN Internals}{equation.3.16}{}}
-\newlabel{eqn:full_all}{{17}{5}{Deep CNN Internals}{equation.3.17}{}}
-\newlabel{eqn:inc_local}{{18}{5}{Deep CNN Internals}{equation.3.18}{}}
-\newlabel{eqn:inc_all}{{19}{5}{Deep CNN Internals}{equation.3.19}{}}
-\newlabel{eqn:redundancy_ratio}{{20}{5}{Deep CNN Internals}{equation.3.20}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {3.3}Estimating the Quality of Generated Approximate Heat Maps}{5}{subsection.3.3}}
+\newlabel{eqn:conv_operator}{{11}{5}{Deep CNN Internals}{equation.3.11}{}}
+\citation{wang2004image}
+\citation{wang2004image}
+\newlabel{eqn:pool_operator}{{13}{6}{Deep CNN Internals}{equation.3.13}{}}
+\newlabel{eqn:full_local}{{16}{6}{Deep CNN Internals}{equation.3.16}{}}
+\newlabel{eqn:full_all}{{17}{6}{Deep CNN Internals}{equation.3.17}{}}
+\newlabel{eqn:inc_local}{{18}{6}{Deep CNN Internals}{equation.3.18}{}}
+\newlabel{eqn:inc_all}{{19}{6}{Deep CNN Internals}{equation.3.19}{}}
+\newlabel{eqn:redundancy_ratio}{{20}{6}{Deep CNN Internals}{equation.3.20}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.3}Estimating the Quality of Generated Approximate Heat Maps}{6}{subsection.3.3}}
+\@writefile{toc}{\contentsline {section}{\numberline {4}Optimizations}{6}{section.4}}
 \bibstyle{unsrt}
 \bibdata{main}
 \bibcite{alexnet}{{1}{}{{}}{{}}}
@@ -73,6 +74,18 @@
 \bibcite{imagenet}{{5}{}{{}}{{}}}
 \bibcite{transfer-learning-factors}{{6}{}{{}}{{}}}
 \bibcite{kermany2018identifying}{{7}{}{{}}{{}}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.1}Incremental Inference}{7}{subsection.4.1}}
+\newlabel{sec:inc_computation}{{4.1}{7}{Incremental Inference}{subsection.4.1}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {3}{\ignorespaces Maximum attainable redundancy ratios of popular CNN architectures when a square occlusion patch of different sizes is placed on the center of the image.\relax }}{7}{figure.caption.6}}
+\newlabel{fig:redundancy_ratio}{{3}{7}{Maximum attainable redundancy ratios of popular CNN architectures when a square occlusion patch of different sizes is placed on the center of the image.\relax }{figure.caption.6}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.2}Approximate Inference}{7}{subsection.4.2}}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {4.2.1}Adaptive Drill-Down}{7}{subsubsection.4.2.1}}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {4.2.2}Patch Propagation Thresholding}{7}{subsubsection.4.2.2}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.3}System Tuning}{7}{subsection.4.3}}
+\@writefile{toc}{\contentsline {section}{\numberline {5}Experimental Evaluation}{7}{section.5}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.1}End-to-End Evaluation}{7}{subsection.5.1}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.2}Drill-Down Analysis}{7}{subsection.5.2}}
+\@writefile{toc}{\contentsline {section}{References}{7}{section*.8}}
 \bibcite{islam2017abnormality}{{8}{}{{}}{{}}}
 \bibcite{mohanty2016using}{{9}{}{{}}{{}}}
 \bibcite{arbabzadah2016identifying}{{10}{}{{}}{{}}}
@@ -90,20 +103,7 @@
 \newlabel{tocindent-1}{0pt}
 \newlabel{tocindent0}{0pt}
 \newlabel{tocindent1}{6.25499pt}
-\newlabel{tocindent2}{10.34999pt}
-\newlabel{tocindent3}{18.198pt}
+\newlabel{tocindent2}{11.49998pt}
+\newlabel{tocindent3}{20.22pt}
 \providecommand\NAT@force@numbers{}\NAT@force@numbers
-\@writefile{lof}{\contentsline {figure}{\numberline {3}{\ignorespaces Maximum attainable redundancy ratios of popular CNN architectures when a square occlusion patch of different sizes is placed on the center of the image.\relax }}{6}{figure.caption.6}}
-\newlabel{fig:redundancy_ratio}{{3}{6}{Maximum attainable redundancy ratios of popular CNN architectures when a square occlusion patch of different sizes is placed on the center of the image.\relax }{figure.caption.6}{}}
-\@writefile{toc}{\contentsline {section}{\numberline {4}Optimizations}{6}{section.4}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {4.1}Incremental Inference}{6}{subsection.4.1}}
-\newlabel{sec:inc_computation}{{4.1}{6}{Incremental Inference}{subsection.4.1}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {4.2}Approximate Inference}{6}{subsection.4.2}}
-\@writefile{toc}{\contentsline {subsubsection}{\numberline {4.2.1}Adaptive Drill-Down}{6}{subsubsection.4.2.1}}
-\@writefile{toc}{\contentsline {subsubsection}{\numberline {4.2.2}Patch Propagation Thresholding}{6}{subsubsection.4.2.2}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {4.3}System Tuning}{6}{subsection.4.3}}
-\@writefile{toc}{\contentsline {section}{\numberline {5}Experimental Evaluation}{6}{section.5}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {5.1}End-to-End Evaluation}{6}{subsection.5.1}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {5.2}Drill-Down Analysis}{6}{subsection.5.2}}
-\@writefile{toc}{\contentsline {section}{References}{6}{section*.8}}
-\newlabel{TotPages}{{6}{6}{}{page.6}{}}
+\newlabel{TotPages}{{8}{8}{}{page.8}{}}

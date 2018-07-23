@@ -148,8 +148,8 @@ The main objective of having pooling layers in CNNs is to reduce the spatial siz
 \noindent \textbf{Relationship between Input and Output Spatial Sizes.} The output volume's spatial size ($W_{out}$ and $H_{out}$) is determined by the spatial size of the input volume ($W_{out}$ and $H_{out}$), spatial size of the filter kernel ($W_k$ and $H_k$) and two other parameters: \textbf{stride} $S$ and \textbf{padding} $P$. Stride is the amount of pixel values used to slide the filter kernel at a time when producing a two dimensional activation map. It is possible to have two different values with one for the width dimension ($S_x$) and one for the height dimension ($H_x$). Sometimes in order to control the spatial size of the output activation map to be same as the input activation map, one needs to pad the input feature map with zeros around the spatial border. Padding ($P$) captures the amount of zeros that needs to be added. Similar to the stride $S$, it is possible to have two separate values for padding with one for the width dimension $P_x$ and one for the height dimension $P_y$. With these parameters defined the width and the height of the output activation volume can be defined as follows:
 
 \begin{align}
-W_{out} = (W_{in} - W_k + 2\times P_x)/S_x + 1 \\
-H_{out} = (H_{in} - H_k + 2\times P_y)/S_y + 1
+W_{out} = (W_{in} - W_k + 1 + 2\times P_x)/S_x \\
+H_{out} = (H_{in} - H_k + 1 + 2\times P_y)/S_y
 \end{align}
 
 \noindent \textbf{Estimating the Computational Cost of Deep CNNs}
