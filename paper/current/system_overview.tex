@@ -49,10 +49,11 @@ Then we formalize the internals of some of the layers in a Deep CNN for the purp
     $f$ & Fine-tuned CNN\\
     \midrule
     $C$ & Class label predicted by $f$ for the original image $\mathcal{I}_{img}$\\
+    \midrule
+    $\bm\circ_{x,y}$ & Superimposition operator. $A~\circ_{x,y}~B$, superimposes $B$ on top of $A$ starting off at $(x,y)$ position\\
     \bottomrule
   \end{tabular}}
 \label{table:preliminaries_symbols}
-\vspace{-2mm}
 \end{table}
 
 
@@ -67,7 +68,7 @@ H_M =&~ \lfloor(\texttt{height}(\mathcal{I}_{img}) - \texttt{height}(\mathcal{P}
 M \in&~ \mathcal{\rm I\!R}^{H_M \times W_M}\\
 \forall~ x,y \in&~ [0, H_M] \times [0, W_M]:\\
 \label{eqn:patchimpose}
-& \mathcal{I}_{img}^{x,y} \leftarrow ~\mathcal{P} ~\circ_{x,y} ~ \mathcal{I}_{img}\\
+& \mathcal{I}_{img}^{x,y} \leftarrow ~\mathcal{P} ~ \bm\circ_{x,y} ~ \mathcal{I}_{img}\\
 \label{eqn:outputval}
 & M[x,y] \leftarrow f(\mathcal{I}_{img}^{x,y},C)
 \end{align}
@@ -91,7 +92,7 @@ For example an RGB input image of 224$\times$224 spatial size can be considered 
 
 \begin{figure*}[t]
 \includegraphics[width=\textwidth]{images/cnn_simplified}
-\caption{Simplified representation of selected layers of a Deep CNN.}
+\caption{Simplified representation of selected layers of a Deep CNN. For simplicity sake addition of bias is not shown in the Conv. transformation. The values marked in red shows how a small spatial update in the first input would propagate through subsequent transformations. Notation used is explained in Table ~\ref{table:preliminaries_symbols}.}
 \end{figure*}
 
 \begin{itemize}
@@ -115,7 +116,6 @@ With incremental spatial updates in the input, both types of transformations tha
 \vspace{2mm}
 \noindent \textbf{Transformations that operate on a local spatial context.} The two types of transformations that operate on a local spatial context in a deep CNN are convolution and max pooling layers. Convolution layers are the most important type of layer in a CNN architecture that also contributes to most of the computational cost. Each convolutional layer can have several (say $C_{out}$) three dimensional filter kernels organized into a four dimensional array $\mathcal{K}_{conv}$ with each having a smaller spatial width $W_k$ and height $H_k$ compared to the width $W_{in}$ and height $H_{in}$ of the input volume $\mathcal{I}$, but has the same depth $C_{in}$. During inference, each filter kernel is slided along the width and height dimensions of the input and a two dimensional activation map is produced by taking element-wise product between the kernel and the input and adding a bias value $\mathcal{B}[c]$ for some c $\in$ $[0, C_{out}-1]$. These two dimensional activation maps are then stacked together along the depth dimension to produce an output volume $\mathcal{O}$ having the dimensions of ($C_{out}$,$H_{out}$,$W_{out}$). This can be formally defined as follows:
 
-\vspace{-2mm}
 \begin{align}
 \text{Input Volume}:&~ \mathcal{I} \in \mathcal{\rm I\!R}^{C_{in} \times H_{in} \times W_{in}}\\
 \text{Conv. Filters}:&~ \mathcal{K}_{conv} \in \mathcal{\rm I\!R}^{C_{out} \times C_{in} \times H_{k} \times W_{k}}\\
@@ -132,7 +132,6 @@ With incremental spatial updates in the input, both types of transformations tha
 
 The main objective of having pooling layers in CNNs is to reduce the spatial size of output volumes. Pooling can also be thought as a convolution operation with a fixed (i.e. not learned) two dimensional filter kernel $\mathcal{K}_{pool}$ having a width of $W_k$ and height of $H_k$, which unlike convolution, operates independently on every depth slice of the input volume. The two main variations of pooling layers are max pooling (takes the maximum value from the local spatial context) and average (takes the average value from the local spatial context) pooling. A Pooling layer takes a three dimensional activation volume $\mathcal{O}$ having a depth of $C$, width of $W_{in}$, and height of $H_{in}$ as input and produces another three dimensional activation volume $\mathcal{O}$ which has the same depth of $C$, width of $W_{out}$, and height of $H_{out}$ as the output. Pooling kernel is generally slided with more than one pixel at a time and hence $W_{out}$ and $H_{out}$ are generally smaller than $W_{in}$ and $H_{in}$. Pooling operation can be formally defined as follows:
 
-\vspace{-2mm}
 \begin{align}
 \text{Pool Filters}:&~ \mathcal{K}_{pool} \in \mathcal{\rm I\!R}^{H_{k} \times W_{k}}
 \end{align}
@@ -145,13 +144,15 @@ The main objective of having pooling layers in CNNs is to reduce the spatial siz
 \end{equation}
 
 
-\noindent \textbf{Relationship between Input and Output Spatial Sizes.} The output volume's spatial size ($W_{out}$ and $H_{out}$) is determined by the spatial size of the input volume ($W_{out}$ and $H_{out}$), spatial size of the filter kernel ($W_k$ and $H_k$) and two other parameters: \textbf{stride} $S$ and \textbf{padding} $P$. Stride is the amount of pixel values used to slide the filter kernel at a time when producing a two dimensional activation map. It is possible to have two different values with one for the width dimension ($S_x$) and one for the height dimension ($H_x$). Sometimes in order to control the spatial size of the output activation map to be same as the input activation map, one needs to pad the input feature map with zeros around the spatial border. Padding ($P$) captures the amount of zeros that needs to be added. Similar to the stride $S$, it is possible to have two separate values for padding with one for the width dimension $P_x$ and one for the height dimension $P_y$. With these parameters defined the width and the height of the output activation volume can be defined as follows:
+\vspace{2mm}
+\noindent \textbf{Relationship between Input and Output Spatial Sizes.} The output volume's spatial size ($W_{out}$ and $H_{out}$) is determined by the spatial size of the input volume ($W_{out}$ and $H_{out}$), spatial size of the filter kernel ($W_k$ and $H_k$) and two other parameters: \textbf{stride} $S$ and \textbf{padding} $P$. Stride is the amount of pixel values used to slide the filter kernel at a time when producing a two dimensional activation map. It is possible to have two different values with one for the width dimension $S_x$ and one for the height dimension $S_y$. Generally $S_x \leq W_K$ and $S_y \leq H_K$. Sometimes in order to control the spatial size of the output activation map to be same as the input activation map, one needs to pad the input feature map with zeros around the spatial border. Padding ($P$) captures the amount of zeros that needs to be added. Similar to the stride $S$, it is possible to have two separate values for padding with one for the width dimension $P_x$ and one for the height dimension $P_y$. With these parameters defined the width and the height of the output activation volume can be defined as follows:
 
 \begin{align}
 W_{out} = (W_{in} - W_k + 1 + 2\times P_x)/S_x \\
 H_{out} = (H_{in} - H_k + 1 + 2\times P_y)/S_y
 \end{align}
 
+\vspace{2mm}
 \noindent \textbf{Estimating the Computational Cost of Deep CNNs}
 Deep CNNs are highly compute intensive and out of the different types of layers, Conv layers contributes to $90\%$ (or more) of the computations. One of the widely used way to estimate the computational cost of a Deep CNN is to estimate the number of fused multiply add (FMA) floating point operations (FLOPs) required by convolution layers for a single forward inference and ignore the computational cost of other layers (e.g. Pooling, Fully-Connected).
 
