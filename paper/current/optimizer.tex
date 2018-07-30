@@ -13,7 +13,7 @@ As explained earlier, occlusion experiments in it's naive form performs many red
 In order to avoid these redundancies, layers in a CNN has to be change aware and operate in an incremental manner i.e. reuse previous computations as much as possible and compute only the required ones.
 In this section we focus on transformations that operate on a local spatial context (i.e. Convolution and Pooling) as other types either has no redundancies (global context transformations) or is trivial to make incremental (point transformations).
 The choice of CPUs vs GPUs for CNN inference also brings up new considerations for the batched implementation of these incremental transformations and we explain two version of implementations, one which is a naive implementation of batched incremental inference approach and the other a GPU optimized version.
-We also explain incremental implementations of two other linear algebra operators, input volume addition and depth-wise concatenation, which are also two popular operators seen in CNN architectures.
+We also explain incremental implementations of two other linear algebra operators, element-wise addition and depth-wise concatenation.
 
 \vspace{2mm}
 \noindent \textbf{Incremental Convolution and Pooling.}
@@ -37,6 +37,8 @@ We also explain incremental implementations of two other linear algebra operator
    	$H^R_P,W^R_P$ & Height, and width of the patch that needs to be read in for the transformation\\
    	\midrule
    	$H^O_P,W^O_P$ & Height, and width of the output patch\\
+    \midrule
+    $\tau$ & Projective field threshold\\
     \bottomrule
   \end{tabular}}
 \label{table:optimizer_symbols}
@@ -126,6 +128,7 @@ y^R_P = &~ H_{in} - H^R_P
 
 \begin{algorithm}
     \caption{Incremental Inference Algorithm}\label{euclid}
+    \label{alg:incinference}
     \begin{flushleft}
      \hspace*{4mm} \textbf{Input:} \\
      \hspace*{8mm} $T$ : \textit{Transformation}\\
@@ -148,7 +151,7 @@ y^R_P = &~ H_{in} - H^R_P
     \State \textit{Calculate} $[(x^R_{P_1},y^R_{P_1}),...,(x^R_{P_n},y^R_{P_n})]$ \textit{and} ($W^R_P,H^R_P$)
     \State \textit{Initialize} $R \in \mathcal{\rm I\!R}^{\texttt{depth}(I) \times H^R_P \times W^R_P}$
 
-    \For{\texttt{i in [1,...,n]}}
+    \For{\texttt{i in [1,...,n]}}\label{alg:line:memcpy_loop}
     	\State $t_1 \gets I[:,x^R_{P_i}:x^R_{P_i}+W^R_P,y^R_{P_i}:y^R_{P_i}+H^R_P]$ 
     	\State $t_2 \gets P_i \bm\circ_{(x^I_{P_i}-x^R_{P_i}),(y^I_{P_i}-y^R_{P_i})} t_1$
     	\State $R[i,:,:] \gets t_2$
@@ -186,7 +189,80 @@ y^R_P = &~ H_{in} - H^R_P
     \end{algorithmic}
 \end{algorithm}
 
+With all the geometric mappings defined, we now explain the complete incremental inference approach for a single transformation. Algorithm \ref{alg:incinference} presents it formally.
+The \textproc{IncrementalInference} procedure takes in the original transformation $T$, pre-materialized input for $T$ corresponding to original image, a batch of updated patches and their geometric properties as input.
+First it calculates geometric properties of the output and read-in patches.
+A temporary input volume $R$ is initialized to hold the input patches with their read-in contexts.
+The \textsc{for} loop iteratively populates $R$ with corresponding patches.
+Finally $T$ is applied on $R$ to compute the output patches.
+In a CNN which has multiple such transformations chained together, the outputs of the \textproc{IncrementalInference} procedure are fed as input again for the incremental inference of the next transformation along with the unchanged pre-materialized input corresponding to the new transformation.
+However at a local context transformation and global context transformation such as in Conv. $	\rightarrow$ Fully-Connected or Pool $\rightarrow$ Fully-Connected, full updated output has to created as per \textproc{IncrementalToFullProjection} procedure instead of propagating only the updated patches.
+
+\begin{figure}[t]
+\includegraphics[width=\columnwidth]{images/redundancy_ratio}
+\caption{Maximum attainable redundancy ratios of popular CNN architectures when a square occlusion patch of different sizes is placed on the center of the image.}
+\label{fig:redundancy_ratio}
+\end{figure}
+
+We analyze the maximum attainable redundancy ratios for popular CNN architectures when a square occlusion patch of different sizes is placed on the center\footnote{If the occlusion patch is placed towards to a corner of the input image the redundancy ratio will be slightly higher. But placing the occlusion on the center gives us a worst case estimate.} of the input image. Figure \ref{fig:redundancy_ratio} shows the results. VGG 16-layer version results in the maximum redundancy ratio and Inception V3 model has the lowest redundancy ratio. Most CNN architectures results in a redundancy ratio between 2-3 except VGG 16, VGG 19, and Squeezenet 1.0 CNNs which results in higher redundancy ratios. The attainable redundancy ratio of a CNN is determined by the aspects of it's internal architecture such as number of layers, the size of the filter kernels, and the filter stride values.
+
+
+\vspace{2mm}
+\noindent \textbf{CPU versus GPU implementation considerations.}
+Through our experiments we found that even though a straight-forward implementation of \textit{incremental inference} approach as shown in Algorithm \ref{alg:incinference} produces expected speedups for the CPU environment it performs poorly on the GPU environment.
+The for loop on the line \ref{alg:line:memcpy_loop} of Algorithm \ref{alg:incinference} is essentially preparing the input for $T$ by copying values from one part of the memory to another sequentially.
+This sequential operation becomes a bottleneck for the GPU implementation as it cannot exploit the available parallelism of the GPU effectively.
+To overcome this a custom GPU kernel which performs the input preparation more efficiently by parallelly executing the memory copying for each item in the input batch is needed.
+
+
+\vspace{2mm}
+\noindent \textbf{Element-wise addition and depth-wise concatenation.}
+Element-wise addition and depth-wise concatenation are two widely used linear algebra operators in CNNs.
+Element-wise addition operator requires the two input volumes to have the same dimensions and the depth-wise concatenation requires them to have same spatial dimensions.
+Consider a situation for these operators where the first input has incremental spatial update starting at $x^I_{P_1},y^I_{P_1}$ coordinates with dimensions of $H^I_{P_1}$ and $W^I_{P_1}$ and for the second input starting at $x^I_{P_2},y^I_{P_2}$ coordinates with dimensions of $H^I_{P_2}$ and $W^I_{P_2}$.
+Then the coordinates and the dimensions of the output and read-in patches can be expressed as follows:
+
+\begin{align}
+\label{eqn:laxcoordinate}
+x^O_P = x^R_P =&~ min(x^I_{P_1},x^I_{P_2})\\
+\label{eqn:laycoordinate}
+y^O_P = y^R_P =&~ min(y^I_{P_1},y^I_{P_2})\\
+\label{eqn:lapatchwidth}
+W^O_P = W^R_P =&~ max(x^I_{P_1}+W^I_{P1},x^I_{P_2}+W^I_{P_2})-min(x^I_{P_1},x^I_{P_2})\\
+\label{eqn:lapatchheight}
+H^O_P = H^R_P =&~ max(y^I_{P_1}+H^I_{P1},y^I_{P_2}+H^I_{P_2})-min(y^I_{P_1},y^I_{P_2})
+\end{align}
+
+
 \subsection{Projective Field Thresholding}
+
+Projective field \cite{le2017receptive, basiccnnoperations} of a CNN neuron is the local region (including the depth) of the output volume which is connected to it.
+The term is borrowed from Neuroscience field where it is used to describe the spatiotemporal effects exerted by a retinal cell on all of the outputs of the neuronal circuitry \cite{de2011projective}.
+For our work the notion of projective field is useful as it essentially determines the change propagation path for incremental changes.
+The three types of transformations affects the size of the projective field differently. Point transformations does not change of the projective field size while global context transformations increases it to the maximum and local context transformations increase it gradually.
+The amount of increase in a local context transformation is determined the filter size and stride parameters. At every transformation the size of the projective field will increase linearly by the filter size and multiplicative by the stride value.
+
+\begin{figure}[t]
+\includegraphics[width=\columnwidth]{images/pf_truncate}
+\caption{(a) One dimensional convolution demonstrating projective field growth (filter size = 2, stride = 1). (b) Projective field thresholding with $\tau = 5/7$. Histograms denote the number of unique change propagation paths.}
+\label{fig:pf_truncate}
+\end{figure}
+
+Because of the projective field growth, even though there will be much computational redundancies in the early layers, towards the latter layers it will decrease or even have no redundancies.
+However, we empirically found that the projective field growth can be truncated up to a certain level without significantly affecting the accuracy.
+For a more intuitive understanding on why this would work consider the simplified one dimensional convolution example shown in Figure \ref{fig:pf_truncate} (a). In the example a single neuron is modified (marked in red) and a filter of size three is applied with a stride of one repeatedly four times.
+Since the filter size is three, each updated neuron will propagate the change to three neurons in the next output layer causing the projective field to grow linearly.
+At the end of the fourth layer, the histogram shows the number of unique paths that are available between each output neuron and the original updated neuron in the first layer.
+It can be seen that this distribution resembles a Gaussian where many of the paths are connected to the central region.
+The amount of actual change in the output layer is determined by both the number of unique paths and also the individual weights of the connections.
+But the actual change in the output will converge to a Gaussian in distribution over all possible weight values.
+For more details we refer the reader to \cite{luo2016understanding}, where a similar theoretical result has been proved for the receptive field\footnote{Receptive field of a CNN neuron is the local region (including the depth) of the input volume which is connected to it.} of a deep CNN.
+
+
+As most of the change will be concentrated on the center, we introduce the notion of a projective field threshold $\tau ~ (0 < \tau \leq 1)$ which will be used to restrict the growth of the projective field.
+It essentially determines the maximum size of the projective field as a fraction of the size of the input.
+Figure \ref{fig:pf_truncate} (b) demonstrates the application of projective field thresholding with a $\tau$ value of $5/7$.
+From the histogram generated for the projective field thresholding approach it can be seen that much of the final output change is maintained by this approach while some small changes are lost from the edges.
 
 \subsection{Adaptive Drill-Down}
 

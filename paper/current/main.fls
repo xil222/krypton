@@ -394,9 +394,10 @@ INPUT optimizer.tex
 INPUT images/dimensions.pdf
 INPUT images/less_one_example.pdf
 INPUT /usr/local/texlive/2016/texmf-dist/fonts/tfm/public/libertine/LinLibertineT-tlf-t1.tfm
-INPUT experiments.tex
-INPUT experiments.tex
 INPUT images/redundancy_ratio.pdf
+INPUT images/pf_truncate.pdf
+INPUT experiments.tex
+INPUT experiments.tex
 INPUT main.bbl
 INPUT main.bbl
 INPUT appendix.tex

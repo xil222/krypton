@@ -133,4 +133,28 @@ Zhou Wang, Alan~C Bovik, Hamid~R Sheikh, and Eero~P Simoncelli.
   similarity.
 \newblock {\em IEEE transactions on image processing}, 13(4):600--612, 2004.
 
+\bibitem{le2017receptive}
+Hung Le and Ali Borji.
+\newblock What are the receptive, effective receptive, and projective fields of
+  neurons in convolutional neural networks?
+\newblock {\em arXiv preprint arXiv:1705.07049}, 2017.
+
+\bibitem{basiccnnoperations}
+Basic operations in a convolutional neural network - cse@iit delhi.
+\newblock
+  \url{http://www.cse.iitd.ernet.in/~rijurekha/lectures/lecture-2.pptx}.
+\newblock Accessed September 31, 2018.
+
+\bibitem{de2011projective}
+Saskia~EJ de~Vries, Stephen~A Baccus, and Markus Meister.
+\newblock The projective field of a retinal amacrine cell.
+\newblock {\em Journal of Neuroscience}, 31(23):8595--8604, 2011.
+
+\bibitem{luo2016understanding}
+Wenjie Luo, Yujia Li, Raquel Urtasun, and Richard Zemel.
+\newblock Understanding the effective receptive field in deep convolutional
+  neural networks.
+\newblock In {\em Advances in neural information processing systems}, pages
+  4898--4906, 2016.
+
 \end{thebibliography}
