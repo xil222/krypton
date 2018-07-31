@@ -1,13 +1,13 @@
 # Fdb version 3
-["bibtex main"] 1532935581 "main.aux" "main.bbl" "main" 1532938148
+["bibtex main"] 1532971517 "main.aux" "main.bbl" "main" 1532971519
   "/usr/local/texlive/2016/texmf-dist/bibtex/bst/base/unsrt.bst" 1292289607 18030 1376b4b231b50c66211e47e42eda2875 ""
-  "main.aux" 1532938148 11234 4b0c55de1866e60f9edbd7e1bc2dfc73 ""
+  "main.aux" 1532971518 11242 fbc407c98156b10a2ac76466b54f6435 ""
   "main.bcf" 0 -1 0 ""
   "main.bib" 1532933885 9201 c820066c45e48fc4f064948ca6d9bc48 ""
   (generated)
   "main.bbl"
   "main.blg"
-["pdflatex"] 1532938146 "main.tex" "main.pdf" "main" 1532938148
+["pdflatex"] 1532971517 "main.tex" "main.pdf" "main" 1532971519
   "/usr/local/texlive/2016/texmf-dist/fonts/map/fontname/texfonts.map" 1272929888 3287 e6b82fe08f5336d4d5ebc73fb1152e87 ""
   "/usr/local/texlive/2016/texmf-dist/fonts/tfm/adobe/zapfding/pzdr.tfm" 1136768653 1528 f853c4d1b4e0550255e02831fdc8496f ""
   "/usr/local/texlive/2016/texmf-dist/fonts/tfm/jknappen/ec/ecrm1000.tfm" 1136768653 3584 adb004a0c8e7c46ee66cad73671f37b4 ""
@@ -170,18 +170,18 @@
   "images/krypton_overview.pdf" 1531954040 317423 6bfe981de6a99e9c12ac4a3a49497432 ""
   "images/less_one_example.pdf" 1532510463 7874 065c5e8f89533dbced214fe82c5c4880 ""
   "images/pf_truncate.pdf" 1532935651 10131 7e8a863371f71d75d06166180a765b54 ""
-  "images/redundancy_ratio.pdf" 1532032510 17573 7af7b17bbf8bc47cbb7651b57e379234 ""
+  "images/redundancy_ratio.pdf" 1532939028 21452 6dc061da775e44e9f1163a34855278d2 ""
   "introduction.tex" 1531954040 9532 40fd2ac4926bc8ca8b5e938670f89dd4 ""
-  "main.aux" 1532938148 11234 4b0c55de1866e60f9edbd7e1bc2dfc73 ""
-  "main.bbl" 1532935581 6256 71a68a8851617794d84a7c9db6003cb1 "bibtex main"
-  "main.out" 1532938148 2822 f07cc9f2f853584c14f23a5773621911 ""
+  "main.aux" 1532971518 11242 fbc407c98156b10a2ac76466b54f6435 ""
+  "main.bbl" 1532971517 6256 71a68a8851617794d84a7c9db6003cb1 "bibtex main"
+  "main.out" 1532971518 2822 f07cc9f2f853584c14f23a5773621911 ""
   "main.tex" 1532938146 3571 980508639d269ece3005ea684999b09a ""
-  "optimizer.tex" 1532938121 20970 25fb846c38b9056aa5d96049d044a6bf ""
+  "optimizer.tex" 1532971513 20974 2fe17138128777857f1636a4b31f8803 ""
   "system_overview.tex" 1532630735 16789 07eb50e45a5d49cd3fc9887c54a68278 ""
   (generated)
-  "/home/snakanda/Work/Krypton/paper/current/main.pdf"
   "main.out"
-  "main.aux"
-  "main.pdf"
-  "/home/snakanda/Work/Krypton/paper/current/main.log"
   "main.log"
+  "main.pdf"
+  "main.aux"
+  "/home/snakanda/Work/Krypton/paper/current/main.log"
+  "/home/snakanda/Work/Krypton/paper/current/main.pdf"
