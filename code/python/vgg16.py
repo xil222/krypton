@@ -144,11 +144,13 @@ class VGG16(nn.Module):
 
         return x
 
-    def forward_gpu(self, x, locations, p_height, p_width):
+    def forward_gpu(self, x, locations, p_height, p_width, beta=None):
         if not self.initialized:
             raise Exception("Not initialized...")
         
-        beta = self.beta
+        if beta is None:
+            beta = self.beta
+            
         batch_size = x.shape[0]
         
         debug = False
@@ -287,17 +289,20 @@ class VGG16(nn.Module):
         out = self.__get_tensor('pool5-full', batch_size, 512, 7, 7, 1, 1, 7, 7, truncate=False)
         full_projection(self.pool5.data, x, out, locations, p_height, p_width)
         x = out
-
+        
         x = x.view(x.size(0), -1)
         x = self.classifier(x)
         return x
     
-    def forward_pytorch(self, patches, locations, p_height, p_width):
+    def forward_pytorch(self, patches, locations, p_height, p_width, beta=None):
         if not self.initialized:
             raise Exception("Not initialized...")
         
         image = self.image
-        beta = self.beta
+
+        if beta is None:
+            beta = self.beta
+        
         batch_size = patches.shape[0]
         
         if self.gpu:
