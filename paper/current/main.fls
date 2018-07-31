@@ -396,6 +396,8 @@ INPUT images/less_one_example.pdf
 INPUT /usr/local/texlive/2016/texmf-dist/fonts/tfm/public/libertine/LinLibertineT-tlf-t1.tfm
 INPUT images/redundancy_ratio.pdf
 INPUT images/pf_truncate.pdf
+INPUT images/th_redundancy_ratio.pdf
+INPUT images/mse_thresholding.pdf
 INPUT experiments.tex
 INPUT experiments.tex
 INPUT main.bbl
