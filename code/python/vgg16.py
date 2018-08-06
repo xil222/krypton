@@ -150,6 +150,8 @@ class VGG16(nn.Module):
         
         if beta is None:
             beta = self.beta
+        else:
+            self.beta = beta
             
         batch_size = x.shape[0]
         
@@ -290,6 +292,8 @@ class VGG16(nn.Module):
         full_projection(self.pool5.data, x, out, locations, p_height, p_width)
         x = out
         
+        return x
+        
         x = x.view(x.size(0), -1)
         x = self.classifier(x)
         return x
@@ -347,6 +351,7 @@ class VGG16(nn.Module):
             
             in_p_size = k + (out_p_size-1)*s
             out_locations = self.__get_output_locations(in_locations, out_p_size, s, p, k, prev_size, size, patch_growing)
+            
             if layer in self.cache:
                 x = self.cache[layer].fill_(0.0)
             else:
@@ -381,26 +386,6 @@ class VGG16(nn.Module):
         x = self.classifier(x)
         return x
     
-    
-    def __get_output_locations(self, in_locations, out_p_size, stride, padding, ksize, in_size, out_size, patch_growing=True):
-        out_locations = []
-        
-        for x,y in in_locations:
-            if patch_growing:
-                x_out = int(max(math.ceil((padding + x - ksize + 1.0)/stride), 0))
-                y_out = int(max(math.ceil((padding + y - ksize + 1.0)/stride), 0))
-            else:
-                x_out = int(round(x*out_size/in_size))
-                y_out = int(round(y*out_size/in_size))
-            
-            if x_out + out_p_size > out_size:
-                x_out = out_size - out_p_size
-            if y_out + out_p_size > out_size:
-                y_out = out_size - out_p_size
-                
-            out_locations.append((x_out, y_out))
-            
-        return out_locations
     
     def __initialize_weights(self, gpu):
         if self.weights_data is None:
@@ -490,11 +475,31 @@ class VGG16(nn.Module):
     def __get_output_shape(self, p_height, p_width, k_size, stride, in_size, out_size, truncate):
         temp_p_height = min(int(math.ceil((p_height+k_size-1)*1.0/stride)), out_size)
         
-        if truncate and p_height > round(in_size*self.beta) and p_height >= 3:
-            remove_y = max(2, ((p_height - round(in_size * self.beta))//2)*2)
-            temp_p_height = min(int(math.ceil((p_height-remove_y+k_size-1)*1.0/stride)), out_size)
+        if truncate and (temp_p_height > round(in_size*self.beta)):
+            temp_p_height = round(self.beta * out_size)
         
         return (temp_p_height,temp_p_height)
+    
+    
+    def __get_output_locations(self, in_locations, out_p_size, stride, padding, ksize, in_size, out_size, patch_growing=True):
+        out_locations = []
+        
+        for x,y in in_locations:
+            if patch_growing:
+                x_out = int(max(math.ceil((padding + x - ksize + 1.0)/stride), 0))
+                y_out = int(max(math.ceil((padding + y - ksize + 1.0)/stride), 0))
+            else:
+                x_out = int(round(x*out_size/in_size))
+                y_out = int(round(y*out_size/in_size))
+            
+            if x_out + out_p_size > out_size:
+                x_out = out_size - out_p_size
+            if y_out + out_p_size > out_size:
+                y_out = out_size - out_p_size
+                
+            out_locations.append((x_out, y_out))
+            
+        return out_locations
     
 
 if __name__ == "__main__":

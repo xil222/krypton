@@ -26,6 +26,14 @@ def inc_convolution(premat_tensor, in_tensor, weights, biases, out_tensor, locat
     temp = inc_conv_lib.inc_convolution(premat_tensor, in_tensor, weights, biases, out_tensor, locations, padding_x, padding_y, stride_x, stride_y, int(p_height), int(p_width), beta)
     return int(temp/1000),int(temp%1000)
 
+def batch_normalization(in_tensor, bn_mean, bn_var, bn_weights, bn_biases, eps=1e-5):
+    temp = inc_conv_lib.batch_normalization(in_tensor, bn_mean, bn_var, bn_weights, bn_biases, eps)
+    return in_tensor
+
+def inc_add(in_tensor1, locations1, premat_tensor2, in_tensor2, locations2):
+    inc_conv_lib.inc_add(in_tensor1, locations1, premat_tensor2, in_tensor2, locations2)
+    return in_tensor1
+    
 def inc_max_pool(premat_tensor, in_tensor, out_tensor, locations, padding_x, padding_y, stride_x, stride_y, k_size_x, k_size_y, p_height, p_width, beta):
     temp = inc_conv_lib.inc_max_pool(premat_tensor, in_tensor, out_tensor, locations, padding_x, padding_y, stride_x, stride_y,
                                  k_size_x, k_size_y, int(p_height), int(p_width), beta)
@@ -44,7 +52,9 @@ def full_inference_e2e(model, file_path, patch_size, stride, logit_index, batch_
     if gpu:
         orig_image = orig_image.cuda()
     
-    full_model = model(gpu=gpu, n_labels=n_labels, weights_data=weights_data)
+    full_model = model(gpu=gpu, n_labels=n_labels, weights_data=weights_data).eval()
+    if gpu:
+        full_model = full_model.cuda()
     full_model.eval()
 
     output_width = int(math.ceil((x_size*1.0 - patch_size) / stride))
@@ -101,7 +111,11 @@ def inc_inference_e2e(model, file_path, patch_size, stride, logit_index, batch_s
     patch_positions = __generate_positions(x_output_width, y_output_width)
     
     num_batches = int(math.ceil(total_number * 1.0 / batch_size))
-    inc_model = model(beta=beta, gpu=gpu, n_labels=n_labels, weights_data=weights_data)
+    inc_model = model(beta=beta, gpu=gpu, n_labels=n_labels, weights_data=weights_data).eval()
+
+    if gpu:
+        inc_model = inc_model.cuda()
+    
     inc_model.forward_materialized(orig_image)
  
     locations = torch.zeros([batch_size, 2], dtype=torch.int32)

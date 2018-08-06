@@ -9,12 +9,12 @@
 
 extern THCState *state;
 
-int min(int a, int b)
+float min(float a, float b)
 {
     return a > b ? b : a;
 }
 
-int max(int a, int b)
+float max(float a, float b)
 {
     return a > b ? a : b;
 }
@@ -98,8 +98,8 @@ int inc_convolution(THCudaTensor * premat_tensor, THCudaTensor * in_tensor, THCu
     int remove_y=0;    
     if((out_p_width) > round(out_width * beta) || (out_p_height) > round(out_height * beta))
     {
-        int out_p_width_temp = (int)min(beta*out_width, out_p_width);
-        int out_p_height_temp = (int)min(beta*out_height, out_p_height);
+        int out_p_width_temp = (int)round(min(beta*out_width, out_p_width));
+        int out_p_height_temp = (int)round(min(beta*out_height, out_p_height));
         
         remove_x = (out_p_width-out_p_width_temp)*stride_x;
         remove_y = (out_p_height-out_p_height_temp)*stride_y;
@@ -171,8 +171,48 @@ int inc_convolution(THCudaTensor * premat_tensor, THCudaTensor * in_tensor, THCu
     return out_p_height*1000+out_p_width;
 }
 
-int inc_max_pool(THCudaTensor * premat_tensor, THCudaTensor * in_tensor, THCudaTensor * out_tensor,  THCudaIntTensor * location_tensor,
- int padding_x, int padding_y, int stride_x, int stride_y, int k_width, int k_height, int p_height, int p_width, float beta)
+void batch_normalization(THCudaTensor * in_tensor,  THCudaTensor * bn_mean, THCudaTensor * bn_var, THCudaTensor * bn_weights, THCudaTensor * bn_biases, float eps)
+{
+    float * ptr_in_tensor = THCudaTensor_data(NULL, in_tensor);    
+    float * ptr_bn_mean = THCudaTensor_data(NULL, bn_mean);
+    float * ptr_bn_var = THCudaTensor_data(NULL, bn_var);
+    float * ptr_bn_weights = THCudaTensor_data(NULL, bn_weights);
+    float * ptr_bn_biases = THCudaTensor_data(NULL, bn_biases);
+    
+    int batch = in_tensor->size[0];
+    int in_channels = in_tensor->size[1];
+    int in_height = in_tensor->size[2];
+    int in_width = in_tensor->size[3];
+    
+    bn_gpu(ptr_in_tensor, ptr_bn_mean, ptr_bn_var, ptr_bn_weights, ptr_bn_biases, eps, batch, in_height, in_width, in_channels);
+}
+
+void inc_add(THCudaTensor * in_tensor1, THCudaIntTensor * location_tensor1, THCudaTensor * premat_tensor2, THCudaTensor * in_tensor2, THCudaIntTensor * location_tensor2)
+{
+    float * ptr_in_tensor1 = THCudaTensor_data(NULL, in_tensor1);
+    float * ptr_premat_tensor2 = THCudaTensor_data(NULL, premat_tensor2);
+    float * ptr_in_tensor2 = THCudaTensor_data(NULL, in_tensor2);
+    
+    int * ptr_location1 = THCudaIntTensor_data(NULL, location_tensor1);
+    int * ptr_location2 = THCudaIntTensor_data(NULL, location_tensor2);
+    
+    int batch = in_tensor1->size[0];
+    int channels = in_tensor1->size[1];
+    int in_height1 = in_tensor1->size[2];
+    int in_width1 = in_tensor1->size[3];
+
+    int in_height2 = in_tensor2->size[2];
+    int in_width2 = in_tensor2->size[3];
+    
+    int premat_height = premat_tensor2->size[2];
+    int premat_width = premat_tensor2->size[3];
+
+    inc_add_gpu(ptr_in_tensor1, ptr_location1, ptr_premat_tensor2, ptr_in_tensor2, ptr_location2, batch, channels, in_height1,
+               in_width1, in_height2, in_width2, premat_height, premat_width);
+}
+
+
+int inc_max_pool(THCudaTensor * premat_tensor, THCudaTensor * in_tensor, THCudaTensor * out_tensor,  THCudaIntTensor * location_tensor, int padding_x, int padding_y, int stride_x, int stride_y, int k_width, int k_height, int p_height, int p_width, float beta)
 {
     float * ptr_premat_tensor = THCudaTensor_data(NULL, premat_tensor);
     float * ptr_in_tensor = THCudaTensor_data(NULL, in_tensor);
@@ -194,8 +234,8 @@ int inc_max_pool(THCudaTensor * premat_tensor, THCudaTensor * in_tensor, THCudaT
     int remove_y=0;    
     if((out_p_width > round(out_width * beta)) || (out_p_height > round(out_height * beta)))
     {
-        int out_p_width_temp = (int)min(beta*out_width, out_p_width);
-        int out_p_height_temp = (int)min(beta*out_height, out_p_height);
+        int out_p_width_temp = (int)round(min(beta*out_width, out_p_width));
+        int out_p_height_temp = (int)round(min(beta*out_height, out_p_height));
         
         remove_x = (out_p_width-out_p_width_temp)*stride_x;
         remove_y = (out_p_height-out_p_height_temp)*stride_y;
@@ -227,7 +267,7 @@ int full_projection(THCudaTensor * premat_tensor, THCudaTensor * in_tensor, THCu
     int batch = in_tensor->size[0];
     int in_channels = in_tensor->size[1];
     int in_height = premat_tensor->size[2];
-    int in_width = premat_tensor->size[3];    
+    int in_width = premat_tensor->size[3];
     
     full_projection_gpu(ptr_premat_tensor, ptr_in_tensor, ptr_out_tensor, ptr_location, batch, in_channels, in_height, in_width, p_height, p_width);
         
