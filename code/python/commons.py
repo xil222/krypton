@@ -43,7 +43,7 @@ def full_projection(premat_tensor, in_tensor, out_tensor, locations, p_height, p
     inc_conv_lib.full_projection(premat_tensor, in_tensor, out_tensor, locations, int(p_height), int(p_width))
 
 
-def full_inference_e2e(model, file_path, patch_size, stride, logit_index, batch_size=256, gpu=True, version='v1', image_size=224, x_size=224, y_size=224, n_labels=1000, weights_data=None, loader=None, c=0.0):
+def full_inference_e2e(model, file_path, patch_size, stride, batch_size=256, gpu=True, version='v1', image_size=224, x_size=224, y_size=224, n_labels=1000, weights_data=None, loader=None, c=0.0):
     if loader == None:
         loader = transforms.Compose([transforms.Resize([image_size, image_size]), transforms.ToTensor()])
     orig_image = Image.open(file_path).convert('RGB')
@@ -57,6 +57,8 @@ def full_inference_e2e(model, file_path, patch_size, stride, logit_index, batch_
         full_model = full_model.cuda()
     full_model.eval()
 
+    logit_index = np.argmax(full_model(orig_image).cpu().data.numpy()[0,:])
+    
     output_width = int(math.ceil((x_size*1.0 - patch_size) / stride))
     total_number = output_width * output_width
 
@@ -89,7 +91,7 @@ def full_inference_e2e(model, file_path, patch_size, stride, logit_index, batch_
     return x
 
 
-def inc_inference_e2e(model, file_path, patch_size, stride, logit_index, batch_size=64, beta=1.0, x0=0, y0=0, image_size=224,
+def inc_inference_e2e(model, file_path, patch_size, stride, batch_size=64, beta=1.0, x0=0, y0=0, image_size=224,
                       x_size=224, y_size=224, gpu=True, version='v1', n_labels=1000, weights_data=None, loader=None, c=0.0):
 
     if loader == None:
@@ -112,11 +114,11 @@ def inc_inference_e2e(model, file_path, patch_size, stride, logit_index, batch_s
     
     num_batches = int(math.ceil(total_number * 1.0 / batch_size))
     inc_model = model(beta=beta, gpu=gpu, n_labels=n_labels, weights_data=weights_data).eval()
-
+    
     if gpu:
         inc_model = inc_model.cuda()
     
-    inc_model.forward_materialized(orig_image)
+    logit_index = np.argmax(inc_model.forward_materialized(orig_image).cpu().data.numpy())
  
     locations = torch.zeros([batch_size, 2], dtype=torch.int32)
     for i in range(num_batches):
@@ -154,7 +156,7 @@ def inc_inference_e2e(model, file_path, patch_size, stride, logit_index, batch_s
 
 
 
-def adaptive_drilldown(model, file_path, patch_size, stride, logit_index, batch_size=128, image_size=224, beta=1.0, percentile=75, gpu=True, version='v1', n_labels=1000, weights_data=None, loader=None):
+def adaptive_drilldown(model, file_path, patch_size, stride, batch_size=128, image_size=224, beta=1.0, percentile=75, gpu=True, version='v1', n_labels=1000, weights_data=None, loader=None):
     final_out_width = int(math.ceil((image_size*1.0-patch_size)/stride))
     #checking for interested regions
     temp1 = inc_inference_e2e(model, file_path, max(16, patch_size), max(8, patch_size/2), logit_index,
@@ -171,7 +173,7 @@ def adaptive_drilldown(model, file_path, patch_size, stride, logit_index, batch_
     y_size = int(min(image_size-y0, y1-y0 + patch_size))
 
     #drilldown into interested regions
-    temp2 = inc_inference_e2e(model, file_path, patch_size, stride, logit_index,
+    temp2 = inc_inference_e2e(model, file_path, patch_size, stride,
                                     batch_size=batch_size, beta=beta, x0=x0, y0=y0, image_size=image_size,
                               x_size=x_size, y_size=y_size, gpu=gpu, version=version,
                               n_labels=n_labels, weights_data=weights_data, loader=loader)

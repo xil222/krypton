@@ -19,11 +19,11 @@ __global__ void update_output_locations_gpu_kernel(int num_kernels, int * ptr_lo
         current_y0 = max((int)ceil((padding_y + current_y0-k_size_y + 1.0)/stride_x), 0);
         current_x0 = max((int)ceil((padding_x + current_x0-k_size_x + 1.0)/stride_y), 0);
 
-        if(current_y0 + out_p_height > out_height)
+        if((current_y0 + out_p_height) > out_height)
         {
             current_y0 = out_height - out_p_height;
         }
-        if(current_x0 + out_p_width > out_width)
+        if((current_x0 + out_p_width) > out_width)
         {
             current_x0 = out_width - out_p_width;
         }
@@ -119,11 +119,11 @@ __global__ void extract_input_volume_gpu_kernel(int num_kernels, float *premat_p
             new_x0 = max((int)ceil((padding_x + current_x0-k_size_x + 1.0)/stride_x), 0);
 
             
-            if(new_y0 + out_p_height > out_height)
+            if((new_y0 + out_p_height) > out_height)
             {
                 new_y0 = out_height - out_p_height;
             }
-            if(new_x0 + out_p_width > out_width)
+            if((new_x0 + out_p_width) > out_width)
             {
                 new_x0 = out_width - out_p_width;
             }
@@ -131,7 +131,7 @@ __global__ void extract_input_volume_gpu_kernel(int num_kernels, float *premat_p
             int w_out = new_x0*stride_x - padding_x + w;
             int h_out = new_y0*stride_y - padding_y + h;
 
-            if(w_out < 0 || w_out >= in_width || h_out < 0 || h_out >= in_height)
+            if((w_out < 0) || (w_out >= in_width) || (h_out < 0) || (h_out >= in_height))
             {
                 *out_ptr = 0;
             }
@@ -199,11 +199,11 @@ __global__ void inc_max_pool_gpu_kernel(int n, float* ptr_premat_tensor, float* 
         new_y0 = max((int)ceil((padding_y + current_y0-k_size_y + 1.0)/stride_y), 0);
         new_x0 = max((int)ceil((padding_x + current_x0-k_size_x + 1.0)/stride_x), 0);
             
-        if(new_y0 + out_p_height > out_height)
+        if((new_y0 + out_p_height) > out_height)
         {
             new_y0 = out_height - out_p_height;
         }
-        if(new_x0 + out_p_width > out_width)
+        if((new_x0 + out_p_width) > out_width)
         {
             new_x0 = out_width - out_p_width;
         }
@@ -227,7 +227,7 @@ __global__ void inc_max_pool_gpu_kernel(int n, float* ptr_premat_tensor, float* 
 
                 float val;
                 int idx, valid;
-                if(cur_w<current_x0 || cur_h<current_y0 || cur_w>=(current_x0+p_width+remove_x) || cur_h>=(current_y0+p_height+remove_y))
+                if((cur_w<current_x0) || (cur_h<current_y0) || (cur_w>=(current_x0+p_width+remove_x)) || (cur_h>=(current_y0+p_height+remove_y)))
                 {
                     idx = cur_w + in_width*(cur_h + in_height*k);
                     valid = (cur_h >= 0 && cur_h < in_height && cur_w >= 0 && cur_w < in_width);

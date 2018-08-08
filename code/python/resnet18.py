@@ -229,16 +229,18 @@ class ResNet18(nn.Module):
                 
         prev_size = 224
         for layer, data, c, size, s, p, k in zip(layers, premat_data, C, sizes, S, P, K):
+            remove = 0
+            if patch_size > round(prev_size*beta):
+                temp_patch_size = int(round(prev_size*beta))
+                if (patch_size-temp_patch_size)%2 != 0:
+                    temp_patch_size -= 1
+                remove = patch_size - temp_patch_size
+                patch_size =temp_patch_size
+                                    
             out_p_size = int(min(math.ceil((patch_size + k - 1.0)/s), size))
-
-            patch_growing = True
-            if out_p_size > round(size*beta):
-                out_p_size = int(round(size*beta))
-                    
-                patch_growing = False
-            
             in_p_size = k + (out_p_size-1)*s
-            out_locations = self.__get_output_locations(in_locations, out_p_size, s, p, k, prev_size, size, patch_growing)
+            
+            out_locations = self.__get_output_locations(in_locations, out_p_size, s, p, k, prev_size, size, remove=remove)
             
             if layer in self.cache:
                 x = self.cache[layer].fill_(0.0)
@@ -257,6 +259,7 @@ class ResNet18(nn.Module):
                 
                 temp = data[0,:,:,:].clone()
                 temp[:,in_locations[i][0]:in_locations[i][0]+patch_size,in_locations[i][1]:in_locations[i][1]+patch_size] = patches[i,:,:,:]
+                
                 x[i,:,x0:x1,y0:y1] = temp[:,max(s*out_locations[i][0]-p,0):max(0, s*out_locations[i][0]-p)+x1-x0,
                     max(0, s*out_locations[i][1]-p):max(0, s*out_locations[i][1]-p)+y1-y0]
                 
@@ -286,10 +289,10 @@ class ResNet18(nn.Module):
         first_layer = True
         
         for sub_layers, data, c, size in zip(layers, premat_data, C, sizes):
-            r_in_locations = in_locations
-            r_patch_size = patch_size
+            r_in_locations = in_locations            
             r_patches = patches
             residual_prev_size = prev_size
+            r_patch_size = patch_size
             
             if first_layer:
                 first_layer = False
@@ -301,6 +304,7 @@ class ResNet18(nn.Module):
                
             #1
             x, out_p_size, in_p_size, out_locations = self.__get_patch_sizes(sub_layers[0], patch_size, prev_size, 3, s1, 1, size, beta, in_locations, batch_size, c1)
+            
             for i in range(batch_size):
                 x0, x1, y0, y1 = self.__get_patch_coordinates(i, out_locations, s1, 1, in_p_size, prev_size)
                 temp = data[0][0,:,:,:].clone()        
@@ -321,6 +325,7 @@ class ResNet18(nn.Module):
                 x0, x1, y0, y1 = self.__get_patch_coordinates(i, out_locations, 1, 1, in_p_size, prev_size)
                 temp = data[1][0,:,:,:].clone()  
                 temp[:,in_locations[i][0]:in_locations[i][0]+patch_size,in_locations[i][1]:in_locations[i][1]+patch_size] = patches[i,:,:,:]
+                
                 x[i,:,x0:x1,y0:y1] = temp[:,max(out_locations[i][0]-1,0):max(0, out_locations[i][0]-1)+x1-x0,
                      max(0, out_locations[i][1]-1):max(0, out_locations[i][1]-1)+y1-y0]
                     
@@ -341,7 +346,7 @@ class ResNet18(nn.Module):
                     
                 for i in range(batch_size):
                     temp = data[0][0,:,:,:].clone()
-                    temp[:,r_in_locations[i][0]:r_in_locations[i][0]+r_patch_size,r_in_locations[i][1]:r_in_locations[i][1]+r_patch_size] = r_patches[i,:,:,:]
+                    temp[:,r_in_locations[i][0]:r_in_locations[i][0]+r_patch_size,r_in_locations[i][1]:+r_in_locations[i][1]+r_patch_size] = r_patches[i,:,:,:]                    
                     x[i,:,:,:] = temp[:,out_locations[i][0]:out_locations[i][0]+patch_size,out_locations[i][1]:out_locations[i][1]+patch_size]
             else:
                 if sub_layers[2] in self.cache:
@@ -353,15 +358,17 @@ class ResNet18(nn.Module):
                     
                 for i in range(batch_size):
                     temp = data[0][0,:,:,:].clone()
+                    
                     temp[:,r_in_locations[i][0]:r_in_locations[i][0]+r_patch_size,r_in_locations[i][1]:r_in_locations[i][1]+r_patch_size] = r_patches[i,:,:,:]
+
                     x[i,:,:,:] = temp[:,2*out_locations[i][0]:2*out_locations[i][0]+patch_size*2,2*out_locations[i][1]:2*out_locations[i][1]+2*patch_size]
                 x = sub_layers[2](x)
                         
             patches = F.relu(patches + x)
             
             r_in_locations = in_locations
-            r_patch_size = patch_size
             r_patches = patches
+            r_patch_size = patch_size
             residual_prev_size = prev_size
             
             x, out_p_size, in_p_size, out_locations = self.__get_patch_sizes(sub_layers[3], patch_size, prev_size, 3, 1, 1, size, beta, in_locations, batch_size, c)
@@ -708,8 +715,7 @@ class ResNet18(nn.Module):
         x = self.classifier(x)
     
         return x
-    
-        
+      
         
     def __get_patch_coordinates(self, i, out_locations, s, p, in_p_size, prev_size):
         x0 = 0 if s*out_locations[i][0]-p >= 0 else -1*(s*out_locations[i][0]-p)
@@ -721,16 +727,17 @@ class ResNet18(nn.Module):
         
         
     def __get_patch_sizes(self, layer, patch_size, prev_size, k, s, p, size, beta, in_locations, b, c):
+        remove = 0
+        if patch_size > round(prev_size*beta):
+            temp_patch_size = int(round(prev_size*beta))
+            if (patch_size-temp_patch_size)%2 != 0:
+                temp_patch_size -= 1
+            remove = patch_size - temp_patch_size
+            patch_size =temp_patch_size
+
         out_p_size = int(min(math.ceil((patch_size + k - 1.0)/s), size))
-    
-        patch_growing = True
-        if out_p_size > round(size*beta):
-            out_p_size = int(round(size*beta))
-
-            patch_growing = False
-
         in_p_size = k + (out_p_size-1)*s
-        out_locations = self.__get_output_locations(in_locations, out_p_size, s, p, k, prev_size, size, patch_growing)
+        out_locations = self.__get_output_locations(in_locations, out_p_size, s, p, k, prev_size, size, remove=remove)
 
         if layer in self.cache:
             x = self.cache[layer].fill_(0.0)
@@ -744,16 +751,12 @@ class ResNet18(nn.Module):
         return x, out_p_size, in_p_size, out_locations
     
         
-    def __get_output_locations(self, in_locations, out_p_size, stride, padding, ksize, in_size, out_size, patch_growing=True):
+    def __get_output_locations(self, in_locations, out_p_size, stride, padding, ksize, in_size, out_size, remove=0):
         out_locations = []
         
         for x,y in in_locations:
-            if patch_growing:
-                x_out = int(max(math.ceil((padding + x - ksize + 1.0)/stride), 0))
-                y_out = int(max(math.ceil((padding + y - ksize + 1.0)/stride), 0))
-            else:
-                x_out = int(round(x*out_size/in_size))
-                y_out = int(round(y*out_size/in_size))
+            x_out = int(max(math.ceil((padding + x + remove/2 - ksize + 1.0)/stride), 0))
+            y_out = int(max(math.ceil((padding + y + remove/2 - ksize + 1.0)/stride), 0))
             
             if x_out + out_p_size > out_size:
                 x_out = out_size - out_p_size
@@ -769,8 +772,6 @@ class ResNet18(nn.Module):
         if name in self.tensor_cache:
             return self.tensor_cache[name]
         else:
-            #print(self.beta, in_size, out_size, self.beta*out_size, batch_size, channels, self.__get_output_shape(p_height, p_width, k_size, stride, in_size, out_size, truncate))
-            #print(name, self.__get_output_shape(p_height, p_width, k_size, stride, in_size, out_size, False), self.__get_output_shape(p_height, p_width, k_size, stride, in_size, out_size, True))
             tensor = torch.FloatTensor(batch_size, channels, *self.__get_output_shape(p_height, p_width, k_size, stride, in_size, out_size, truncate))
             if self.gpu:
                 tensor = tensor.cuda()
@@ -779,11 +780,16 @@ class ResNet18(nn.Module):
 
     
     def __get_output_shape(self, p_height, p_width, k_size, stride, in_size, out_size, truncate):
+        if truncate and (p_height > round(in_size*self.beta)):
+            in_p_height = round(in_size*self.beta)
+            
+            if ((p_height-in_p_height) % 2) != 0:
+                in_p_height -= 1
+                
+            p_height = in_p_height
+                
         temp_p_height = min(int(math.ceil((p_height+k_size-1)*1.0/stride)), out_size)
-        
-        if truncate and (temp_p_height > round(out_size*self.beta)):
-            temp_p_height = round(self.beta * out_size)
-        
+            
         return (temp_p_height, temp_p_height)
     
     
