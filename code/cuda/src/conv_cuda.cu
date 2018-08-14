@@ -257,6 +257,90 @@ void inc_max_pool_gpu(float* ptr_premat_tensor, float* ptr_in_tensor, float* ptr
         k_size_x, k_size_y, p_height, p_width, out_p_height, out_p_width, remove_x, remove_y);
 }
 
+
+__global__ void inc_avg_pool_gpu_kernel(int n, float* ptr_premat_tensor, float* ptr_in_tensor, float* ptr_out_tensor, int * ptr_location, int batch, int channels, int in_height, int in_width, int out_height, int out_width, int padding_x, int padding_y, int stride_x, int stride_y, int k_size_x, int k_size_y, int p_height, int p_width, int out_p_height, int out_p_width, int remove_x, int remove_y)
+{
+    int index = blockIdx.x * blockDim.x + threadIdx.x;
+    if(index < n)
+    {        
+        int j = index % out_p_width;
+        index /= out_p_width;
+        int i = index % out_p_height;
+        index /= out_p_height;
+        int k = index % channels;
+        index /= channels;
+        int b = index;
+
+        int w_offset = -padding_x;
+        int h_offset = -padding_y;
+        
+        int current_y0 = ptr_location[b*2] + remove_y/2;
+        int current_x0 = ptr_location[b*2+1] + remove_x/2;
+
+        int new_y0, new_x0;
+
+        new_y0 = max((int)ceil((padding_y + current_y0-k_size_y + 1.0)/stride_y), 0);
+        new_x0 = max((int)ceil((padding_x + current_x0-k_size_x + 1.0)/stride_x), 0);
+            
+        if((new_y0 + out_p_height) > out_height)
+        {
+            new_y0 = out_height - out_p_height;
+        }
+        if((new_x0 + out_p_width) > out_width)
+        {
+            new_x0 = out_width - out_p_width;
+        }
+
+        i = i + new_y0;
+        j = j + new_x0;
+
+        float max = -INFINITY;
+
+        current_y0 -= remove_y/2;
+        current_x0 -= remove_x/2;        
+        
+        float total = 0;
+        #pragma unroll 3
+        for(int l=0; l<k_size_y; l++)
+        {
+            #pragma unroll 3
+            for(int m=0; m<k_size_x; m++)
+            {
+                int cur_h = h_offset + i*stride_y + l;
+                int cur_w = w_offset + j*stride_x + m;
+
+                float val;
+                int idx, valid;
+                if((cur_w<current_x0) || (cur_h<current_y0) || (cur_w>=(current_x0+p_width+remove_x)) || (cur_h>=(current_y0+p_height+remove_y)))
+                {
+                    idx = cur_w + in_width*(cur_h + in_height*k);
+                    valid = (cur_h >= 0 && cur_h < in_height && cur_w >= 0 && cur_w < in_width);
+                    val = (valid != 0) ? ptr_premat_tensor[idx] : 0;
+                }
+                else
+                {
+                    cur_h -= current_y0;
+                    cur_w -= current_x0;
+                    
+                    idx = cur_w + (p_width+remove_x)*(cur_h + (p_height+remove_y)*(k + b*channels));
+                    val = ptr_in_tensor[idx];
+                }
+                total   += val;
+            }
+        }
+
+        ptr_out_tensor[blockIdx.x * blockDim.x + threadIdx.x] = total/(k_size_y*k_size_x);
+    }
+}
+
+void inc_avg_pool_gpu(float* ptr_premat_tensor, float* ptr_in_tensor, float* ptr_out_tensor, int * ptr_location, int batch, int channels, int in_height, int in_width, int out_height, int out_width,  int padding_x, int padding_y, int stride_x, int stride_y, int k_size_x, int k_size_y, int p_height, int p_width, int out_p_height, int out_p_width, int remove_x, int remove_y)
+{
+    size_t n =  out_p_height * out_p_width * channels * batch;
+    inc_avg_pool_gpu_kernel<<<(n+BLOCK-1)/BLOCK, BLOCK>>>(n, ptr_premat_tensor, ptr_in_tensor, ptr_out_tensor, ptr_location,
+        batch, channels, in_height, in_width, out_height, out_width, padding_x, padding_y, stride_x, stride_y,
+        k_size_x, k_size_y, p_height, p_width, out_p_height, out_p_width, remove_x, remove_y);
+}
+
 __global__ void  full_projection_gpu_kernel(int n, float * ptr_premat_tensor, float * ptr_in_tensor,
  float * ptr_out_tensor, int * ptr_location, int batch, int channels, int in_height, int in_width, int p_height, int p_width)
 {
@@ -327,4 +411,47 @@ void inc_add_gpu(float * ptr_in_tensor1, int * ptr_location1, float *  ptr_prema
 {
     size_t n =  in_height1 * in_width1 * channels;
     inc_add_gpu_kernel<<<(n+BLOCK-1)/BLOCK, BLOCK>>>(ptr_in_tensor1, ptr_location1, ptr_premat_tensor2, ptr_in_tensor2, ptr_location2, batch, channels, in_height1, in_width1, in_height2, in_width2, premat_height, premat_width, n);
+}
+
+__global__ void inc_stack_gpu_kernel(float * ptr_out_tensor, int out_channels, int start_channel, int out_height, int out_width, int * ptr_out_location, float * ptr_in_tensor, int batch_size, int in_channels, int in_height, int in_width, int * ptr_in_location, float * ptr_premat_tensor, int premat_height, int premat_width, int n)
+{
+    int index = blockIdx.x*blockDim.x+threadIdx.x;
+    if (index < n)
+    {
+        int w_out = index % out_width;
+        int h_index = index / out_width;
+        int h_out = h_index % out_height;
+        int channel_in = h_index / out_height;
+        int channel_out = start_channel + channel_in;
+
+        #pragma unroll 4
+        for(int i=0; i<batch_size; i++)
+        {
+            int y = ptr_out_location[i*2] + h_out;
+            int x = ptr_out_location[i*2+1] + w_out;
+            
+            if( (y >= ptr_in_location[2*i]) && ((ptr_in_location[2*i] + in_height) > y) && (x >= ptr_in_location[2*i+1]) && ((ptr_in_location[2*i+1] + in_width) > x))
+            {
+                int w_temp = x - ptr_in_location[2*i+1];
+                int h_temp = y - ptr_in_location[2*i];
+                
+                ptr_out_tensor[channel_out*out_height*out_width+h_out*out_width+w_out] = ptr_in_tensor[channel_in*in_width*in_height+h_temp*in_width+w_temp];
+            }
+            else
+            {
+                ptr_out_tensor[channel_out*out_height*out_width+h_out*out_width+w_out] = ptr_premat_tensor[channel_in*premat_width*premat_height+y*premat_width+x]; 
+            }
+            
+            ptr_out_tensor += out_channels * out_width * out_height;
+            ptr_in_tensor += in_channels * in_width * in_height;
+        }
+
+    }
+
+}
+
+void inc_stack_gpu(float * ptr_out_tensor, int out_channels, int start_channel, int out_height, int out_width, int * ptr_out_location, float * ptr_in_tensor, int batch_size, int in_channels, int in_height, int in_width, int * ptr_in_location, float * ptr_premat_tensor, int premat_height, int premat_width)
+{
+    size_t n = out_width * out_height * in_channels;
+    inc_stack_gpu_kernel<<<(n+BLOCK-1)/BLOCK, BLOCK>>>(ptr_out_tensor, out_channels, start_channel, out_height, out_width, ptr_out_location, ptr_in_tensor, batch_size, in_channels, in_height, in_width, ptr_in_location, ptr_premat_tensor, premat_height, premat_width, n);
 }

@@ -22,8 +22,8 @@ from matplotlib.figure import Figure
 sys.path.append('../')
 from cuda._ext import inc_conv_lib
 
-def inc_convolution(premat_tensor, in_tensor, weights, biases, out_tensor, locations, padding_x, padding_y, stride_x, stride_y, p_height, p_width, beta):
-    temp = inc_conv_lib.inc_convolution(premat_tensor, in_tensor, weights, biases, out_tensor, locations, padding_x, padding_y, stride_x, stride_y, int(p_height), int(p_width), beta)
+def inc_convolution(premat_tensor, in_tensor, weights, biases, out_tensor, locations, padding_y, padding_x, stride_y, stride_x, p_height, p_width, beta):
+    temp = inc_conv_lib.inc_convolution(premat_tensor, in_tensor, weights, biases, out_tensor, locations, padding_y, padding_x, stride_y, stride_x, int(p_height), int(p_width), beta)
     return int(temp/1000),int(temp%1000)
 
 def batch_normalization(in_tensor, bn_mean, bn_var, bn_weights, bn_biases, eps=1e-5):
@@ -33,10 +33,19 @@ def batch_normalization(in_tensor, bn_mean, bn_var, bn_weights, bn_biases, eps=1
 def inc_add(in_tensor1, locations1, premat_tensor2, in_tensor2, locations2):
     inc_conv_lib.inc_add(in_tensor1, locations1, premat_tensor2, in_tensor2, locations2)
     return in_tensor1
+
+def inc_stack(out_tensor, out_channels, start_channel, out_location, in_tensor, in_location, premat_tensor):
+    inc_conv_lib.inc_stack(out_tensor, out_channels, start_channel, out_location, in_tensor, in_location, premat_tensor)
+    return out_tensor
     
-def inc_max_pool(premat_tensor, in_tensor, out_tensor, locations, padding_x, padding_y, stride_x, stride_y, k_size_x, k_size_y, p_height, p_width, beta):
-    temp = inc_conv_lib.inc_max_pool(premat_tensor, in_tensor, out_tensor, locations, padding_x, padding_y, stride_x, stride_y,
-                                 k_size_x, k_size_y, int(p_height), int(p_width), beta)
+def inc_max_pool(premat_tensor, in_tensor, out_tensor, locations, padding_y, padding_x, stride_y, stride_x, k_size_y, k_size_x, p_height, p_width, beta):
+    temp = inc_conv_lib.inc_max_pool(premat_tensor, in_tensor, out_tensor, locations, padding_y, padding_x, stride_y, stride_x,
+                                 k_size_y, k_size_x, int(p_height), int(p_width), beta)
+    return int(temp/1000),int(temp%1000)
+
+def inc_avg_pool(premat_tensor, in_tensor, out_tensor, locations, padding_y, padding_x, stride_y, stride_x, k_size_y, k_size_x, p_height, p_width, beta):
+    temp = inc_conv_lib.inc_avg_pool(premat_tensor, in_tensor, out_tensor, locations, padding_y, padding_x, stride_y, stride_x,
+                                 k_size_y, k_size_x, int(p_height), int(p_width), beta)
     return int(temp/1000),int(temp%1000)
 
 def full_projection(premat_tensor, in_tensor, out_tensor, locations, p_height, p_width):    
@@ -195,21 +204,24 @@ def generate_heatmap(image_file_path, x, show=True, label="", width=224):
     start = int((width - stride*x.shape[0])//2)
     img = Image.fromarray(np.asarray(img)[start:start+x.shape[0]*stride,start:start+x.shape[0]*stride,:])
     
+    #vmin, vmax = np.percentile(x, 5),np.percentile(x, 95)
+    
     if show:
         fig, axes = plt.subplots(nrows=1, ncols=2)
         fig.suptitle("Predicted Class: " + label, fontsize=12, y=0.9)
         axes[0].imshow(img, extent=(0,1,0,1))
         axes[1].imshow(img, extent=(0,1,0,1))
-        #accounting for outliers
-        #vmin, vmax = np.percentile(x, 25),np.percentile(x, 75)
-        im = axes[1].imshow(x, cmap=plt.cm.jet_r, alpha=.7, interpolation='bilinear', extent=(0,1,0,1))
 
+        im = axes[1].imshow(x, cmap=plt.cm.jet_r, alpha=0.8, interpolation='bilinear', extent=(0,1,0,1))
+        im.set_clim(vmin=0.75, vmax=1.0)
+        
         fig.subplots_adjust(right=0.8)
         cbar_ax = fig.add_axes([1., 0.15, 0.02, 0.7])
         fig.colorbar(im, cax=cbar_ax)
 
         fig.tight_layout()
         #plt.axis('off')
+
         plt.show()
       
     
@@ -218,7 +230,9 @@ def generate_heatmap(image_file_path, x, show=True, label="", width=224):
     ax = fig.gca()
     
     ax.imshow(img, extent=(0,1,0,1))
-    ax.imshow(x, cmap=plt.cm.jet_r, alpha=.7, interpolation='bilinear', extent=(0,1,0,1))
+    im = ax.imshow(x, cmap=plt.cm.jet_r, alpha=0.8, interpolation='bilinear', extent=(0,1,0,1))
+    im.set_clim(vmin=0.75, vmax=1.0)
+    
     ax.axis('off')
     canvas.draw()  
     

@@ -140,7 +140,7 @@ class ResNet18(nn.Module):
         residual = self.residual_5_op(x)
         x = self.conv5_1_a_op(x)
         x = self.conv5_1_b_op(x)
-        x = F.relu(x + residual)
+        x = F.relu(x + residual) 
         residual = x
         x = self.conv5_2_a_op(x)
         x = self.conv5_2_b_op(x)
@@ -229,16 +229,18 @@ class ResNet18(nn.Module):
                 
         prev_size = 224
         for layer, data, c, size, s, p, k in zip(layers, premat_data, C, sizes, S, P, K):
+
             remove = 0
-            if patch_size > round(prev_size*beta):
-                temp_patch_size = int(round(prev_size*beta))
-                if (patch_size-temp_patch_size)%2 != 0:
-                    temp_patch_size -= 1
-                remove = patch_size - temp_patch_size
-                patch_size =temp_patch_size
-                                    
+            orig_patch_size = patch_size
             out_p_size = int(min(math.ceil((patch_size + k - 1.0)/s), size))
             in_p_size = k + (out_p_size-1)*s
+            
+            if out_p_size > round(size*beta):
+                temp_out_p_size = int(round(size*beta))
+                remove = (out_p_size-temp_out_p_size)*s
+                in_p_size -= remove
+                out_p_size = temp_out_p_size
+
             
             out_locations = self.__get_output_locations(in_locations, out_p_size, s, p, k, prev_size, size, remove=remove)
             
@@ -362,6 +364,7 @@ class ResNet18(nn.Module):
                     temp[:,r_in_locations[i][0]:r_in_locations[i][0]+r_patch_size,r_in_locations[i][1]:r_in_locations[i][1]+r_patch_size] = r_patches[i,:,:,:]
 
                     x[i,:,:,:] = temp[:,2*out_locations[i][0]:2*out_locations[i][0]+patch_size*2,2*out_locations[i][1]:2*out_locations[i][1]+2*patch_size]
+                    
                 x = sub_layers[2](x)
                         
             patches = F.relu(patches + x)
@@ -659,9 +662,10 @@ class ResNet18(nn.Module):
                                             p_width, beta)
         out = batch_normalization(out, self.conv5_1_b_op[1].running_mean.data, self.conv5_1_b_op[1].running_var.data, 
                             self.conv5_1_b_op[1].weight.data, self.conv5_1_b_op[1].bias.data)
+    
         x = out
         if debug: print(locations, p_height, x.shape)
-
+            
         out = self.__get_tensor('residual5', batch_size, 512, r_p_height, r_p_width, 1, 2, 14, 7)
         _, _ = inc_convolution(self.merge_4_2.data, r, self.residual_5_op[0].weight.data, 
                                             self.residual_5_op[0].bias.data, out.data, r_locations.data, 0, 0, 2, 2, r_p_height, 
@@ -669,11 +673,12 @@ class ResNet18(nn.Module):
         out = batch_normalization(out, self.residual_5_op[1].running_mean.data, self.residual_5_op[1].running_var.data, self.residual_5_op[1].weight.data, self.residual_5_op[1].bias.data)
         
         r = out
-        
+                
         x = inc_add(x, locations, self.residual_5.data, r, r_locations)    
         x = F.relu(x)
         r = x
         r_locations = locations.clone()
+        
         
         out = self.__get_tensor('conv5_2_a', batch_size, 512, p_height, p_width, 3, 1, 7, 7)
         p_height, p_width = inc_convolution(self.merge_5_1.data, x, self.conv5_2_a_op[0].weight.data, 
@@ -707,8 +712,6 @@ class ResNet18(nn.Module):
         full_projection(self.merge_5_2.data, x, out, locations, p_height, p_width)
         x = out
         
-        return x
-    
         x = self.avgpool(x)
         x = x.view(x.size(0), -1)
         x = self.fc(x)
@@ -727,16 +730,30 @@ class ResNet18(nn.Module):
         
         
     def __get_patch_sizes(self, layer, patch_size, prev_size, k, s, p, size, beta, in_locations, b, c):
-        remove = 0
-        if patch_size > round(prev_size*beta):
-            temp_patch_size = int(round(prev_size*beta))
-            if (patch_size-temp_patch_size)%2 != 0:
-                temp_patch_size -= 1
-            remove = patch_size - temp_patch_size
-            patch_size =temp_patch_size
+#         remove = 0
+#         if patch_size > round(prev_size*beta):
+#             temp_patch_size = int(round(prev_size*beta))
+#             #if (patch_size-temp_patch_size)%2 != 0:
+#             #    temp_patch_size -= 1
+            
+#             remove = patch_size - temp_patch_size
+#             patch_size =temp_patch_size
 
+#         out_p_size = int(min(math.ceil((patch_size + k - 1.0)/s), size))
+#         in_p_size = k + (out_p_size-1)*s
+        
+        remove = 0
+        orig_patch_size = patch_size
         out_p_size = int(min(math.ceil((patch_size + k - 1.0)/s), size))
         in_p_size = k + (out_p_size-1)*s
+
+        if out_p_size > round(size*beta):
+            temp_out_p_size = int(round(size*beta))
+            remove = (out_p_size-temp_out_p_size)*s
+            in_p_size -= remove
+            out_p_size = temp_out_p_size
+
+        
         out_locations = self.__get_output_locations(in_locations, out_p_size, s, p, k, prev_size, size, remove=remove)
 
         if layer in self.cache:
@@ -755,8 +772,8 @@ class ResNet18(nn.Module):
         out_locations = []
         
         for x,y in in_locations:
-            x_out = int(max(math.ceil((padding + x + remove/2 - ksize + 1.0)/stride), 0))
-            y_out = int(max(math.ceil((padding + y + remove/2 - ksize + 1.0)/stride), 0))
+            x_out = int(max(math.ceil((padding + x + remove//2 - ksize + 1.0)/stride), 0))
+            y_out = int(max(math.ceil((padding + y + remove//2 - ksize + 1.0)/stride), 0))
             
             if x_out + out_p_size > out_size:
                 x_out = out_size - out_p_size
@@ -777,20 +794,25 @@ class ResNet18(nn.Module):
                 tensor = tensor.cuda()
             self.tensor_cache[name] = tensor
             return tensor
+        
+    def reset_tensor_cache(self):
+        self.tensor_cache = {}
 
     
     def __get_output_shape(self, p_height, p_width, k_size, stride, in_size, out_size, truncate):
-        if truncate and (p_height > round(in_size*self.beta)):
-            in_p_height = round(in_size*self.beta)
+#         if truncate and (p_height > round(in_size*self.beta)):
+#             in_p_height = round(in_size*self.beta)
+#             p_height = in_p_height
             
-            if ((p_height-in_p_height) % 2) != 0:
-                in_p_height -= 1
-                
-            p_height = in_p_height
-                
-        temp_p_height = min(int(math.ceil((p_height+k_size-1)*1.0/stride)), out_size)
+#         temp_p_height = min(int(math.ceil((p_height+k_size-1)*1.0/stride)), out_size)
             
-        return (temp_p_height, temp_p_height)
+#         return (temp_p_height, temp_p_height)
+
+        new_p_height = min(int(math.ceil((p_height+k_size-1)*1.0/stride)), out_size)
+        if truncate and (new_p_height > round(out_size*self.beta)):
+                new_p_height = round(out_size*self.beta)
+                
+        return new_p_height, new_p_height
     
     
     def __initialize_weights(self, gpu):

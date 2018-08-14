@@ -292,9 +292,7 @@ class VGG16(nn.Module):
         out = self.__get_tensor('pool5-full', batch_size, 512, 7, 7, 1, 1, 7, 7, truncate=False)
         full_projection(self.pool5.data, x, out, locations, p_height, p_width)
         x = out
-        
-        return x
-                
+            
         x = x.view(x.size(0), -1)
         x = self.classifier(x)
         return x
@@ -345,16 +343,14 @@ class VGG16(nn.Module):
             
             remove = 0
             orig_patch_size = patch_size
-            if patch_size > round(prev_size*beta):
-                temp_patch_size = int(round(prev_size*beta))
-                if (patch_size-temp_patch_size)%2 != 0:
-                    temp_patch_size -= 1
-                remove = patch_size - temp_patch_size
-                patch_size = temp_patch_size
-
-                
             out_p_size = int(min(math.ceil((patch_size + k - 1.0)/s), size))
             in_p_size = k + (out_p_size-1)*s
+            
+            if out_p_size > round(size*beta):
+                temp_out_p_size = int(round(size*beta))
+                remove = (out_p_size-temp_out_p_size)*s
+                in_p_size -= remove
+                out_p_size = temp_out_p_size
             
             out_locations = self.__get_output_locations(in_locations, out_p_size, s, p, k, prev_size, size, remove=remove)
             
@@ -374,7 +370,7 @@ class VGG16(nn.Module):
                 y1 = min(prev_size - s*out_locations[i][1]+p, in_p_size)
         
                 temp = data[0,:,:,:].clone()               
-                temp[:,in_locations[i][0]:in_locations[i][0]+patch_size,in_locations[i][1]:in_locations[i][1]+patch_size] = patches[i,:,:,:]
+                temp[:,in_locations[i][0]:in_locations[i][0]+orig_patch_size,in_locations[i][1]:in_locations[i][1]+orig_patch_size] = patches[i,:,:,:]
       
                 x[i,:,x0:x1,y0:y1] = temp[:,max(s*out_locations[i][0]-p,0):max(0, s*out_locations[i][0]-p)+x1-x0,
                      max(0, s*out_locations[i][1]-p):max(0, s*out_locations[i][1]-p)+y1-y0]
@@ -477,20 +473,17 @@ class VGG16(nn.Module):
                 tensor = tensor.cuda()
             self.tensor_cache[name] = tensor
             return tensor
+        
+        
+    def reset_tensor_cache(self):
+        self.tensor_cache = {}
 
 
     def __get_output_shape(self, p_height, p_width, k_size, stride, in_size, out_size, truncate):
-
-        if truncate and (p_height > round(in_size*self.beta)):
-            temp_p_height = round(in_size*self.beta)
-            
-            if ((p_height-temp_p_height) % 2) != 0:
-                temp_p_height -= 1
-                
-            p_height = temp_p_height
-                
         new_p_height = min(int(math.ceil((p_height+k_size-1)*1.0/stride)), out_size)
-        
+        if truncate and (new_p_height > round(out_size*self.beta)):
+            new_p_height = round(out_size*self.beta)
+    
         return (new_p_height,new_p_height)
     
     
@@ -498,8 +491,8 @@ class VGG16(nn.Module):
         out_locations = []
         
         for x,y in in_locations:
-            x_out = int(max(math.ceil((padding + x + remove/2 - ksize + 1.0)/stride), 0))
-            y_out = int(max(math.ceil((padding + y + remove/2 - ksize + 1.0)/stride), 0))
+            x_out = int(max(math.ceil((padding + x + remove//2 - ksize + 1.0)/stride), 0))
+            y_out = int(max(math.ceil((padding + y + remove//2 - ksize + 1.0)/stride), 0))
             
             if x_out + out_p_size > out_size:
                 x_out = out_size - out_p_size
