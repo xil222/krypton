@@ -14,5 +14,7 @@ int inc_max_pool(THCudaTensor * premat_tensor, THCudaTensor * in_tensor, THCudaT
 int inc_avg_pool(THCudaTensor * premat_tensor, THCudaTensor * in_tensor, THCudaTensor * out_tensor,  THCudaIntTensor * location_tensor,
  int padding_y, int padding_x, int stride_y, int stride_x, int k_size_y, int k_size_x, int p_height, int p_width, float beta);
 
-int full_projection(THCudaTensor * premat_tensor, THCudaTensor * in_tensor, THCudaTensor * out_tensor,
+void full_projection(THCudaTensor * premat_tensor, THCudaTensor * in_tensor, THCudaTensor * out_tensor,
  THCudaIntTensor * location_tensor, int p_height, int p_width);
+
+void calc_bbox_coordinates(int batch_size, THCudaIntTensor * loc_out_tensor, THCudaIntTensor * loc_tensor1, THCudaIntTensor * loc_tensor2);

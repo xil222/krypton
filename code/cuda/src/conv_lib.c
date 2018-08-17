@@ -90,36 +90,7 @@ int inc_convolution(THCudaTensor * premat_tensor, THCudaTensor * in_tensor, THCu
  
     int out_width = (in_width - k_width + 2*padding_x)/stride_x + 1;
     int out_height = (in_height - k_height + 2*padding_y)/stride_y + 1;
-        
-//     int remove_x = 0;
-//     int remove_y = 0;
-//     if(((p_width) > round(in_width * beta)) || ((p_height) > round(in_height * beta)))
-//     {
-//         int temp_p_height = (int)round(min(beta*in_height, p_height*1.0));
-//         int temp_p_width = (int)round(min(beta*in_width, p_width*1.0));
-        
-//         //if((p_height-temp_p_height)%2 != 0)
-//         //{
-//         //    temp_p_height -= 1;
-//         //}
-//         //if((p_width-temp_p_width)%2 != 0)
-//         //{
-//         //    temp_p_width -= 1;
-//         //}
-        
-//         remove_x = p_width - temp_p_width;
-//         remove_y = p_height - temp_p_height;
-        
-//         p_height = temp_p_height;
-//         p_width = temp_p_width;
-//     }
-
-//     int out_p_height = (int)min(ceil((p_height+k_height-1)*1.0/stride_y), out_height*1.0);
-//     int out_p_width = (int)min(ceil((p_width+k_width-1)*1.0/stride_x), out_width*1.0);
-    
-//     int in_p_height = k_height + (out_p_height-1)*stride_y;
-//     int in_p_width = k_width + (out_p_width-1)*stride_x;
-    
+            
     int out_p_height = (int)min(ceil((p_height+k_height-1)*1.0/stride_y), out_height*1.0);
     int out_p_width = (int)min(ceil((p_width+k_width-1)*1.0/stride_x), out_width*1.0);
     
@@ -146,7 +117,6 @@ int inc_convolution(THCudaTensor * premat_tensor, THCudaTensor * in_tensor, THCu
         out_p_width = temp_out_p_width;
     }    
     
-
     //temp input tensor
     cudnnTensorDescriptor_t in_desc;
     cudnnCreateTensorDescriptor(&in_desc);
@@ -285,23 +255,6 @@ int inc_max_pool(THCudaTensor * premat_tensor, THCudaTensor * in_tensor, THCudaT
     int out_width = (in_width - k_width + 2*padding_x)/stride_x + 1;
     int out_height = (in_height - k_height + 2*padding_y)/stride_y + 1;
 
-//     int remove_x = 0;
-//     int remove_y = 0;
-//     if(((p_width) > round(in_width * beta)) || ((p_height) > round(in_height * beta)))
-//     {
-//         int temp_p_height = (int)round(min(beta*in_height, p_height*1.0));
-//         int temp_p_width = (int)round(min(beta*in_width, p_width*1.0));
-                
-//         remove_x = p_width - temp_p_width;
-//         remove_y = p_height - temp_p_height;
-        
-//         p_height = temp_p_height;
-//         p_width = temp_p_width;
-//     }
-    
-//     int out_p_height = min((int)ceil((p_height+k_height-1)*1.0/stride_y), out_height);
-//     int out_p_width = min((int)ceil((p_width+k_width-1)*1.0/stride_x), out_width); 
-    
     
     int out_p_height = (int)min(ceil((p_height+k_height-1)*1.0/stride_y), out_height*1.0);
     int out_p_width = (int)min(ceil((p_width+k_width-1)*1.0/stride_x), out_width*1.0);
@@ -351,24 +304,7 @@ int inc_avg_pool(THCudaTensor * premat_tensor, THCudaTensor * in_tensor, THCudaT
 
     int out_width = (in_width - k_width + 2*padding_x)/stride_x + 1;
     int out_height = (in_height - k_height + 2*padding_y)/stride_y + 1;
-
-//     int remove_x = 0;
-//     int remove_y = 0;
-//     if(((p_width) > round(in_width * beta)) || ((p_height) > round(in_height * beta)))
-//     {
-//         int temp_p_height = (int)round(min(beta*in_height, p_height));
-//         int temp_p_width = (int)round(min(beta*in_width, p_width));
-                
-//         remove_x = p_width - temp_p_width;
-//         remove_y = p_height - temp_p_height;
-        
-//         p_height = temp_p_height;
-//         p_width = temp_p_width;
-//     }
-    
-//     int out_p_height = min((int)ceil((p_height+k_height-1)*1.0/stride_y), out_height);
-//     int out_p_width = min((int)ceil((p_width+k_width-1)*1.0/stride_x), out_width);   
-    
+     
     int out_p_height = (int)min(ceil((p_height+k_height-1)*1.0/stride_y), out_height*1.0);
     int out_p_width = (int)min(ceil((p_width+k_width-1)*1.0/stride_x), out_width*1.0);
     
@@ -405,7 +341,7 @@ int inc_avg_pool(THCudaTensor * premat_tensor, THCudaTensor * in_tensor, THCudaT
 }
 
 
-int full_projection(THCudaTensor * premat_tensor, THCudaTensor * in_tensor, THCudaTensor * out_tensor,
+void full_projection(THCudaTensor * premat_tensor, THCudaTensor * in_tensor, THCudaTensor * out_tensor,
  THCudaIntTensor * location_tensor, int p_height, int p_width)
 {
     float * ptr_premat_tensor = THCudaTensor_data(NULL, premat_tensor);
@@ -420,7 +356,15 @@ int full_projection(THCudaTensor * premat_tensor, THCudaTensor * in_tensor, THCu
     
     full_projection_gpu(ptr_premat_tensor, ptr_in_tensor, ptr_out_tensor, ptr_location, batch, in_channels, in_height, in_width, p_height, p_width);
         
-    return 0;
+}
+
+void calc_bbox_coordinates(int batch_size, THCudaIntTensor * loc_out_tensor, THCudaIntTensor * loc_tensor1, THCudaIntTensor * loc_tensor2)
+{
+    int * ptr_loc_out_tensor = THCudaIntTensor_data(NULL, loc_out_tensor);
+    int * ptr_loc_tensor1 = THCudaIntTensor_data(NULL, loc_tensor1);
+    int * ptr_loc_tensor2 = THCudaIntTensor_data(NULL, loc_tensor2);
+    
+    calc_bbox_coordinates_gpu(batch_size, ptr_loc_out_tensor, ptr_loc_tensor1, ptr_loc_tensor2);
 }
 
 //     int out_p_height = min((int)ceil((p_height+k_height-1)*1.0/stride_y), out_height);

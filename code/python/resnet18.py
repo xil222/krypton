@@ -145,7 +145,7 @@ class ResNet18(nn.Module):
         x = self.conv5_2_a_op(x)
         x = self.conv5_2_b_op(x)
         x = F.relu(x + residual)        
-        
+        return x
         x = self.avgpool(x)
         x = x.view(x.size(0), -1)
         x = self.fc(x)
@@ -229,7 +229,6 @@ class ResNet18(nn.Module):
                 
         prev_size = 224
         for layer, data, c, size, s, p, k in zip(layers, premat_data, C, sizes, S, P, K):
-
             remove = 0
             orig_patch_size = patch_size
             out_p_size = int(min(math.ceil((patch_size + k - 1.0)/s), size))
@@ -240,7 +239,6 @@ class ResNet18(nn.Module):
                 remove = (out_p_size-temp_out_p_size)*s
                 in_p_size -= remove
                 out_p_size = temp_out_p_size
-
             
             out_locations = self.__get_output_locations(in_locations, out_p_size, s, p, k, prev_size, size, remove=remove)
             
@@ -711,7 +709,7 @@ class ResNet18(nn.Module):
         out = self.__get_tensor('merge_5_2-full', batch_size, 512, 7, 7, 1, 1, 7, 7, truncate=False)
         full_projection(self.merge_5_2.data, x, out, locations, p_height, p_width)
         x = out
-        
+        return x
         x = self.avgpool(x)
         x = x.view(x.size(0), -1)
         x = self.fc(x)
@@ -730,18 +728,6 @@ class ResNet18(nn.Module):
         
         
     def __get_patch_sizes(self, layer, patch_size, prev_size, k, s, p, size, beta, in_locations, b, c):
-#         remove = 0
-#         if patch_size > round(prev_size*beta):
-#             temp_patch_size = int(round(prev_size*beta))
-#             #if (patch_size-temp_patch_size)%2 != 0:
-#             #    temp_patch_size -= 1
-            
-#             remove = patch_size - temp_patch_size
-#             patch_size =temp_patch_size
-
-#         out_p_size = int(min(math.ceil((patch_size + k - 1.0)/s), size))
-#         in_p_size = k + (out_p_size-1)*s
-        
         remove = 0
         orig_patch_size = patch_size
         out_p_size = int(min(math.ceil((patch_size + k - 1.0)/s), size))
@@ -752,7 +738,6 @@ class ResNet18(nn.Module):
             remove = (out_p_size-temp_out_p_size)*s
             in_p_size -= remove
             out_p_size = temp_out_p_size
-
         
         out_locations = self.__get_output_locations(in_locations, out_p_size, s, p, k, prev_size, size, remove=remove)
 
@@ -799,19 +784,11 @@ class ResNet18(nn.Module):
         self.tensor_cache = {}
 
     
-    def __get_output_shape(self, p_height, p_width, k_size, stride, in_size, out_size, truncate):
-#         if truncate and (p_height > round(in_size*self.beta)):
-#             in_p_height = round(in_size*self.beta)
-#             p_height = in_p_height
-            
-#         temp_p_height = min(int(math.ceil((p_height+k_size-1)*1.0/stride)), out_size)
-            
-#         return (temp_p_height, temp_p_height)
-
+    def __get_output_shape(self, p_height, p_width, k_size, stride, in_size, out_size, truncate):            
         new_p_height = min(int(math.ceil((p_height+k_size-1)*1.0/stride)), out_size)
         if truncate and (new_p_height > round(out_size*self.beta)):
-                new_p_height = round(out_size*self.beta)
-                
+            new_p_height = round(out_size*self.beta)
+    
         return new_p_height, new_p_height
     
     

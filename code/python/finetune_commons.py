@@ -48,7 +48,7 @@ def ft_train_model(model, criterion, optimizer, dataloaders,device, dataset_size
                 # forward
                 # track history if only in train
                 with torch.set_grad_enabled(phase == 'train'):
-                    outputs = model(inputs)
+                    outputs = model(inputs)   
                     _, preds = torch.max(outputs, 1)
                     loss = criterion(outputs, labels)
 
@@ -80,7 +80,7 @@ def ft_train_model(model, criterion, optimizer, dataloaders,device, dataset_size
 
     # load best model weights
     model.load_state_dict(best_model_wts)
-    return model
+    return model, best_acc
 
 
 def visualize_model(model, dataloaders, class_names, device, num_images=6):

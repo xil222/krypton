@@ -50,6 +50,10 @@ def inc_avg_pool(premat_tensor, in_tensor, out_tensor, locations, padding_y, pad
 
 def full_projection(premat_tensor, in_tensor, out_tensor, locations, p_height, p_width):    
     inc_conv_lib.full_projection(premat_tensor, in_tensor, out_tensor, locations, int(p_height), int(p_width))
+    
+def calc_bbox_coordinates(batch_size, loc_out_tensor, loc_tensor1, loc_tensor2):
+    inc_conv_lib.calc_bbox_coordinates(batch_size, loc_out_tensor, loc_tensor1, loc_tensor2)
+    return loc_out_tensor
 
 
 def full_inference_e2e(model, file_path, patch_size, stride, batch_size=256, gpu=True, version='v1', image_size=224, x_size=224, y_size=224, n_labels=1000, weights_data=None, loader=None, c=0.0):
@@ -195,7 +199,7 @@ def adaptive_drilldown(model, file_path, patch_size, stride, batch_size=128, ima
     return temp1
     
     
-def generate_heatmap(image_file_path, x, show=True, label="", width=224):
+def generate_heatmap(image_file_path, x, show=True, label="", width=224, alpha=1.0):
 
     img = Image.open(image_file_path).convert('RGB')
     img = img.resize((width,width), Image.ANTIALIAS)
@@ -212,7 +216,7 @@ def generate_heatmap(image_file_path, x, show=True, label="", width=224):
         axes[0].imshow(img, extent=(0,1,0,1))
         axes[1].imshow(img, extent=(0,1,0,1))
 
-        im = axes[1].imshow(x, cmap=plt.cm.jet_r, alpha=0.8, interpolation='bilinear', extent=(0,1,0,1))
+        im = axes[1].imshow(x, cmap=plt.cm.jet_r, alpha=alpha, interpolation='none', extent=(0,1,0,1))
         im.set_clim(vmin=0.75, vmax=1.0)
         
         fig.subplots_adjust(right=0.8)
@@ -230,7 +234,7 @@ def generate_heatmap(image_file_path, x, show=True, label="", width=224):
     ax = fig.gca()
     
     ax.imshow(img, extent=(0,1,0,1))
-    im = ax.imshow(x, cmap=plt.cm.jet_r, alpha=0.8, interpolation='bilinear', extent=(0,1,0,1))
+    im = ax.imshow(x, cmap=plt.cm.jet_r, alpha=0.8, interpolation='none', extent=(0,1,0,1))
     im.set_clim(vmin=0.75, vmax=1.0)
     
     ax.axis('off')

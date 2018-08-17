@@ -11,7 +11,7 @@ import torch.nn.functional as F
 from torch.autograd import Variable
 from torchvision.transforms import transforms
 
-from commons import inc_convolution, inc_max_pool, inc_avg_pool, full_projection, batch_normalization, inc_stack
+from commons import inc_convolution, inc_max_pool, inc_avg_pool, full_projection, batch_normalization, inc_stack, calc_bbox_coordinates
 from commons import load_dict_from_hdf5
 from imagenet_classes import class_names
 
@@ -67,16 +67,17 @@ class Inception3(nn.Module):
         self.mixed_6e = InceptionC(768, c7=192, beta=beta, gpu=gpu)
         
         # layer 7
-        self.mixed_7a = InceptionD(768)
-        self.mixed_7b = InceptionE(1280)
-        self.mixed_7c = InceptionE(2048)
+        self.mixed_7a = InceptionD(768, beta=beta, gpu=gpu)
+        self.mixed_7b = InceptionE(1280, beta=beta, gpu=gpu)
+        self.mixed_7c = InceptionE(2048, beta=beta, gpu=gpu)
 
         self.fc = nn.Linear(2048, n_labels)
         self.classifier = nn.Softmax(dim=1)
         self.weights_data = weights_data
         self.__initialize_weights(gpu)
         
-        self.tensor_cache = {}        
+        self.tensor_cache = {}   
+        self.cache = {}
 
     def forward(self, x):
         return self.forward_fused(x)
@@ -93,22 +94,22 @@ class Inception3(nn.Module):
         x = self.pool2_op(x)       
         x = self.conv3_op(x)
         x = self.conv4_op(x)      
-        x = self.pool4_op(x)       
+        x = self.pool4_op(x)
         
-        x = self.mixed_5a(x)
+        x = self.mixed_5a(x)       
         x = self.mixed_5b(x)   
-        x = self.mixed_5c(x)
+        x = self.mixed_5c(x)     
     
-        x = self.mixed_6a(x)        
-        x = self.mixed_6b(x)                  
-        x = self.mixed_6c(x)
-        x = self.mixed_6d(x)
-        x = self.mixed_6e(x)
+        x = self.mixed_6a(x)
+        x = self.mixed_6b(x)
+        x = self.mixed_6c(x)        
+        x = self.mixed_6d(x)  
+        x = self.mixed_6e(x)       
     
-        x = self.mixed_7a(x)
-        x = self.mixed_7b(x)   
+        x = self.mixed_7a(x)       
+        x = self.mixed_7b(x)       
         x = self.mixed_7c(x)
-    
+        return x
         x = F.avg_pool2d(x, kernel_size=8)        
     
         x = x.view(x.size(0), -1)
@@ -236,25 +237,42 @@ class Inception3(nn.Module):
         x = out
         if debug: print(locations, p_height, x.shape)
    
-        x, p_height, p_width = self.mixed_5a.forward_gpu(x, locations, p_height, p_width, beta)        
-        x, p_height, p_width = self.mixed_5b.forward_gpu(x, locations, p_height, p_width, beta)      
-        x, p_height, p_width = self.mixed_5c.forward_gpu(x, locations, p_height, p_width, beta)
-   
-        x, p_height, p_width = self.mixed_6a.forward_gpu(x, locations, p_height, p_width, beta)        
-        x, p_height, p_width = self.mixed_6b.forward_gpu(x, locations, p_height, p_width, beta)    
-        x, p_height, p_width = self.mixed_6c.forward_gpu(x, locations, p_height, p_width, beta)
-        x, p_height, p_width = self.mixed_6d.forward_gpu(x, locations, p_height, p_width, beta)
-        x, p_height, p_width = self.mixed_6e.forward_gpu(x, locations, p_height, p_width, beta)        
         
+        x, p_height, p_width = self.mixed_5a.forward_gpu(x, locations, p_height, p_width, beta)
+        if debug: print(locations, p_height, x.shape)
+        x, p_height, p_width = self.mixed_5b.forward_gpu(x, locations, p_height, p_width, beta)
+        if debug: print(locations, p_height, x.shape)
+        x, p_height, p_width = self.mixed_5c.forward_gpu(x, locations, p_height, p_width, beta)
+        if debug: print(locations, p_height, x.shape)
+   
+        x, p_height, p_width = self.mixed_6a.forward_gpu(x, locations, p_height, p_width, beta)
+        if debug: print(locations, p_height, x.shape)
+        x, p_height, p_width = self.mixed_6b.forward_gpu(x, locations, p_height, p_width, beta)
+        if debug: print(locations, p_height, x.shape)    
+        x, p_height, p_width = self.mixed_6c.forward_gpu(x, locations, p_height, p_width, beta)
+        if debug: print(locations, p_height, x.shape)       
+        x, p_height, p_width = self.mixed_6d.forward_gpu(x, locations, p_height, p_width, beta)
+        if debug: print(locations, p_height, x.shape)             
+        x, p_height, p_width = self.mixed_6e.forward_gpu(x, locations, p_height, p_width, beta)
+        if debug: print(locations, p_height, x.shape)
+                 
         x, p_height, p_width = self.mixed_7a.forward_gpu(x, locations, p_height, p_width, beta)
+        if debug: print(locations, p_height, x.shape)                       
         x, p_height, p_width = self.mixed_7b.forward_gpu(x, locations, p_height, p_width, beta)
-        x, p_height, p_width = self.mixed_7c.forward_gpu(x, locations, p_height, p_width, beta)      
+        if debug: print(locations, p_height, x.shape)            
+#         out = self.__get_tensor('global-pool-full', batch_size, x.shape[1], 8, 8, 1, 1,
+#                                 8, 8, truncate=False)
+#         full_projection(self.mixed_7b.concat.data, x, out, locations, p_height, p_width)
+#         x = out    
+#         return x            
+        x, p_height, p_width = self.mixed_7c.forward_gpu(x, locations, p_height, p_width, beta)
+        if debug: print(locations, p_height, x.shape)
 
         #final full-projection
         out = self.__get_tensor('global-pool-full', batch_size, 2048, 8, 8, 1, 1, 8, 8, truncate=False)
         full_projection(self.mixed_7c.concat.data, x, out, locations, p_height, p_width)
         x = out
-        
+        return x
         x = F.avg_pool2d(x, kernel_size=8)      
 
         x = x.view(x.size(0), -1)
@@ -262,6 +280,146 @@ class Inception3(nn.Module):
         x = self.classifier(x)
         
         return x
+    
+    def forward_pytorch(self, patches, locations, p_height, p_width, beta=None):                
+        if not self.initialized:
+            raise Exception("Not initialized...")
+        
+        image = self.image
+
+        if beta is None:
+            beta = self.beta
+        else:
+            self.beta = beta
+
+        batch_size = patches.shape[0]
+
+        patches = patches.clone()
+        patches[:, 0] = patches[:, 0] * (0.229 / 0.5) + (0.485 - 0.5) / 0.5
+        patches[:, 1] = patches[:, 1] * (0.224 / 0.5) + (0.456 - 0.5) / 0.5
+        patches[:, 2] = patches[:, 2] * (0.225 / 0.5) + (0.406 - 0.5) / 0.5
+        
+        if self.gpu:
+            patches = patches.cuda()
+        
+        in_locations = locations.cpu().data.numpy().tolist()
+        
+        layers = [self.conv1_inc_op, self.conv2_a_inc_op, self.conv2_b_inc_op, self.pool2_inc_op,
+                 self.conv3_inc_op, self.conv4_inc_op, self.pool4_inc_op]
+        premat_data = [image, self.conv1, self.conv2_a, self.conv2_b, self.pool2, self.conv3, self.conv4, self.pool4]
+        C = [3, 32, 32, 64, 64, 80, 192]
+        sizes = [149, 147, 147, 73, 73, 71, 35]
+        S = [2, 1, 1, 2, 1, 1, 2]
+        P = [0, 0, 1, 0, 0, 0, 0]
+        K = [3, 3, 3, 3, 1, 3, 3]
+        
+        #FIXME
+        patch_size = p_height
+        
+        prev_size = 299
+        for layer, data, c, size, s, p, k in zip(layers, premat_data, C, sizes, S, P, K):
+            remove = 0
+            orig_patch_size = patch_size
+            out_p_size = int(min(math.ceil((patch_size + k - 1.0)/s), size))
+            in_p_size = k + (out_p_size-1)*s
+            
+            if out_p_size > round(size*beta):
+                temp_out_p_size = int(round(size*beta))
+                remove = (out_p_size-temp_out_p_size)*s
+                in_p_size -= remove
+                out_p_size = temp_out_p_size
+            
+            out_locations = self.__get_output_locations(in_locations, out_p_size, s, p, k, prev_size, size, remove=remove)
+            
+            if layer in self.tensor_cache:
+                x = self.tensor_cache[layer].fill_(0.0)
+            else:
+                x = torch.FloatTensor(batch_size, c, in_p_size, in_p_size).fill_(0.0)
+                self.tensor_cache[layer] = x
+                
+            if self.gpu:
+                x = x.cuda()
+
+            for i in range(batch_size):
+                x0 = 0 if s*out_locations[i][0]-p >= 0 else -1*(s*out_locations[i][0]-p)
+                x1 = min(prev_size - s*out_locations[i][0]+p, in_p_size)
+                y0 = 0 if s*out_locations[i][1]-p >= 0 else -1*(s*out_locations[i][1]-p)
+                y1 = min(prev_size - s*out_locations[i][1]+p, in_p_size)
+                
+                temp = data[0,:,:,:].clone()
+                temp[:,in_locations[i][0]:in_locations[i][0]+patch_size,in_locations[i][1]:in_locations[i][1]+patch_size] = patches[i,:,:,:]
+                
+                x[i,:,x0:x1,y0:y1] = temp[:,max(s*out_locations[i][0]-p,0):max(0, s*out_locations[i][0]-p)+x1-x0,
+                    max(0, s*out_locations[i][1]-p):max(0, s*out_locations[i][1]-p)+y1-y0]
+                
+            
+            patches = layer(x).data
+            in_locations = out_locations
+            patch_size = out_p_size
+            prev_size = size 
+                  
+        
+        debug = False
+        
+        if debug: print(in_locations, patch_size, patch_size)
+        patches, locations, p_height, p_width = self.mixed_5a.forward_pytorch(patches, in_locations, patch_size, patch_size, beta=beta)
+        if debug: print(locations, p_height, p_width)
+        patches, locations, p_height, p_width = self.mixed_5b.forward_pytorch(patches, locations, p_height, p_width, beta=beta)
+        if debug: print(locations, p_height, p_width)
+        patches, locations, p_height, p_width = self.mixed_5c.forward_pytorch(patches, locations, p_height, p_width, beta=beta)
+        
+        if debug: print(locations, p_height, p_width)
+        patches, locations, p_height, p_width = self.mixed_6a.forward_pytorch(patches, locations, p_height, p_width, beta=beta)
+        if debug: print(locations, p_height, p_width)
+        patches, locations, p_height, p_width = self.mixed_6b.forward_pytorch(patches, locations, p_height, p_width, beta=beta) 
+        if debug: print(locations, p_height, p_width)
+        patches, locations, p_height, p_width = self.mixed_6c.forward_pytorch(patches, locations, p_height, p_width, beta=beta) 
+        if debug: print(locations, p_height, p_width)
+        patches, locations, p_height, p_width = self.mixed_6d.forward_pytorch(patches, locations, p_height, p_width, beta=beta)
+        if debug: print(locations, p_height, p_width)
+        patches, locations, p_height, p_width = self.mixed_6e.forward_pytorch(patches, locations, p_height, p_width, beta=beta)
+            
+        if debug: print(locations, p_height, p_width)
+        patches, locations, p_height, p_width = self.mixed_7a.forward_pytorch(patches, locations, p_height, p_width, beta=beta)
+        if debug: print(locations, p_height, p_width)
+        patches, locations, p_height, p_width = self.mixed_7b.forward_pytorch(patches, locations, p_height, p_width, beta=beta)
+#         full_project = self.mixed_7b.concat.data.repeat(batch_size, 1, 1, 1)
+#         for i, (y, x) in enumerate(locations):
+#             full_project[i,:,y:y+p_height,x:x+p_width] = patches[i,:,:,:]
+#         return full_project 
+        
+        if debug: print(locations, p_height, p_width)
+        patches, locations, p_height, p_width = self.mixed_7c.forward_pytorch(patches, locations, p_height, p_width, beta=beta)
+        if debug: print(locations, p_height, p_width)
+            
+        full_project = self.mixed_7c.concat.data.repeat(batch_size, 1, 1, 1)
+        for i, (y, x) in enumerate(locations):
+            full_project[i,:,y:y+p_height,x:x+p_width] = patches[i,:,:,:]
+            
+        x = F.avg_pool2d(full_project, kernel_size=8)        
+    
+        x = x.view(x.size(0), -1)
+        x = self.fc(x)
+        x = self.classifier(x)
+        
+        return x
+    
+        
+    def __get_output_locations(self, in_locations, out_p_size, stride, padding, ksize, in_size, out_size, remove=0):
+        out_locations = []
+        
+        for y,x in in_locations:
+            y_out = int(max(math.ceil((padding + y + remove//2 - ksize + 1.0)/stride), 0))
+            x_out = int(max(math.ceil((padding + x + remove//2 - ksize + 1.0)/stride), 0))
+            
+            if x_out + out_p_size > out_size:
+                x_out = out_size - out_p_size
+            if y_out + out_p_size > out_size:
+                y_out = out_size - out_p_size
+                
+            out_locations.append((y_out, x_out))
+            
+        return out_locations
         
 
 
@@ -494,13 +652,15 @@ class InceptionA(nn.Module):
         b5 = self.b5_2_op(b5)
         b3 = self.b3_1_op(x)
         b3 = self.b3_2_op(b3)
-        b3 = self.b3_3_op(b3)        
+        b3 = self.b3_3_op(b3)
         b_pool = nn.AvgPool2d(kernel_size=3, stride=1, padding=1)(x)
         b_pool = self.branch_pool_op(b_pool)
         x = torch.cat([b1, b5, b3, b_pool], 1)
         return x
 
     def forward_materialized(self, x):
+        self.initialized = True
+        
         self.input = x
         self.b1 = self.b1_op(x)
         self.b5_1 = self.b5_1_op(x)
@@ -601,6 +761,126 @@ class InceptionA(nn.Module):
         x = out
         return x, p_height5, p_width5
     
+    def forward_pytorch(self, patches, in_locations, p_height, p_width, beta=None):                
+        if not self.initialized:
+            raise Exception("Not initialized...")
+        
+        if beta is None:
+            beta = self.beta
+        else:
+            self.beta = beta
+
+        batch_size = patches.shape[0]
+        
+        if self.gpu:
+            patches = patches.cuda()
+        
+        
+        x1, locations1, p_height1, p_width1 = self.__pytch_single_layer(batch_size, self.b1_inc_op, self.input, self.in_channels, 35, 35, 1, 1, 0, 0, 1, 1, patches, p_height, p_width, in_locations)
+        
+        x5, locations5, p_height5, p_width5 = self.__pytch_single_layer(batch_size, self.b5_1_inc_op, self.input, self.in_channels, 35, 35, 1, 1, 0, 0, 1, 1, patches, p_height, p_width, in_locations)
+        x5, locations5, p_height5, p_width5 = self.__pytch_single_layer(batch_size, self.b5_2_inc_op, self.b5_1.data, 48, 35, 35, 1, 1, 2, 2, 5, 5, x5, p_height5, p_width5, locations5)
+        
+        x3, locations3, p_height3, p_width3 = self.__pytch_single_layer(batch_size, self.b3_1_inc_op, self.input, self.in_channels, 35, 35, 1, 1, 0, 0, 1, 1, patches, p_height, p_width, in_locations)
+        x3, locations3, p_height3, p_width3 = self.__pytch_single_layer(batch_size, self.b3_2_inc_op, self.b3_1.data, 64, 35, 35, 1, 1, 1, 1, 3, 3, x3, p_height3, p_width3, locations3)
+        x3, locations3, p_height3, p_width3 = self.__pytch_single_layer(batch_size, self.b3_3_inc_op, self.b3_2.data, 96, 35, 35, 1, 1, 1, 1, 3, 3, x3, p_height3, p_width3, locations3)
+        
+        xp, locationsp, p_heightp, p_widthp = self.__pytch_single_layer(batch_size, nn.AvgPool2d(kernel_size=3, stride=1), self.input.data, self.in_channels, 35, 35, 1, 1, 1, 1, 3, 3, patches, p_height, p_width, in_locations)
+        xp, locationsp, p_heightp, p_widthp = self.__pytch_single_layer(batch_size, self.branch_pool_inc_op, self.b_pool_1.data, self.in_channels, 35, 35, 1, 1, 0, 0, 1, 1, xp, p_heightp, p_heightp, locationsp)
+        
+        if 'stack' in self.tensor_cache:
+            stack = self.tensor_cache['stack']
+        else:
+            stack = torch.FloatTensor(batch_size, 224+self.pool_features, p_height3, p_width3)
+            if self.gpu: stack = stack.cuda()
+            self.tensor_cache['stack'] = stack
+            
+        for i in range(batch_size):
+            temp = self.b1[0,:,:,:].clone()
+            temp[:,locations1[i][0]:locations1[i][0]+p_height1,locations1[i][1]:+locations1[i][1]+p_width1] = x1[i,:,:,:]
+            stack[i,0:64,:,:] = temp[:,locations3[i][0]:locations3[i][0]+p_height3,locations3[i][1]:locations3[i][1]+p_width3]
+            
+            temp = self.b5_2[0,:,:,:].clone()
+            temp[:,locations5[i][0]:locations5[i][0]+p_height5,locations5[i][1]:+locations5[i][1]+p_width5] = x5[i,:,:,:]
+            stack[i,64:128,:,:] = temp[:,locations3[i][0]:locations3[i][0]+p_height3,locations3[i][1]:locations3[i][1]+p_width3]
+                        
+            temp = self.b_pool_2[0,:,:,:].clone()
+            temp[:,locationsp[i][0]:locationsp[i][0]+p_heightp,locationsp[i][1]:+locationsp[i][1]+p_widthp] = xp[i,:,:,:]
+            stack[i,128+96:128+96+self.pool_features,:,:] = temp[:,locations3[i][0]:locations3[i][0]+p_height3,locations3[i][1]:locations3[i][1]+p_width3]
+        
+        stack[:,128:128+96,:,:] = x3
+        
+        return stack, locations3, p_height3, p_width3
+        
+        
+    
+    def __pytch_single_layer(self, batch_size, layer, data, c, prev_size, size, s_y, s_x, p_y, p_x, k_y, k_x, patches, p_height, p_width, in_locations):
+        remove_y = 0
+        remove_x = 0
+        out_p_height = int(min(math.ceil((p_height + k_y - 1.0)/s_y), size))
+        out_p_width = int(min(math.ceil((p_width + k_x - 1.0)/s_x), size))
+        
+        in_p_height = k_y + (out_p_height-1)*s_y
+        in_p_width = k_x + (out_p_width-1)*s_x
+
+        if (out_p_height > round(size*self.beta)) or (out_p_width > round(size*self.beta)):
+            temp_out_p_height = min(int(round(size*self.beta)), out_p_height)
+            temp_out_p_width = min(int(round(size*self.beta)), out_p_width)
+            
+            remove_y = (out_p_height-temp_out_p_height)*s_y
+            remove_x = (out_p_width-temp_out_p_width)*s_x
+            
+            in_p_height -= remove_y
+            in_p_width -= remove_x
+            
+            out_p_height = temp_out_p_height
+            out_p_width = temp_out_p_width
+
+        out_locations = self.__get_output_locations(in_locations, out_p_height, out_p_width, s_y, s_x,
+                                                    p_y, p_x, k_y, k_x, prev_size, size, remove_y=remove_y, remove_x=remove_x)
+
+        if layer in self.tensor_cache:
+            x = self.tensor_cache[layer].fill_(0.0)
+        else:
+            x = torch.FloatTensor(batch_size, c, in_p_height, in_p_width).fill_(0.0)
+            self.tensor_cache[layer] = x
+
+        if self.gpu:
+            x = x.cuda()
+
+        for i in range(batch_size):
+            x0 = 0 if s_x*out_locations[i][1]-p_x >= 0 else -1*(s_x*out_locations[i][1]-p_x)
+            x1 = min(prev_size - s_x*out_locations[i][1]+p_x, in_p_width)
+            y0 = 0 if s_y*out_locations[i][0]-p_y >= 0 else -1*(s_y*out_locations[i][0]-p_y)
+            y1 = min(prev_size - s_y*out_locations[i][0]+p_y, in_p_height)
+
+            temp = data[0,:,:,:].clone()
+            temp[:,in_locations[i][0]:in_locations[i][0]+p_height,in_locations[i][1]:in_locations[i][1]+p_width] = patches[i,:,:,:]
+
+            x[i,:,y0:y1,x0:x1] = temp[:,max(s_y*out_locations[i][0]-p_y,0):max(0, s_y*out_locations[i][0]-p_y)+y1-y0,
+                max(0, s_x*out_locations[i][1]-p_x):max(0, s_x*out_locations[i][1]-p_x)+x1-x0]
+
+
+        patches = layer(x).data
+        return patches, out_locations, out_p_height, out_p_width
+    
+    
+    def __get_output_locations(self, in_locations, out_p_height, out_p_width, stride_y, stride_x, padding_y, padding_x, ksize_y, ksize_x, in_size, out_size, remove_y=0, remove_x=0):
+        out_locations = []
+        
+        for y,x in in_locations:
+            x_out = int(max(math.ceil((padding_x + x + remove_x//2 - ksize_x + 1.0)/stride_x), 0))
+            y_out = int(max(math.ceil((padding_y + y + remove_y//2 - ksize_y + 1.0)/stride_y), 0))
+            
+            if x_out + out_p_width > out_size:
+                x_out = out_size - out_p_width
+            if y_out + out_p_height > out_size:
+                y_out = out_size - out_p_height
+                
+            out_locations.append((y_out, x_out))
+            
+        return out_locations
+    
     
     def __get_tensor(self, name, batch_size, channels, p_height, p_width, k_size, stride, in_size, out_size, truncate=True):
         if name in self.tensor_cache:
@@ -666,6 +946,8 @@ class InceptionB(nn.Module):
     
     
     def forward_materialized(self, x):
+        self.initialized = True
+        
         self.input = x
         
         self.b3 = self.b3_op(x)
@@ -730,12 +1012,124 @@ class InceptionB(nn.Module):
         out = self.__get_tensor('stack', batch_size, 480+self.in_channels,
                                 p_height3_db, p_width3_db, 1, 1, 17, 17, truncate=False)
         
-        inc_stack(out.data,  480+self.in_channels, 0, locations, x3, locations3, self.b3.data)
-        inc_stack(out.data,  480+self.in_channels, 384, locations, x3_db, locations, self.b3_db_3.data)
-        inc_stack(out.data,  480+self.in_channels, 384+96, locations, xp, locationsp, self.b_pool.data)
+        inc_stack(out.data, 480+self.in_channels, 0, locations, x3, locations3, self.b3.data)
+        inc_stack(out.data, 480+self.in_channels, 384, locations, x3_db, locations, self.b3_db_3.data)
+        inc_stack(out.data, 480+self.in_channels, 384+96, locations, xp, locationsp, self.b_pool.data)
         x = out
         
         return x, p_height3_db, p_width3_db
+    
+    
+    def forward_pytorch(self, patches, in_locations, p_height, p_width, beta=None):                
+        if not self.initialized:
+            raise Exception("Not initialized...")
+        
+        if beta is None:
+            beta = self.beta
+        else:
+            self.beta = beta
+
+        batch_size = patches.shape[0]
+        
+        if self.gpu:
+            patches = patches.cuda()
+        
+        x3, locations3, p_height3, p_width3 = self.__pytch_single_layer(batch_size, self.b3_inc_op, self.input, self.in_channels, 35, 17, 2, 2, 0, 0, 3, 3, patches, p_height, p_width, in_locations)
+        
+        x3_db, locations3_db, p_height3_db, p_width3_db = self.__pytch_single_layer(batch_size, self.b3_db_1_inc_op, self.input, self.in_channels, 35, 35, 1, 1, 0, 0, 1, 1, patches, p_height, p_width, in_locations)
+        x3_db, locations3_db, p_height3_db, p_width3_db = self.__pytch_single_layer(batch_size, self.b3_db_2_inc_op, self.b3_db_1, 64, 35, 35, 1, 1, 1, 1, 3, 3, x3_db, p_height3_db, p_width3_db, locations3_db)
+        x3_db, locations3_db, p_height3_db, p_width3_db = self.__pytch_single_layer(batch_size, self.b3_db_3_inc_op, self.b3_db_2, 96, 35, 17, 2, 2, 0, 0, 3, 3, x3_db, p_height3_db, p_width3_db, locations3_db)
+
+        xp, locationsp, p_heightp, p_widthp = self.__pytch_single_layer(batch_size, nn.MaxPool2d(kernel_size=3, stride=2), self.input, self.in_channels, 35, 17, 2, 2, 0, 0, 3, 3, patches, p_height, p_width, in_locations)
+
+        if 'stack' in self.tensor_cache:
+            stack = self.tensor_cache['stack']
+        else:
+            stack = torch.FloatTensor(batch_size, 480+self.in_channels, p_height3_db, p_width3_db)
+            if self.gpu: stack = stack.cuda()
+            self.tensor_cache['stack'] = stack
+            
+        for i in range(batch_size):
+            temp = self.b3[0,:,:,:].clone()
+            temp[:,locations3[i][0]:locations3[i][0]+p_height3,locations3[i][1]:+locations3[i][1]+p_width3] = x3[i,:,:,:]
+            stack[i,0:384,:,:] = temp[:,locations3_db[i][0]:locations3_db[i][0]+p_height3_db,locations3_db[i][1]:locations3_db[i][1]+p_width3_db]
+            
+            temp = self.b_pool[0,:,:,:].clone()
+            temp[:,locationsp[i][0]:locationsp[i][0]+p_heightp,locationsp[i][1]:+locationsp[i][1]+p_widthp] = xp[i,:,:,:]
+            stack[i,480:480+self.in_channels,:,:] = temp[:,locations3_db[i][0]:locations3_db[i][0]+p_height3_db,locations3_db[i][1]:locations3_db[i][1]+p_width3_db]
+            
+        stack[:,384:480,:,:] = x3_db
+            
+        return stack, locations3_db, p_height3_db, p_width3_db
+            
+        
+    
+    def __pytch_single_layer(self, batch_size, layer, data, c, prev_size, size, s_y, s_x, p_y, p_x, k_y, k_x, patches, p_height, p_width, in_locations):
+        remove_y = 0
+        remove_x = 0
+        out_p_height = int(min(math.ceil((p_height + k_y - 1.0)/s_y), size))
+        out_p_width = int(min(math.ceil((p_width + k_x - 1.0)/s_x), size))
+        
+        in_p_height = k_y + (out_p_height-1)*s_y
+        in_p_width = k_x + (out_p_width-1)*s_x
+
+        if (out_p_height > round(size*self.beta)) or (out_p_width > round(size*self.beta)):
+            temp_out_p_height = min(int(round(size*self.beta)), out_p_height)
+            temp_out_p_width = min(int(round(size*self.beta)), out_p_width)
+            
+            remove_y = (out_p_height-temp_out_p_height)*s_y
+            remove_x = (out_p_width-temp_out_p_width)*s_x
+            
+            in_p_height -= remove_y
+            in_p_width -= remove_x
+            
+            out_p_height = temp_out_p_height
+            out_p_width = temp_out_p_width
+
+        out_locations = self.__get_output_locations(in_locations, out_p_height, out_p_width, s_y, s_x,
+                                                    p_y, p_x, k_y, k_x, prev_size, size, remove_y=remove_y, remove_x=remove_x)
+
+        if layer in self.tensor_cache:
+            x = self.tensor_cache[layer].fill_(0.0)
+        else:
+            x = torch.FloatTensor(batch_size, c, in_p_height, in_p_width).fill_(0.0)
+            self.tensor_cache[layer] = x
+
+        if self.gpu:
+            x = x.cuda()
+
+        for i in range(batch_size):
+            x0 = 0 if s_x*out_locations[i][1]-p_x >= 0 else -1*(s_x*out_locations[i][1]-p_x)
+            x1 = min(prev_size - s_x*out_locations[i][1]+p_x, in_p_width)
+            y0 = 0 if s_y*out_locations[i][0]-p_y >= 0 else -1*(s_y*out_locations[i][0]-p_y)
+            y1 = min(prev_size - s_y*out_locations[i][0]+p_y, in_p_height)
+
+            temp = data[0,:,:,:].clone()
+            temp[:,in_locations[i][0]:in_locations[i][0]+p_height,in_locations[i][1]:in_locations[i][1]+p_width] = patches[i,:,:,:]
+
+            x[i,:,y0:y1,x0:x1] = temp[:,max(s_y*out_locations[i][0]-p_y,0):max(0, s_y*out_locations[i][0]-p_y)+y1-y0,
+                max(0, s_x*out_locations[i][1]-p_x):max(0, s_x*out_locations[i][1]-p_x)+x1-x0]
+
+
+        patches = layer(x).data
+        return patches, out_locations, out_p_height, out_p_width
+    
+    def __get_output_locations(self, in_locations, out_p_height, out_p_width, stride_y, stride_x, padding_y, padding_x, ksize_y, ksize_x, in_size, out_size, remove_y=0, remove_x=0):
+        out_locations = []
+        
+        for y,x in in_locations:
+            x_out = int(max(math.ceil((padding_x + x + remove_x//2 - ksize_x + 1.0)/stride_x), 0))
+            y_out = int(max(math.ceil((padding_y + y + remove_y//2 - ksize_y + 1.0)/stride_y), 0))
+            
+            if x_out + out_p_width > out_size:
+                x_out = out_size - out_p_width
+            if y_out + out_p_height > out_size:
+                y_out = out_size - out_p_height
+                
+            out_locations.append((y_out, x_out))
+            
+        return out_locations
+    
     
     def __get_tensor(self, name, batch_size, channels, p_height, p_width, k_size, stride, in_size, out_size, truncate=True):
         if name in self.tensor_cache:
@@ -838,6 +1232,7 @@ class InceptionC(nn.Module):
 
     
     def forward_materialized(self, x):
+        self.initialized = True
         self.input = x
         self.b1 = self.b1_op(x)
 
@@ -963,6 +1358,130 @@ class InceptionC(nn.Module):
         return x, p_height7_db, p_width7_db 
     
     
+    def forward_pytorch(self, patches, in_locations, p_height, p_width, beta=None):                
+        if not self.initialized:
+            raise Exception("Not initialized...")
+        
+        if beta is None:
+            beta = self.beta
+        else:
+            self.beta = beta
+
+        batch_size = patches.shape[0]
+        
+        if self.gpu:
+            patches = patches.cuda()    
+    
+        x1, locations1, p_height1, p_width1 = self.__pytch_single_layer(batch_size, self.b1_inc_op, self.input, self.in_channels, 17, 17, 1, 1, 0, 0, 1, 1, patches, p_height, p_width, in_locations)
+        
+        x7, locations7, p_height7, p_width7 = self.__pytch_single_layer(batch_size, self.b7_1_inc_op, self.input, self.in_channels, 17, 17, 1, 1, 0, 0, 1, 1, patches, p_height, p_width, in_locations)
+        x7, locations7, p_height7, p_width7 = self.__pytch_single_layer(batch_size, self.b7_2_inc_op, self.b7_1, self.c7, 17, 17, 1, 1, 0, 3, 1, 7, x7, p_height7, p_width7, locations7)
+        x7, locations7, p_height7, p_width7 = self.__pytch_single_layer(batch_size, self.b7_3_inc_op, self.b7_2, self.c7, 17, 17, 1, 1, 3, 0, 7, 1, x7, p_height7, p_width7, locations7)
+        
+        x7_db, locations7_db, p_height7_db, p_width7_db = self.__pytch_single_layer(batch_size, self.b7_db_1_inc_op, self.input, self.in_channels, 17, 17, 1, 1, 0, 0, 1, 1, patches, p_height, p_width, in_locations)
+        x7_db, locations7_db, p_height7_db, p_width7_db = self.__pytch_single_layer(batch_size, self.b7_db_2_inc_op, self.b7_db_1, self.c7, 17, 17, 1, 1, 3, 0, 7, 1, x7_db, p_height7_db, p_width7_db, locations7_db)
+        x7_db, locations7_db, p_height7_db, p_width7_db = self.__pytch_single_layer(batch_size, self.b7_db_3_inc_op, self.b7_db_2, self.c7, 17, 17, 1, 1, 0, 3, 1, 7, x7_db, p_height7_db, p_width7_db, locations7_db)
+        x7_db, locations7_db, p_height7_db, p_width7_db = self.__pytch_single_layer(batch_size, self.b7_db_4_inc_op, self.b7_db_3, self.c7, 17, 17, 1, 1, 3, 0, 7, 1, x7_db, p_height7_db, p_width7_db, locations7_db)
+        x7_db, locations7_db, p_height7_db, p_width7_db = self.__pytch_single_layer(batch_size, self.b7_db_5_inc_op, self.b7_db_4, self.c7, 17, 17, 1, 1, 0, 3, 1, 7, x7_db, p_height7_db, p_width7_db, locations7_db)        
+        
+        
+        xp, locationsp, p_heightp, p_widthp = self.__pytch_single_layer(batch_size, nn.AvgPool2d(kernel_size=3, stride=1), self.input, self.in_channels, 17, 17, 1, 1, 1, 1, 3, 3, patches, p_height, p_width, in_locations)
+        xp, locationsp, p_heightp, p_widthp = self.__pytch_single_layer(batch_size, self.branch_pool_inc_op, self.b_pool_1, self.in_channels, 17, 17, 1, 1, 0, 0, 1, 1, xp, p_heightp, p_widthp, locationsp)
+        
+        
+        if 'stack' in self.tensor_cache:
+            stack = self.tensor_cache['stack']
+        else:
+            stack = torch.FloatTensor(batch_size, 192*4, p_height7_db, p_width7_db)
+            if self.gpu: stack = stack.cuda()
+            self.tensor_cache['stack'] = stack
+            
+        for i in range(batch_size):
+            temp = self.b1[0,:,:,:].clone()
+            temp[:,locations1[i][0]:locations1[i][0]+p_height1,locations1[i][1]:+locations1[i][1]+p_width1] = x1[i,:,:,:]
+            stack[i,0:192,:,:] = temp[:,locations7_db[i][0]:locations7_db[i][0]+p_height7_db,locations7_db[i][1]:locations7_db[i][1]+p_width7_db]
+            
+            temp = self.b7_3[0,:,:,:].clone()
+            temp[:,locations7[i][0]:locations7[i][0]+p_height7,locations7[i][1]:+locations7[i][1]+p_width7] = x7[i,:,:,:]
+            stack[i,192:192*2,:,:] = temp[:,locations7_db[i][0]:locations7_db[i][0]+p_height7_db,locations7_db[i][1]:locations7_db[i][1]+p_width7_db]
+            
+            temp = self.b_pool_2[0,:,:,:].clone()
+            temp[:,locationsp[i][0]:locationsp[i][0]+p_heightp,locationsp[i][1]:+locationsp[i][1]+p_widthp] = xp[i,:,:,:]
+            stack[i,192*3:192*4,:,:] = temp[:,locations7_db[i][0]:locations7_db[i][0]+p_height7_db,locations7_db[i][1]:locations7_db[i][1]+p_width7_db]
+            
+        stack[:,192*2:192*3,:,:] = x7_db
+            
+        return stack, locations7_db, p_height7_db, p_width7_db
+        
+    
+    def __pytch_single_layer(self, batch_size, layer, data, c, prev_size, size, s_y, s_x, p_y, p_x, k_y, k_x, patches, p_height, p_width, in_locations):
+        remove_y = 0
+        remove_x = 0
+        
+        out_p_height = int(min(math.ceil((p_height + k_y - 1.0)/s_y), size))
+        out_p_width = int(min(math.ceil((p_width + k_x - 1.0)/s_x), size))
+        
+        in_p_height = k_y + (out_p_height-1)*s_y
+        in_p_width = k_x + (out_p_width-1)*s_x
+
+        if (out_p_height > round(size*self.beta)) or (out_p_width > round(size*self.beta)):
+            temp_out_p_height = min(int(round(size*self.beta)), out_p_height)
+            temp_out_p_width = min(int(round(size*self.beta)), out_p_width)
+            
+            remove_y = (out_p_height-temp_out_p_height)*s_y
+            remove_x = (out_p_width-temp_out_p_width)*s_x
+            
+            in_p_height -= remove_y
+            in_p_width -= remove_x
+            
+            out_p_height = temp_out_p_height
+            out_p_width = temp_out_p_width
+
+        out_locations = self.__get_output_locations(in_locations, out_p_height, out_p_width, s_y, s_x,
+                                                    p_y, p_x, k_y, k_x, prev_size, size, remove_y=remove_y, remove_x=remove_x)
+
+        if layer in self.tensor_cache:
+            x = self.tensor_cache[layer].fill_(0.0)
+        else:
+            x = torch.FloatTensor(batch_size, c, in_p_height, in_p_width).fill_(0.0)
+            self.tensor_cache[layer] = x
+
+        if self.gpu:
+            x = x.cuda()
+
+        for i in range(batch_size):
+            x0 = 0 if s_x*out_locations[i][1]-p_x >= 0 else -1*(s_x*out_locations[i][1]-p_x)
+            x1 = min(prev_size - s_x*out_locations[i][1]+p_x, in_p_width)
+            y0 = 0 if s_y*out_locations[i][0]-p_y >= 0 else -1*(s_y*out_locations[i][0]-p_y)
+            y1 = min(prev_size - s_y*out_locations[i][0]+p_y, in_p_height)
+
+            temp = data[0,:,:,:].clone()
+            temp[:,in_locations[i][0]:in_locations[i][0]+p_height,in_locations[i][1]:in_locations[i][1]+p_width] = patches[i,:,:,:]
+            x[i,:,y0:y1,x0:x1] = temp[:,max(s_y*out_locations[i][0]-p_y,0):max(0, s_y*out_locations[i][0]-p_y)+y1-y0,
+                max(0, s_x*out_locations[i][1]-p_x):max(0, s_x*out_locations[i][1]-p_x)+x1-x0]
+
+
+        patches = layer(x).data
+        return patches, out_locations, out_p_height, out_p_width
+    
+    def __get_output_locations(self, in_locations, out_p_height, out_p_width, stride_y, stride_x, padding_y, padding_x, ksize_y, ksize_x, in_size, out_size, remove_y=0, remove_x=0):
+        out_locations = []
+
+        for y,x in in_locations:
+            x_out = int(max(math.ceil((padding_x + x + remove_x//2 - ksize_x + 1.0)/stride_x), 0))
+            y_out = int(max(math.ceil((padding_y + y + remove_y//2 - ksize_y + 1.0)/stride_y), 0))
+            
+            if x_out + out_p_width > out_size:
+                x_out = out_size - out_p_width
+            if y_out + out_p_height > out_size:
+                y_out = out_size - out_p_height
+                
+            out_locations.append((y_out, x_out))
+        
+        return out_locations
+    
+    
+    
     def __get_tensor(self, name, batch_size, channels, p_height, p_width, k_size_y, k_size_x, stride_y, stride_x, in_size, out_size, truncate=True):
         if name in self.tensor_cache:
             return self.tensor_cache[name]
@@ -1031,7 +1550,7 @@ class InceptionD(nn.Module):
         b7 = self.b7_1_op(x)
         b7 = self.b7_2_op(b7)        
         b7 = self.b7_3_op(b7)
-        b7 = self.b7_4_op(b7)    
+        b7 = self.b7_4_op(b7)
 
         b_pool = nn.MaxPool2d(kernel_size=3, stride=2)(x)
     
@@ -1040,6 +1559,8 @@ class InceptionD(nn.Module):
 
     
     def forward_materialized(self, x):
+        self.initialized = True
+        
         self.input =  x
         self.b3_1 = self.b3_1_op(x)
         self.b3_2 = self.b3_2_op(self.b3_1)
@@ -1130,7 +1651,119 @@ class InceptionD(nn.Module):
         inc_stack(out.data,  320+192+self.in_channels, 320+192, locations, xp, locationsp, self.b_pool.data)      
         x = out
         
-        return x, p_height7, p_width7 
+        return x, p_height7, p_width7
+        
+    
+    def forward_pytorch(self, patches, in_locations, p_height, p_width, beta=None):                
+        if not self.initialized:
+            raise Exception("Not initialized...")
+        
+        if beta is None:
+            beta = self.beta
+        else:
+            self.beta = beta
+
+        batch_size = patches.shape[0]
+        
+        if self.gpu:
+            patches = patches.cuda()    
+    
+        x3, locations3, p_height3, p_width3 = self.__pytch_single_layer(batch_size, self.b3_1_inc_op, self.input, self.in_channels, 17, 17, 1, 1, 0, 0, 1, 1, patches, p_height, p_width, in_locations)
+        x3, locations3, p_height3, p_width3 = self.__pytch_single_layer(batch_size, self.b3_2_inc_op, self.b3_1.data, 192, 17, 8, 2, 2, 0, 0, 3, 3, x3, p_height3, p_width3, locations3)
+        
+        x7, locations7, p_height7, p_width7 = self.__pytch_single_layer(batch_size, self.b7_1_inc_op, self.input, self.in_channels, 17, 17, 1, 1, 0, 0, 1, 1, patches, p_height, p_width, in_locations)
+        x7, locations7, p_height7, p_width7 = self.__pytch_single_layer(batch_size, self.b7_2_inc_op, self.b7_1.data, 192, 17, 17, 1, 1, 0, 3, 1, 7, x7, p_height7, p_width7, locations7)
+        x7, locations7, p_height7, p_width7 = self.__pytch_single_layer(batch_size, self.b7_3_inc_op, self.b7_2.data, 192, 17, 17, 1, 1, 3, 0, 7, 1, x7, p_height7, p_width7, locations7)
+        x7, locations7, p_height7, p_width7 = self.__pytch_single_layer(batch_size, self.b7_4_inc_op, self.b7_3.data, 192, 17, 8, 2, 2, 0, 0, 3, 3, x7, p_height7, p_width7, locations7)
+        
+        xp, locationsp, p_heightp, p_widthp = self.__pytch_single_layer(batch_size, nn.MaxPool2d(kernel_size=3, stride=2), self.input, self.in_channels, 17, 8, 2, 2, 0, 0, 3, 3, patches, p_height, p_width, in_locations)
+        
+        if 'stack' in self.tensor_cache:
+            stack = self.tensor_cache['stack']
+        else:
+            stack = torch.FloatTensor(batch_size, 320+192+self.in_channels, p_height7, p_width7)
+            if self.gpu: stack = stack.cuda()
+            self.tensor_cache['stack'] = stack
+            
+        for i in range(batch_size):
+            temp = self.b3_2[0,:,:,:].clone()
+            temp[:,locations3[i][0]:locations3[i][0]+p_height3,locations3[i][1]:+locations3[i][1]+p_width3] = x3[i,:,:,:]
+            stack[i,0:320,:,:] = temp[:,locations7[i][0]:locations7[i][0]+p_height7,locations7[i][1]:locations7[i][1]+p_width7]
+            
+            temp = self.b_pool[0,:,:,:].clone()
+            temp[:,locationsp[i][0]:locationsp[i][0]+p_heightp,locationsp[i][1]:+locationsp[i][1]+p_widthp] = xp[i,:,:,:]
+            stack[i,320+192:320+192+self.in_channels,:,:] = temp[:,locations7[i][0]:locations7[i][0]+p_height7,locations7[i][1]:locations7[i][1]+p_width7]
+            
+        stack[:,320:320+192,:,:] = x7
+        
+        return stack, locations7, p_height7, p_width7
+    
+    
+    def __pytch_single_layer(self, batch_size, layer, data, c, prev_size, size, s_y, s_x, p_y, p_x, k_y, k_x, patches, p_height, p_width, in_locations):
+        remove_y = 0
+        remove_x = 0
+        
+        out_p_height = int(min(math.ceil((p_height + k_y - 1.0)/s_y), size))
+        out_p_width = int(min(math.ceil((p_width + k_x - 1.0)/s_x), size))
+        
+        in_p_height = k_y + (out_p_height-1)*s_y
+        in_p_width = k_x + (out_p_width-1)*s_x
+
+        if (out_p_height > round(size*self.beta)) or (out_p_width > round(size*self.beta)):
+            temp_out_p_height = min(int(round(size*self.beta)), out_p_height)
+            temp_out_p_width = min(int(round(size*self.beta)), out_p_width)
+            
+            remove_y = (out_p_height-temp_out_p_height)*s_y
+            remove_x = (out_p_width-temp_out_p_width)*s_x
+            
+            in_p_height -= remove_y
+            in_p_width -= remove_x
+            
+            out_p_height = temp_out_p_height
+            out_p_width = temp_out_p_width
+
+        out_locations = self.__get_output_locations(in_locations, out_p_height, out_p_width, s_y, s_x,
+                                                    p_y, p_x, k_y, k_x, prev_size, size, remove_y=remove_y, remove_x=remove_x)
+
+        if layer in self.tensor_cache:
+            x = self.tensor_cache[layer].fill_(0.0)
+        else:
+            x = torch.FloatTensor(batch_size, c, in_p_height, in_p_width).fill_(0.0)
+            self.tensor_cache[layer] = x
+
+        if self.gpu:
+            x = x.cuda()
+
+        for i in range(batch_size):
+            x0 = 0 if s_x*out_locations[i][1]-p_x >= 0 else -1*(s_x*out_locations[i][1]-p_x)
+            x1 = min(prev_size - s_x*out_locations[i][1]+p_x, in_p_width)
+            y0 = 0 if s_y*out_locations[i][0]-p_y >= 0 else -1*(s_y*out_locations[i][0]-p_y)
+            y1 = min(prev_size - s_y*out_locations[i][0]+p_y, in_p_height)
+
+            temp = data[0,:,:,:].clone()
+            temp[:,in_locations[i][0]:in_locations[i][0]+p_height,in_locations[i][1]:in_locations[i][1]+p_width] = patches[i,:,:,:]
+            x[i,:,y0:y1,x0:x1] = temp[:,max(s_y*out_locations[i][0]-p_y,0):max(0, s_y*out_locations[i][0]-p_y)+y1-y0,
+                max(0, s_x*out_locations[i][1]-p_x):max(0, s_x*out_locations[i][1]-p_x)+x1-x0]
+
+
+        patches = layer(x).data
+        return patches, out_locations, out_p_height, out_p_width
+    
+    def __get_output_locations(self, in_locations, out_p_height, out_p_width, stride_y, stride_x, padding_y, padding_x, ksize_y, ksize_x, in_size, out_size, remove_y=0, remove_x=0):
+        out_locations = []
+        
+        for y,x in in_locations:
+            x_out = int(max(math.ceil((padding_x + x + remove_x//2 - ksize_x + 1.0)/stride_x), 0))
+            y_out = int(max(math.ceil((padding_y + y + remove_y//2 - ksize_y + 1.0)/stride_y), 0))
+            
+            if x_out + out_p_width > out_size:
+                x_out = out_size - out_p_width
+            if y_out + out_p_height > out_size:
+                y_out = out_size - out_p_height
+                
+            out_locations.append((y_out, x_out))
+            
+        return out_locations
     
     def __get_tensor(self, name, batch_size, channels, p_height, p_width, k_size_y, k_size_x, stride_y, stride_x, in_size, out_size, truncate=True):
         if name in self.tensor_cache:
@@ -1216,6 +1849,7 @@ class InceptionE(nn.Module):
             self.b3_2b_op(b3),
         ]
         b3 = torch.cat(b3, 1)
+        #return b3
 
         b3_db = self.b3_db_1_op(x)
         b3_db = self.b3_db_2_op(b3_db)
@@ -1232,6 +1866,7 @@ class InceptionE(nn.Module):
         return torch.cat(outputs, 1)
     
     def forward_materialized(self, x):
+        self.initialized = True
         self.input = x
         self.b1 = self.b1_op(x)
 
@@ -1262,6 +1897,106 @@ class InceptionE(nn.Module):
         self.concat = torch.cat(outputs, 1)
         return self.concat
 
+    def forward_pytorch(self, patches, in_locations, p_height, p_width, beta=None):                
+        if not self.initialized:
+            raise Exception("Not initialized...")
+        
+        if beta is None:
+            beta = self.beta
+        else:
+            self.beta = beta
+
+        batch_size = patches.shape[0]
+        
+        if self.gpu:
+            patches = patches.cuda()    
+    
+        x1, locations1, p_height1, p_width1 = self.__pytch_single_layer(batch_size, self.b1_inc_op, self.input, self.in_channels, 8, 8, 1, 1, 0, 0, 1, 1, patches, p_height, p_width, in_locations)
+        
+        x3_1, locations3, p_height3, p_width3 = self.__pytch_single_layer(batch_size, self.b3_1_inc_op, self.input, self.in_channels, 8, 8, 1, 1, 0, 0, 1, 1, patches, p_height, p_width, in_locations)
+        
+        x3_2a, locations3_2a, p_height3_2a, p_width3_2a = self.__pytch_single_layer(batch_size, self.b3_2a_inc_op, self.b3_1, 384, 8, 8, 1, 1, 0, 1, 1, 3, x3_1.data, p_height3, p_width3, locations3)
+        
+        x3_2b, locations3_2b, p_height3_2b, p_width3_2b = self.__pytch_single_layer(batch_size, self.b3_2b_inc_op, self.b3_1, 384, 8, 8, 1, 1, 1, 0, 3, 1, x3_1.data, p_height3, p_width3, locations3)
+        
+        p_height3, p_width3 = max(p_height3_2a, p_height3_2b), max(p_width3_2a, p_width3_2b)
+        for i in range(batch_size):
+            locations3[i] = min(locations3_2a[i][0], locations3_2b[i][0]), min(locations3_2a[i][1], locations3_2b[i][1])
+            
+        if 'stack_3' in self.tensor_cache:
+            stack3 = self.tensor_cache['stack_3']
+        else:
+            stack3 = torch.FloatTensor(batch_size, 384*2, p_height3, p_width3)
+            if self.gpu: stack3 = stack3.cuda()
+            self.tensor_cache['stack_3'] = stack3
+            
+        for i in range(batch_size):
+            temp = self.b3_2a[0,:,:,:].clone()
+            temp[:,locations3_2a[i][0]:locations3_2a[i][0]+p_height3_2a,locations3_2a[i][1]:+locations3_2a[i][1]+p_width3_2a] = x3_2a[i,:,:,:]
+            stack3[i,0:384,:,:] = temp[:,locations3[i][0]:locations3[i][0]+p_height3,locations3[i][1]:locations3[i][1]+p_width3]
+            
+            temp = self.b3_2b[0,:,:,:].clone()
+            temp[:,locations3_2b[i][0]:locations3_2b[i][0]+p_height3_2b,locations3_2b[i][1]:+locations3_2b[i][1]+p_width3_2b] = x3_2b[i,:,:,:]
+            stack3[i,384:384*2,:,:] = temp[:,locations3[i][0]:locations3[i][0]+p_height3,locations3[i][1]:locations3[i][1]+p_width3]
+            
+        
+        
+        x3_db, locations3_db, p_height3_db, p_width3_db = self.__pytch_single_layer(batch_size, self.b3_db_1_inc_op, self.input, self.in_channels, 8, 8, 1, 1, 0, 0, 1, 1, patches, p_height, p_width, in_locations)
+        x3_db, locations3_db, p_height3_db, p_width3_db = self.__pytch_single_layer(batch_size, self.b3_db_2_inc_op, self.b3_db_1, 448, 8, 8, 1, 1, 1, 1, 3, 3, x3_db, p_height3_db, p_width3_db, locations3_db)
+        
+        x3_db_3a, locations3_db_3a, p_height3_db_3a, p_width3_db_3a = self.__pytch_single_layer(batch_size, self.b3_db_3a_inc_op, self.b3_db_2, 384, 8, 8, 1, 1, 0, 1, 1, 3, x3_db, p_height3_db, p_width3_db, locations3_db)
+        
+        x3_db_3b, locations3_db_3b, p_height3_db_3b, p_width3_db_3b = self.__pytch_single_layer(batch_size, self.b3_db_3b_inc_op, self.b3_db_2, 384, 8, 8, 1, 1, 1, 0, 3, 1, x3_db, p_height3_db, p_width3_db, locations3_db)
+        
+        p_height3_db, p_width3_db = max(p_height3_db_3a, p_height3_db_3b), max(p_width3_db_3a, p_width3_db_3b)
+        for i in range(batch_size):
+            locations3_db[i] = min(locations3_db_3a[i][0], locations3_db_3b[i][0]), min(locations3_db_3a[i][1], locations3_db_3b[i][1])
+            
+        if 'stack_3_db' in self.tensor_cache:
+            stack3_db = self.tensor_cache['stack_3_db']
+        else:
+            stack3_db = torch.FloatTensor(batch_size, 384*2, p_height3_db, p_width3_db)
+            if self.gpu: stack3_db = stack3_db.cuda()
+            self.tensor_cache['stack_3_db'] = stack3_db
+            
+        for i in range(batch_size):
+            temp = self.b3_db_3a[0,:,:,:].clone()
+            temp[:,locations3_db_3a[i][0]:locations3_db_3a[i][0]+p_height3_db_3a,locations3_db_3a[i][1]:+locations3_db_3a[i][1]+p_width3_db_3a] = x3_db_3a[i,:,:,:]
+            stack3_db[i,0:384,:,:] = temp[:,locations3_db[i][0]:locations3_db[i][0]+p_height3_db,locations3_db[i][1]:locations3_db[i][1]+p_width3_db]
+            
+            temp = self.b3_db_3b[0,:,:,:].clone()
+            temp[:,locations3_db_3b[i][0]:locations3_db_3b[i][0]+p_height3_db_3b,locations3_db_3b[i][1]:+locations3_db_3b[i][1]+p_width3_db_3b] = x3_db_3b[i,:,:,:]
+            stack3_db[i,384:384*2,:,:] = temp[:,locations3_db[i][0]:locations3_db[i][0]+p_height3_db,locations3_db[i][1]:locations3_db[i][1]+p_width3_db]
+        
+    
+        xp, locationsp, p_heightp, p_widthp = self.__pytch_single_layer(batch_size, nn.AvgPool2d(kernel_size=3, stride=1), self.input, self.in_channels, 8, 8, 1, 1, 1, 1, 3, 3, patches, p_height, p_width, in_locations)
+        xp, locationsp, p_heightp, p_widthp = self.__pytch_single_layer(batch_size, self.branch_pool_inc_op, self.b_pool_1.data, self.in_channels, 8, 8, 1, 1, 0, 0, 1, 1, xp, p_heightp, p_widthp, locationsp)
+
+        if 'stack' in self.tensor_cache:
+            stack = self.tensor_cache['stack']
+        else:
+            stack = torch.FloatTensor(batch_size, 320+384*4+192, p_height3_db, p_width3_db)
+            if self.gpu: stack = stack.cuda()
+            self.tensor_cache['stack'] = stack
+            
+        for i in range(batch_size):
+            temp = self.b1[0,:,:,:].clone()
+            temp[:,locations1[i][0]:locations1[i][0]+p_height1,locations1[i][1]:+locations1[i][1]+p_width1] = x1[i,:,:,:]
+            stack[i,0:320,:,:] = temp[:,locations3_db[i][0]:locations3_db[i][0]+p_height3_db,locations3_db[i][1]:locations3_db[i][1]+p_width3_db]
+            
+            temp = self.b3[0,:,:,:].clone()
+            temp[:,locations3[i][0]:locations3[i][0]+p_height3,locations3[i][1]:+locations3[i][1]+p_width3] = stack3[i,:,:,:]
+            stack[i,320:320+384*2,:,:] = temp[:,locations3_db[i][0]:locations3_db[i][0]+p_height3_db,locations3_db[i][1]:locations3_db[i][1]+p_width3_db]
+            
+            temp = self.b_pool_2[0,:,:,:].clone()
+            temp[:,locationsp[i][0]:locationsp[i][0]+p_heightp,locationsp[i][1]:+locationsp[i][1]+p_widthp] = xp[i,:,:,:]
+            stack[i,320+384*4:320+384*4+192,:,:] = temp[:,locations3_db[i][0]:locations3_db[i][0]+p_height3_db,locations3_db[i][1]:locations3_db[i][1]+p_width3_db]
+          
+        stack[:,320+384*2:320+384*4,:,:] = stack3_db
+        
+        return stack, locations3_db, p_height3_db, p_width3_db
+        #return x1, locations1, p_height1, p_width1
+    
 
     def forward_gpu(self, x, locations, p_height, p_width, beta=None):
         
@@ -1308,14 +2043,14 @@ class InceptionE(nn.Module):
         x3_2b = F.relu(out)        
         if debug: print(locations3_2b, p_height3_2b, x3_2b.shape)
             
-        locations3_2a_temp = locations3_2a.cpu().data.numpy().flatten().tolist()
-        locations3_2b_temp = locations3_2b.cpu().data.numpy().flatten().tolist()
+#         locations3_2a_temp = locations3_2a.cpu().data.numpy().flatten().tolist()
+#         locations3_2b_temp = locations3_2b.cpu().data.numpy().flatten().tolist()
         
-        for i in range(batch_size):
-            locations3[i][0] = min(locations3_2a_temp[2*i], locations3_2b_temp[2*i])
-            locations3[i][1] = min(locations3_2a_temp[2*i+1], locations3_2b_temp[2*i+1])            
+#         for i in range(batch_size):
+#             locations3[i][0] = min(locations3_2a_temp[2*i], locations3_2b_temp[2*i])
+#             locations3[i][1] = min(locations3_2a_temp[2*i+1], locations3_2b_temp[2*i+1])            
 
-        
+        locations3 = calc_bbox_coordinates(batch_size, locations3, locations3_2a, locations3_2b)
         p_height3, p_width3 = max(p_height3_2a, p_height3_2b), max(p_width3_2a, p_width3_2b)
         
         out = self.__get_tensor('b3_stack', batch_size, 384*2,
@@ -1367,13 +2102,14 @@ class InceptionE(nn.Module):
         x3_db_3b = F.relu(out)        
         if debug: print(locations3_db_3b, p_height3_db_3b, x3_db_3b.shape)
             
-        locations3_db_3a_temp = locations3_db_3a.cpu().data.numpy().flatten().tolist()
-        locations3_db_3b_temp = locations3_db_3b.cpu().data.numpy().flatten().tolist()
+#         locations3_db_3a_temp = locations3_db_3a.cpu().data.numpy().flatten().tolist()
+#         locations3_db_3b_temp = locations3_db_3b.cpu().data.numpy().flatten().tolist()
         
-        for i in range(batch_size):
-            locations[i][0] = min(locations3_db_3a_temp[2*i], locations3_db_3b_temp[2*i])
-            locations[i][1] = min(locations3_db_3a_temp[2*i+1], locations3_db_3b_temp[2*i+1])
+#         for i in range(batch_size):
+#             locations[i][0] = min(locations3_db_3a_temp[2*i], locations3_db_3b_temp[2*i])
+#             locations[i][1] = min(locations3_db_3a_temp[2*i+1], locations3_db_3b_temp[2*i+1])
         
+        locations = calc_bbox_coordinates(batch_size, locations, locations3_db_3a, locations3_db_3b)
         p_height3_db, p_width3_db = max(p_height3_db_3a, p_height3_db_3b), max(p_width3_db_3a, p_width3_db_3b)
         
         out = self.__get_tensor('b3_db_stack', batch_size, 384*2,
@@ -1392,6 +2128,73 @@ class InceptionE(nn.Module):
         x = out
         
         return x, p_height3_db, p_width3_db
+        #return x1, p_height1, p_width1
+    
+    def __pytch_single_layer(self, batch_size, layer, data, c, prev_size, size, s_y, s_x, p_y, p_x, k_y, k_x, patches, p_height, p_width, in_locations):
+        remove_y = 0
+        remove_x = 0
+        
+        out_p_height = int(min(math.ceil((p_height + k_y - 1.0)/s_y), size))
+        out_p_width = int(min(math.ceil((p_width + k_x - 1.0)/s_x), size))
+        
+        in_p_height = k_y + (out_p_height-1)*s_y
+        in_p_width = k_x + (out_p_width-1)*s_x
+
+        if (out_p_height > round(size*self.beta)) or (out_p_width > round(size*self.beta)):
+            temp_out_p_height = min(int(round(size*self.beta)), out_p_height)
+            temp_out_p_width = min(int(round(size*self.beta)), out_p_width)
+            
+            remove_y = (out_p_height-temp_out_p_height)*s_y
+            remove_x = (out_p_width-temp_out_p_width)*s_x
+            
+            in_p_height -= remove_y
+            in_p_width -= remove_x
+            
+            out_p_height = temp_out_p_height
+            out_p_width = temp_out_p_width
+
+        out_locations = self.__get_output_locations(in_locations, out_p_height, out_p_width, s_y, s_x,
+                                                    p_y, p_x, k_y, k_x, prev_size, size, remove_y=remove_y, remove_x=remove_x)
+
+        if layer in self.tensor_cache:
+            x = self.tensor_cache[layer].fill_(0.0)
+        else:
+            x = torch.FloatTensor(batch_size, c, in_p_height, in_p_width).fill_(0.0)
+            self.tensor_cache[layer] = x
+
+        if self.gpu:
+            x = x.cuda()
+
+        for i in range(batch_size):
+            x0 = 0 if s_x*out_locations[i][1]-p_x >= 0 else -1*(s_x*out_locations[i][1]-p_x)
+            x1 = min(prev_size - s_x*out_locations[i][1]+p_x, in_p_width)
+            y0 = 0 if s_y*out_locations[i][0]-p_y >= 0 else -1*(s_y*out_locations[i][0]-p_y)
+            y1 = min(prev_size - s_y*out_locations[i][0]+p_y, in_p_height)
+
+            temp = data[0,:,:,:].clone()
+            temp[:,in_locations[i][0]:in_locations[i][0]+p_height,in_locations[i][1]:in_locations[i][1]+p_width] = patches[i,:,:,:]
+            x[i,:,y0:y1,x0:x1] = temp[:,max(s_y*out_locations[i][0]-p_y,0):max(0, s_y*out_locations[i][0]-p_y)+y1-y0,
+                max(0, s_x*out_locations[i][1]-p_x):max(0, s_x*out_locations[i][1]-p_x)+x1-x0]
+
+
+        patches = layer(x).data
+        return patches, out_locations, out_p_height, out_p_width
+    
+    def __get_output_locations(self, in_locations, out_p_height, out_p_width, stride_y, stride_x, padding_y, padding_x, ksize_y, ksize_x, in_size, out_size, remove_y=0, remove_x=0):
+        out_locations = []
+        
+        for y,x in in_locations:
+            x_out = int(max(math.ceil((padding_x + x + remove_x//2 - ksize_x + 1.0)/stride_x), 0))
+            y_out = int(max(math.ceil((padding_y + y + remove_y//2 - ksize_y + 1.0)/stride_y), 0))
+            
+            if x_out + out_p_width > out_size:
+                x_out = out_size - out_p_width
+            if y_out + out_p_height > out_size:
+                y_out = out_size - out_p_height
+                
+            out_locations.append((y_out, x_out))
+            
+        return out_locations
     
     
     def __get_tensor(self, name, batch_size, channels, p_height, p_width, k_size_y, k_size_x, stride_y, stride_x, in_size, out_size, truncate=True):

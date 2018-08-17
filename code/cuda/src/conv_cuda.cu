@@ -455,3 +455,18 @@ void inc_stack_gpu(float * ptr_out_tensor, int out_channels, int start_channel, 
     size_t n = out_width * out_height * in_channels;
     inc_stack_gpu_kernel<<<(n+BLOCK-1)/BLOCK, BLOCK>>>(ptr_out_tensor, out_channels, start_channel, out_height, out_width, ptr_out_location, ptr_in_tensor, batch_size, in_channels, in_height, in_width, ptr_in_location, ptr_premat_tensor, premat_height, premat_width, n);
 }
+
+__global__ void calc_bbox_coordinates_gpu_kernel(int batch_size, int * loc_out_tensor, int * loc_tensor1, int * loc_tensor2)
+{
+    int index = blockIdx.x*blockDim.x+threadIdx.x;
+    if (index < batch_size)
+    {
+        loc_out_tensor[2*index] = min(loc_tensor1[2*index], loc_tensor2[2*index]);
+        loc_out_tensor[2*index+1] = min(loc_tensor1[2*index+1], loc_tensor2[2*index+1]);
+    }
+}
+
+void calc_bbox_coordinates_gpu(int batch_size, int * loc_out_tensor, int * loc_tensor1, int * loc_tensor2)
+{
+    calc_bbox_coordinates_gpu_kernel<<<(batch_size+BLOCK-1)/BLOCK, BLOCK>>>(batch_size, loc_out_tensor, loc_tensor1, loc_tensor2);
+}

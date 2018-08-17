@@ -25,6 +25,8 @@ void inc_avg_pool_gpu(float* ptr_premat_tensor, float* ptr_in_tensor, float* ptr
     
 void full_projection_gpu(float * ptr_premat_tensor, float * ptr_in_tensor, float * ptr_out_tensor, int * ptr_location, int batch, int channels, int in_height, int in_width, int p_height, int p_width);
     
+void calc_bbox_coordinates_gpu(int batch_size, int * loc_out_tensor, int * loc_tensor1, int * loc_tensor2);
+    
 #ifdef __cplusplus
 }
 #endif
