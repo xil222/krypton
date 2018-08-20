@@ -34,7 +34,8 @@ torch.set_num_threads(8)
 torch.manual_seed(245)
 np.random.seed(345)
 
-data_dir = '../data/oct'
+dataset = 'oct'
+data_dir = '../data/'+dataset
 
 n_labels = 4
 
@@ -65,16 +66,6 @@ for name, model, image_size, in zip(['VGG16', 'ResNet18', 'Inception3'],
     for lr in [1e-2, 1e-4, 1e-6]:
         for reg in [1e-2, 1e-4, 1e-6]:
     
-            if name == 'VGG16':
-                lr = 1e-4
-                reg = 1e-4
-            elif name == 'ResNet18':
-                lr = 1e-2
-                reg = 1e-4
-            elif name == 'Inception3':
-                lr = 1e-2
-                reg = 1e-6
-
             model_ft = model(pretrained=True)
 
             if name == 'VGG16':
@@ -134,17 +125,17 @@ for name, model, image_size, in zip(['VGG16', 'ResNet18', 'Inception3'],
                 if name == 'VGG16':
                     final_layer['fc8_W:0'] = model_ft.classifier[-1].weight.data.cpu().numpy()
                     final_layer['fc8_b:0'] = model_ft.classifier[-1].bias.data.cpu().numpy()
-                    save_dict_to_hdf5(final_layer, './oct_vgg16_ptch.h5')
+                    save_dict_to_hdf5(final_layer, './'+dataset+'_vgg16_ptch.h5')
 
                 elif name == 'ResNet18':
                     final_layer['fc:w'] = model_ft.fc.weight.data.cpu().numpy()
                     final_layer['fc:b'] = model_ft.fc.bias.data.cpu().numpy()
-                    save_dict_to_hdf5(final_layer, './oct_resnet18_ptch.h5')
+                    save_dict_to_hdf5(final_layer, './'+dataset+'_resnet18_ptch.h5')
 
                 elif name == 'Inception3':
                     final_layer['482.fc.weight'] = model_ft.fc.weight.data.cpu().numpy()
                     final_layer['483.fc.bias'] = model_ft.fc.bias.data.cpu().numpy()
-                    save_dict_to_hdf5(final_layer, './oct_inception3_ptch.h5')
+                    save_dict_to_hdf5(final_layer, './'+dataset+'_inception3_ptch.h5')
 
                 best_acc = current_acc
 
