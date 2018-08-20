@@ -105,7 +105,7 @@ class VGG16(nn.Module):
         x = self.conv5_2_op(x)               
         x = self.conv5_3_op(x)
         x = self.pool5_op(x)
-        return x
+        #return x
         x = x.view(x.size(0), -1)
         x = self.classifier(x)
         
@@ -292,7 +292,7 @@ class VGG16(nn.Module):
         out = self.__get_tensor('pool5-full', batch_size, 512, 7, 7, 1, 1, 7, 7, truncate=False)
         full_projection(self.pool5.data, x, out, locations, p_height, p_width)
         x = out
-        return x
+        #return x
 
         x = x.view(x.size(0), -1)
         x = self.classifier(x)
@@ -483,7 +483,7 @@ class VGG16(nn.Module):
     def __get_output_shape(self, p_height, p_width, k_size, stride, in_size, out_size, truncate):
         new_p_height = min(int(math.ceil((p_height+k_size-1)*1.0/stride)), out_size)
         if truncate and (new_p_height > round(out_size*self.beta)):
-            new_p_height = round(out_size*self.beta)
+            temp_new_p_height = round(out_size*self.beta)
     
         return (new_p_height,new_p_height)
     

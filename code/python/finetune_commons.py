@@ -28,7 +28,7 @@ def ft_train_model(model, criterion, optimizer, dataloaders,device, dataset_size
         print('-' * 10)
 
         # Each epoch has a training and validation phase
-        for phase in ['train', 'validation']:
+        for phase in ['train', 'validation', 'test']:
             if phase == 'train':
                 model.train()  # Set model to training mode
             else:

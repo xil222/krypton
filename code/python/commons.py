@@ -70,7 +70,9 @@ def full_inference_e2e(model, file_path, patch_size, stride, batch_size=256, gpu
         full_model = full_model.cuda()
     full_model.eval()
 
-    logit_index = np.argmax(full_model(orig_image).cpu().data.numpy()[0,:])
+    temp = full_model(orig_image).cpu().data.numpy()[0,:]
+    logit_index = np.argmax(temp)
+    prob = np.max(temp)
     
     output_width = int(math.ceil((x_size*1.0 - patch_size) / stride))
     total_number = output_width * output_width
@@ -101,7 +103,7 @@ def full_inference_e2e(model, file_path, patch_size, stride, batch_size=256, gpu
 
     x = np.array(logit_values).reshape(output_width, output_width)
     
-    return x
+    return x, prob
 
 
 def inc_inference_e2e(model, file_path, patch_size, stride, batch_size=64, beta=1.0, x0=0, y0=0, image_size=224,
@@ -131,7 +133,9 @@ def inc_inference_e2e(model, file_path, patch_size, stride, batch_size=64, beta=
     if gpu:
         inc_model = inc_model.cuda()
     
-    logit_index = np.argmax(inc_model.forward_materialized(orig_image).cpu().data.numpy())
+    temp = inc_model.forward_materialized(orig_image).cpu().data.numpy()
+    logit_index = np.argmax(temp)
+    prob = np.max(temp)
  
     locations = torch.zeros([batch_size, 2], dtype=torch.int32)
     for i in range(num_batches):
@@ -165,14 +169,14 @@ def inc_inference_e2e(model, file_path, patch_size, stride, batch_size=64, beta=
     del inc_model
     gc.collect()
 
-    return logit_values
+    return logit_values, prob
 
 
 
 def adaptive_drilldown(model, file_path, patch_size, stride, batch_size=128, image_size=224, beta=1.0, percentile=75, gpu=True, version='v1', n_labels=1000, weights_data=None, loader=None):
     final_out_width = int(math.ceil((image_size*1.0-patch_size)/stride))
     #checking for interested regions
-    temp1 = inc_inference_e2e(model, file_path, max(16, patch_size), max(8, patch_size/2), logit_index,
+    temp1, prob = inc_inference_e2e(model, file_path, max(16, patch_size), max(8, patch_size/2),
                                     batch_size=batch_size, beta=beta, image_size=image_size, x_size=image_size,
                               y_size=image_size, gpu=gpu, version=version, n_labels=n_labels, weights_data=weights_data, loader=loader)
     temp1 = cv2.resize(temp1, (final_out_width, final_out_width))
@@ -196,10 +200,10 @@ def adaptive_drilldown(model, file_path, patch_size, stride, batch_size=128, ima
     #optional gaussian filter
     #temp1 = ndimage.gaussian_filter(temp1, sigma=.75)
     
-    return temp1
+    return temp1, prob
     
     
-def generate_heatmap(image_file_path, x, show=True, label="", width=224, alpha=1.0):
+def generate_heatmap(image_file_path, x, show=True, label="", width=224, alpha=1.0, prob=1.0):
 
     img = Image.open(image_file_path).convert('RGB')
     img = img.resize((width,width), Image.ANTIALIAS)
@@ -208,7 +212,7 @@ def generate_heatmap(image_file_path, x, show=True, label="", width=224, alpha=1
     start = int((width - stride*x.shape[0])//2)
     img = Image.fromarray(np.asarray(img)[start:start+x.shape[0]*stride,start:start+x.shape[0]*stride,:])
     
-    #vmin, vmax = np.percentile(x, 5),np.percentile(x, 95)
+    vmax, vmin = min(1.0, prob*1.25), prob*0.75
     
     if show:
         fig, axes = plt.subplots(nrows=1, ncols=2)
@@ -217,7 +221,7 @@ def generate_heatmap(image_file_path, x, show=True, label="", width=224, alpha=1
         axes[1].imshow(img, extent=(0,1,0,1))
 
         im = axes[1].imshow(x, cmap=plt.cm.jet_r, alpha=alpha, interpolation='none', extent=(0,1,0,1))
-        im.set_clim(vmin=0.75, vmax=1.0)
+        im.set_clim(vmin=vmin, vmax=vmax)
         
         fig.subplots_adjust(right=0.8)
         cbar_ax = fig.add_axes([1., 0.15, 0.02, 0.7])
@@ -234,8 +238,8 @@ def generate_heatmap(image_file_path, x, show=True, label="", width=224, alpha=1
     ax = fig.gca()
     
     ax.imshow(img, extent=(0,1,0,1))
-    im = ax.imshow(x, cmap=plt.cm.jet_r, alpha=0.8, interpolation='none', extent=(0,1,0,1))
-    im.set_clim(vmin=0.75, vmax=1.0)
+    im = ax.imshow(x, cmap=plt.cm.jet_r, alpha=1.0, interpolation='none', extent=(0,1,0,1))
+    im.set_clim(vmin=vmin, vmax=vmax)
     
     ax.axis('off')
     canvas.draw()  
@@ -247,113 +251,7 @@ def generate_heatmap(image_file_path, x, show=True, label="", width=224, alpha=1
     data = cv2.resize(data, dsize=(x.shape[0], x.shape[1]), interpolation=cv2.INTER_CUBIC)
     return data
 
-
-def show_images(inp, title=None):
-    """Imshow for Tensor."""
-    inp = inp.numpy().transpose((1, 2, 0))
-    mean = np.array([0.485, 0.456, 0.406])
-    std = np.array([0.229, 0.224, 0.225])
-    inp = std * inp + mean
-    inp = np.clip(inp, 0, 1)
-    plt.imshow(inp)
-    if title is not None:
-        plt.title(title)
-    plt.pause(0.001)  # pause a bit so that plots are updated
-
-    
-def ft_train_model(model, criterion, optimizer, dataloaders, device, dataset_sizes, class_names,  num_epochs=25):
-    since = time.time()
-
-    best_model_wts = copy.deepcopy(model.state_dict())
-    best_acc = 0.0
-
-    for epoch in range(num_epochs):
-        print('Epoch {}/{}'.format(epoch, num_epochs - 1))
-        print('-' * 10)
-
-        # Each epoch has a training and validation phase
-        for phase in ['train', 'test']:
-            if phase == 'train':
-                model.train()  # Set model to training mode
-            else:
-                model.eval()   # Set model to evaluate mode
-
-            running_loss = 0.0
-            running_corrects = 0
-
-            # Iterate over data.
-            for inputs, labels in dataloaders[phase]:
-                inputs = inputs.to(device)
-                labels = labels.to(device)
-
-                # zero the parameter gradients
-                optimizer.zero_grad()
-
-                # forward
-                # track history if only in train
-                with torch.set_grad_enabled(phase == 'train'):
-                    outputs = model(inputs)
-                    _, preds = torch.max(outputs, 1)
-                    loss = criterion(outputs, labels)
-
-                    # backward + optimize only if in training phase
-                    if phase == 'train':
-                        loss.backward()
-                        optimizer.step()
-
-                # statistics
-                running_loss += loss.item() * inputs.size(0)
-                running_corrects += torch.sum(preds == labels.data)
-
-            epoch_loss = running_loss / dataset_sizes[phase]
-            epoch_acc = running_corrects.double() / dataset_sizes[phase]
-
-            print('{} Loss: {:.4f} Acc: {:.4f}'.format(
-                phase, epoch_loss, epoch_acc))
-
-            # deep copy the model
-            if phase == 'test' and epoch_acc > best_acc:
-                best_acc = epoch_acc
-                best_model_wts = copy.deepcopy(model.state_dict())
-
-        print()
-
-    time_elapsed = time.time() - since
-    print('Training complete in {:.0f}m {:.0f}s'.format(
-        time_elapsed // 60, time_elapsed % 60))
-    print('Best test Acc: {:4f}'.format(best_acc))
-
-    # load best model weights
-    model.load_state_dict(best_model_wts)
-    return model
-
-
-def visualize_model(model, dataloaders, class_names, device, num_images=6):
-    was_training = model.training
-    model.eval()
-    images_so_far = 0
-    fig = plt.figure()
-
-    with torch.no_grad():
-        for i, (inputs, labels) in enumerate(dataloaders['test']):
-            inputs = inputs.to(device)
-            labels = labels.to(device)
-
-            outputs = model(inputs)
-            _, preds = torch.max(outputs, 1)
-
-            for j in range(inputs.size()[0]):
-                images_so_far += 1
-                ax = plt.subplot(num_images//2, 2, images_so_far)
-                ax.axis('off')
-                ax.set_title('predicted: {}'.format(class_names[preds[j]]))
-                imshow(inputs.cpu().data[j])
-
-                if images_so_far == num_images:
-                    model.train(mode=was_training)
-                    return
-        model.train(mode=was_training)
-        
+            
 
 def save_dict_to_hdf5(dic, filename):
     with h5py.File(filename, 'w') as h5file:

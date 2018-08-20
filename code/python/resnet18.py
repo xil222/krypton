@@ -145,7 +145,7 @@ class ResNet18(nn.Module):
         x = self.conv5_2_a_op(x)
         x = self.conv5_2_b_op(x)
         x = F.relu(x + residual)        
-        return x
+        #return x
         x = self.avgpool(x)
         x = x.view(x.size(0), -1)
         x = self.fc(x)
@@ -709,7 +709,7 @@ class ResNet18(nn.Module):
         out = self.__get_tensor('merge_5_2-full', batch_size, 512, 7, 7, 1, 1, 7, 7, truncate=False)
         full_projection(self.merge_5_2.data, x, out, locations, p_height, p_width)
         x = out
-        return x
+        #return x
         x = self.avgpool(x)
         x = x.view(x.size(0), -1)
         x = self.fc(x)
@@ -787,7 +787,10 @@ class ResNet18(nn.Module):
     def __get_output_shape(self, p_height, p_width, k_size, stride, in_size, out_size, truncate):            
         new_p_height = min(int(math.ceil((p_height+k_size-1)*1.0/stride)), out_size)
         if truncate and (new_p_height > round(out_size*self.beta)):
-            new_p_height = round(out_size*self.beta)
+            temp_new_p_height = round(out_size*self.beta)
+            #if (new_p_height-temp_new_p_height)%2 != 0:
+            #    temp_new_p_height -= 1
+            new_p_height = temp_new_p_height
     
         return new_p_height, new_p_height
     

@@ -294,8 +294,6 @@ __global__ void inc_avg_pool_gpu_kernel(int n, float* ptr_premat_tensor, float* 
         i = i + new_y0;
         j = j + new_x0;
 
-        float max = -INFINITY;
-
         current_y0 -= remove_y/2;
         current_x0 -= remove_x/2;        
         

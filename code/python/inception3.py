@@ -107,9 +107,10 @@ class Inception3(nn.Module):
         x = self.mixed_6e(x)       
     
         x = self.mixed_7a(x)       
-        x = self.mixed_7b(x)       
+        x = self.mixed_7b(x)
         x = self.mixed_7c(x)
-        return x
+        #return x
+    
         x = F.avg_pool2d(x, kernel_size=8)        
     
         x = x.view(x.size(0), -1)
@@ -255,16 +256,11 @@ class Inception3(nn.Module):
         if debug: print(locations, p_height, x.shape)             
         x, p_height, p_width = self.mixed_6e.forward_gpu(x, locations, p_height, p_width, beta)
         if debug: print(locations, p_height, x.shape)
-                 
+        
         x, p_height, p_width = self.mixed_7a.forward_gpu(x, locations, p_height, p_width, beta)
         if debug: print(locations, p_height, x.shape)                       
         x, p_height, p_width = self.mixed_7b.forward_gpu(x, locations, p_height, p_width, beta)
-        if debug: print(locations, p_height, x.shape)            
-#         out = self.__get_tensor('global-pool-full', batch_size, x.shape[1], 8, 8, 1, 1,
-#                                 8, 8, truncate=False)
-#         full_projection(self.mixed_7b.concat.data, x, out, locations, p_height, p_width)
-#         x = out    
-#         return x            
+        if debug: print(locations, p_height, x.shape)                     
         x, p_height, p_width = self.mixed_7c.forward_gpu(x, locations, p_height, p_width, beta)
         if debug: print(locations, p_height, x.shape)
 
@@ -272,7 +268,7 @@ class Inception3(nn.Module):
         out = self.__get_tensor('global-pool-full', batch_size, 2048, 8, 8, 1, 1, 8, 8, truncate=False)
         full_projection(self.mixed_7c.concat.data, x, out, locations, p_height, p_width)
         x = out
-        return x
+        #return x
         x = F.avg_pool2d(x, kernel_size=8)      
 
         x = x.view(x.size(0), -1)
