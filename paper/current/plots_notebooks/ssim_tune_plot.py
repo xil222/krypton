@@ -34,6 +34,10 @@ from python.resnet18 import ResNet18
 from python.inception3 import Inception3
 
 
+gpu = True
+dataset = 'oct'
+batch_size = 256
+
 def mean_confidence_interval(data, confidence=0.95):
     a = 1.0 * np.array(data)
     n = len(a)
@@ -50,22 +54,20 @@ def inc_inference(model, image_file_path, beta, patch_size=4, stride=1,
     
     if not adaptive:
         with torch.no_grad():
-            x, prob = inc_inference_e2e(model, image_file_path, patch_size, stride,
-                                  batch_size=256, beta=beta, gpu=gpu, version='v1',
+            x, prob, logit_index = inc_inference_e2e(model, image_file_path, patch_size, stride,
+                                  batch_size=batch_size, beta=beta, gpu=gpu, version='v1',
                                   weights_data=weights_data, c=0.0,
                                  image_size=image_size, x_size=image_size, y_size=image_size)
     
     if gpu:
         torch.cuda.synchronize()
 
-    return x, prob
+    return x, prob, logit_index
 
-gpu = True
-dataset = 'imagenet'
 
 image_files = []
 # OCT
-if dataset == 'imagenet':
+if dataset == 'oct':
     temp = os.listdir('../../../data/oct/test/DRUSEN')
     for name in temp:
         if name.endswith('jpeg'):
@@ -87,14 +89,14 @@ if dataset == 'imagenet':
         if name.endswith('jpeg'):
             image_files.append('../../../data/oct/test/NORMAL/'+name)
             
-elif dataset == 'oct':
+elif dataset == 'imagenet':
 # ImageNet
     temp = os.listdir('../../../data/imagenet-sample')
     for name in temp:
         if name.endswith('jpg'):
             image_files.append('../../../data/imagenet-sample/'+name)
 
-file_amount = 30
+file_amount = 32
 image_files = random.sample(image_files, file_amount)
 random.shuffle(image_files)
 
@@ -102,7 +104,7 @@ train_files = image_files[:file_amount//2]
 test_files = image_files[file_amount//2:]
 
 patch_size = 16
-stride = 1
+stride = 2
 
 taus = [1.0, 0.9, 0.8, 0.7, 0.6, 0.5, 0.4]
 
@@ -143,16 +145,14 @@ for model,model_name,weight_file in zip([VGG16, ResNet18, Inception3], ['VGG16',
     
     for file_path in train_files:
         
-        #x = full_inference_e2e(model, file_path, patch_size, stride, batch_size=128,
-        #                       gpu=gpu, weights_data=weights_data, c=0.0, version='v1', n_labels=2)
-        x, prob = inc_inference(model, file_path, 1.0, patch_size=patch_size, stride=stride,
+        x, prob, logit_index = inc_inference(model, file_path, 1.0, patch_size=patch_size, stride=stride,
                              weights_data=weights_data, image_size=image_size)
         
         orig_hm = generate_heatmap(file_path, x, show=False, label="", prob=prob, width=image_size)
         
         for beta in taus:
             prev_time = time.time()
-            x, prob = inc_inference(model, file_path, beta, patch_size=patch_size, stride=stride,
+            x, prob, logit_index = inc_inference(model, file_path, beta, patch_size=patch_size, stride=stride,
                              weights_data=weights_data, image_size=image_size)
             inc_inference_time = time.time()-prev_time
             hm = generate_heatmap(file_path, x, show=False, label="", prob=prob, width=image_size)
@@ -261,13 +261,14 @@ for model,model_name,weight_file in zip([VGG16, ResNet18, Inception3], ['VGG16',
     
 
     for file_path in test_files:
-        x, prob = inc_inference(model, file_path, 1.0, patch_size=patch_size, stride=stride,
+        x, prob, logit_index = inc_inference(model, file_path, 1.0, patch_size=patch_size, stride=stride,
                              weights_data=weights_data, image_size=image_size)
         
         orig_hm = generate_heatmap(file_path, x, show=False, label="", prob=prob, width=image_size)
         
-        x, prob = inc_inference(model, file_path, ssim_tau, patch_size=patch_size, stride=stride,
+        x, prob, logit_index = inc_inference(model, file_path, ssim_tau, patch_size=patch_size, stride=stride,
                          weights_data=weights_data, image_size=image_size)
+        
         hm = generate_heatmap(file_path, x, show=False, label="", prob=prob, width=image_size)
 
         if hm.shape[0] < 7:
