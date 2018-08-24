@@ -22,6 +22,7 @@
 \citation{mohanty2016using}
 \citation{arbabzadah2016identifying}
 \citation{wang2017deep}
+\citation{fdaretinopathy}
 \citation{radiologistshortage}
 \citation{jung2017deep}
 \citation{zeiler2014visualizing}
@@ -44,10 +45,10 @@
 \@writefile{toc}{\contentsline {section}{\numberline {2}Background}{3}{section.2}}
 \@writefile{toc}{\contentsline {section}{\numberline {3}Preliminaries and Overview}{3}{section.3}}
 \newlabel{sec:preliminaries}{{3}{3}{Preliminaries and Overview}{section.3}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.1}Problem Statement and Assumptions}{3}{subsection.3.1}}
 \citation{caffemodelzoo,tfmodelzoo}
 \@writefile{lot}{\contentsline {table}{\numberline {1}{\ignorespaces Symbols used in the Preliminaries Section\relax }}{4}{table.caption.4}}
 \newlabel{table:preliminaries_symbols}{{1}{4}{Symbols used in the Preliminaries Section\relax }{table.caption.4}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {3.1}Problem Statement and Assumptions}{4}{subsection.3.1}}
 \newlabel{eqn:mheight}{{1}{4}{Problem Statement and Assumptions}{equation.3.1}{}}
 \newlabel{eqn:mwidth}{{2}{4}{Problem Statement and Assumptions}{equation.3.2}{}}
 \newlabel{eqn:patchimpose}{{5}{4}{Problem Statement and Assumptions}{equation.3.5}{}}
@@ -64,11 +65,11 @@
 \newlabel{eqn:inc_all}{{19}{6}{Deep CNN Internals}{equation.3.19}{}}
 \newlabel{eqn:redundancy_ratio}{{20}{6}{Deep CNN Internals}{equation.3.20}{}}
 \@writefile{toc}{\contentsline {subsection}{\numberline {3.3}Estimating the Quality of Generated Approximate Heat Maps}{6}{subsection.3.3}}
-\@writefile{toc}{\contentsline {section}{\numberline {4}Optimizations}{7}{section.4}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {4.1}Incremental Inference}{7}{subsection.4.1}}
-\newlabel{sec:inc_computation}{{4.1}{7}{Incremental Inference}{subsection.4.1}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {4}Optimizations}{6}{section.4}}
 \@writefile{lot}{\contentsline {table}{\numberline {2}{\ignorespaces Additional symbols used in the Optimizations Section\relax }}{7}{table.caption.6}}
 \newlabel{table:optimizer_symbols}{{2}{7}{Additional symbols used in the Optimizations Section\relax }{table.caption.6}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.1}Incremental Inference}{7}{subsection.4.1}}
+\newlabel{sec:inc_computation}{{4.1}{7}{Incremental Inference}{subsection.4.1}{}}
 \@writefile{lof}{\contentsline {figure}{\numberline {3}{\ignorespaces Simplified representation of input and output patch coordinates and dimensions of Conv. and Pool transformations.\relax }}{7}{figure.caption.7}}
 \newlabel{fig:dimensions}{{3}{7}{Simplified representation of input and output patch coordinates and dimensions of Conv. and Pool transformations.\relax }{figure.caption.7}{}}
 \newlabel{eqn:xcoordinate}{{21}{8}{Incremental Inference}{equation.4.21}{}}
@@ -87,57 +88,77 @@
 \newlabel{euclid}{{1}{9}{Incremental Inference Algorithm\relax }{algorithm.1}{}}
 \newlabel{alg:incinference}{{1}{9}{Incremental Inference Algorithm\relax }{algorithm.1}{}}
 \newlabel{alg:line:memcpy_loop}{{5}{9}{Incremental Inference Algorithm\relax }{algorithm.1}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {5}{\ignorespaces Maximum attainable redundancy ratios of popular CNN architectures when a square occlusion patch of different sizes is placed on the center of the image.\relax }}{9}{figure.caption.9}}
-\newlabel{fig:redundancy_ratio}{{5}{9}{Maximum attainable redundancy ratios of popular CNN architectures when a square occlusion patch of different sizes is placed on the center of the image.\relax }{figure.caption.9}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {5}{\ignorespaces Theoretical speedup ratios for popular CNN architectures when a square occlusion patch of different sizes is placed on the center of the image.\relax }}{9}{figure.caption.9}}
+\newlabel{fig:redundancy_ratio}{{5}{9}{Theoretical speedup ratios for popular CNN architectures when a square occlusion patch of different sizes is placed on the center of the image.\relax }{figure.caption.9}{}}
 \citation{le2017receptive,basiccnnoperations}
 \citation{de2011projective}
 \citation{luo2016understanding}
-\bibstyle{unsrt}
-\bibdata{main}
-\bibcite{alexnet}{{1}{}{{}}{{}}}
+\@writefile{lof}{\contentsline {figure}{\numberline {6}{\ignorespaces Input-Output coordinate and dimension mapping for element-wise addition and depth-wise concatenation.\relax }}{10}{figure.caption.10}}
+\newlabel{fig:la_operators}{{6}{10}{Input-Output coordinate and dimension mapping for element-wise addition and depth-wise concatenation.\relax }{figure.caption.10}{}}
 \newlabel{eqn:laxcoordinate}{{35}{10}{Incremental Inference}{equation.4.35}{}}
 \newlabel{eqn:laycoordinate}{{36}{10}{Incremental Inference}{equation.4.36}{}}
 \newlabel{eqn:lapatchwidth}{{37}{10}{Incremental Inference}{equation.4.37}{}}
 \newlabel{eqn:lapatchheight}{{38}{10}{Incremental Inference}{equation.4.38}{}}
 \@writefile{toc}{\contentsline {subsection}{\numberline {4.2}Projective Field Thresholding}{10}{subsection.4.2}}
-\@writefile{lof}{\contentsline {figure}{\numberline {6}{\ignorespaces (a) One dimensional convolution demonstrating projective field growth (filter size = 2, stride = 1). (b) Projective field thresholding with $\tau = 5/7$. Histograms denote the number of unique change propagation paths.\relax }}{10}{figure.caption.10}}
-\newlabel{fig:pf_truncate}{{6}{10}{(a) One dimensional convolution demonstrating projective field growth (filter size = 2, stride = 1). (b) Projective field thresholding with $\tau = 5/7$. Histograms denote the number of unique change propagation paths.\relax }{figure.caption.10}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {7}{\ignorespaces (a) One dimensional convolution demonstrating projective field growth (filter size = 2, stride = 1). (b) Projective field thresholding with $\tau = 5/7$. Histograms denote the number of unique change propagation paths.\relax }}{10}{figure.caption.11}}
+\newlabel{fig:pf_truncate}{{7}{10}{(a) One dimensional convolution demonstrating projective field growth (filter size = 2, stride = 1). (b) Projective field thresholding with $\tau = 5/7$. Histograms denote the number of unique change propagation paths.\relax }{figure.caption.11}{}}
+\newlabel{eqn:normal_width_calc}{{39}{11}{Projective Field Thresholding}{equation.4.39}{}}
+\newlabel{eqn:check_tau}{{40}{11}{Projective Field Thresholding}{equation.4.40}{}}
+\newlabel{eqn:new_width_calc_with_tau}{{41}{11}{Projective Field Thresholding}{equation.4.41}{}}
+\newlabel{eqn:new_in_width}{{42}{11}{Projective Field Thresholding}{equation.4.42}{}}
+\newlabel{eqn:new_x_coord}{{43}{11}{Projective Field Thresholding}{equation.4.43}{}}
+\newlabel{eqn:new_input_width}{{44}{11}{Projective Field Thresholding}{equation.4.44}{}}
+\newlabel{eqn:new_output_x}{{45}{11}{Projective Field Thresholding}{equation.4.45}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.3}Adaptive Drill-Down}{11}{subsection.4.3}}
+\newlabel{sec:ada-drill-down}{{4.3}{11}{Adaptive Drill-Down}{subsection.4.3}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {8}{\ignorespaces (a) Theoretical speedup ratio with projective field thresholding for different occlusion patch sizes and CNN models. (b) Mean Square Error between exact and approximate output of the final convolution layer for different occlusion patch sizes and CNN models on a sample of OCT dataset. In both (a) and (b) occlusion patches are placed at the center of the image.\relax }}{11}{figure.caption.12}}
+\newlabel{fig:th_redundancy_ratio}{{8}{11}{(a) Theoretical speedup ratio with projective field thresholding for different occlusion patch sizes and CNN models. (b) Mean Square Error between exact and approximate output of the final convolution layer for different occlusion patch sizes and CNN models on a sample of OCT dataset. In both (a) and (b) occlusion patches are placed at the center of the image.\relax }{figure.caption.12}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {9}{\ignorespaces Schematic representation of adaptive drill-down\relax }}{11}{figure.caption.13}}
+\newlabel{fig:adaptive-drill-down}{{9}{11}{Schematic representation of adaptive drill-down\relax }{figure.caption.13}{}}
+\bibstyle{unsrt}
+\bibdata{main}
+\bibcite{alexnet}{{1}{}{{}}{{}}}
 \bibcite{vggnet}{{2}{}{{}}{{}}}
 \bibcite{resnet}{{3}{}{{}}{{}}}
 \bibcite{inception}{{4}{}{{}}{{}}}
 \bibcite{imagenet}{{5}{}{{}}{{}}}
+\@writefile{lof}{\contentsline {figure}{\numberline {10}{\ignorespaces Conceptual diagram showing the effect of $S_1$ and $r_{drill-down}$ on speedup.\relax }}{12}{figure.caption.14}}
+\newlabel{fig:r_and_s1}{{10}{12}{Conceptual diagram showing the effect of $S_1$ and $r_{drill-down}$ on speedup.\relax }{figure.caption.14}{}}
+\newlabel{eqn:addaptive-drill-down-eqn}{{46}{12}{Adaptive Drill-Down}{equation.4.46}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.4}System Tuning}{12}{subsection.4.4}}
+\newlabel{eqn:s1}{{47}{12}{System Tuning}{equation.4.47}{}}
+\newlabel{eqn:speedup_bound}{{48}{12}{System Tuning}{equation.4.48}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {5}Experimental Evaluation}{12}{section.5}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.1}End-to-End Evaluation}{12}{subsection.5.1}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.2}Drill-Down Analysis}{12}{subsection.5.2}}
+\@writefile{toc}{\contentsline {section}{References}{12}{section*.17}}
 \bibcite{transfer-learning-factors}{{6}{}{{}}{{}}}
 \bibcite{kermany2018identifying}{{7}{}{{}}{{}}}
 \bibcite{islam2017abnormality}{{8}{}{{}}{{}}}
 \bibcite{mohanty2016using}{{9}{}{{}}{{}}}
 \bibcite{arbabzadah2016identifying}{{10}{}{{}}{{}}}
 \bibcite{wang2017deep}{{11}{}{{}}{{}}}
-\bibcite{radiologistshortage}{{12}{}{{}}{{}}}
-\bibcite{jung2017deep}{{13}{}{{}}{{}}}
-\bibcite{zeiler2014visualizing}{{14}{}{{}}{{}}}
-\bibcite{squeezenet}{{15}{}{{}}{{}}}
-\bibcite{mobilenets}{{16}{}{{}}{{}}}
-\bibcite{miller2017explanation}{{17}{}{{}}{{}}}
-\bibcite{zintgraf2017visualizing}{{18}{}{{}}{{}}}
-\bibcite{caffemodelzoo}{{19}{}{{}}{{}}}
-\bibcite{tfmodelzoo}{{20}{}{{}}{{}}}
-\bibcite{wang2004image}{{21}{}{{}}{{}}}
-\bibcite{le2017receptive}{{22}{}{{}}{{}}}
-\bibcite{basiccnnoperations}{{23}{}{{}}{{}}}
-\bibcite{de2011projective}{{24}{}{{}}{{}}}
-\bibcite{luo2016understanding}{{25}{}{{}}{{}}}
+\bibcite{fdaretinopathy}{{12}{}{{}}{{}}}
+\bibcite{radiologistshortage}{{13}{}{{}}{{}}}
+\bibcite{jung2017deep}{{14}{}{{}}{{}}}
+\bibcite{zeiler2014visualizing}{{15}{}{{}}{{}}}
+\bibcite{squeezenet}{{16}{}{{}}{{}}}
+\bibcite{mobilenets}{{17}{}{{}}{{}}}
+\bibcite{miller2017explanation}{{18}{}{{}}{{}}}
+\bibcite{zintgraf2017visualizing}{{19}{}{{}}{{}}}
+\bibcite{caffemodelzoo}{{20}{}{{}}{{}}}
+\bibcite{tfmodelzoo}{{21}{}{{}}{{}}}
+\bibcite{wang2004image}{{22}{}{{}}{{}}}
+\bibcite{le2017receptive}{{23}{}{{}}{{}}}
+\bibcite{basiccnnoperations}{{24}{}{{}}{{}}}
+\bibcite{de2011projective}{{25}{}{{}}{{}}}
+\bibcite{luo2016understanding}{{26}{}{{}}{{}}}
 \newlabel{tocindent-1}{0pt}
 \newlabel{tocindent0}{0pt}
 \newlabel{tocindent1}{4.65pt}
 \newlabel{tocindent2}{11.49998pt}
 \newlabel{tocindent3}{0pt}
 \providecommand\NAT@force@numbers{}\NAT@force@numbers
-\@writefile{lof}{\contentsline {figure}{\numberline {7}{\ignorespaces (a) Distribution of redundancy ratios for different occlusion patch sizes and projective field thresholding values. (b) Mean Square Error of the final convolution output with different projective field thresholding and occlusion patch sizes for a sample of Diabetic Retinopathy images.\relax }}{11}{figure.caption.11}}
-\newlabel{fig:th_redundancy_ratio}{{7}{11}{(a) Distribution of redundancy ratios for different occlusion patch sizes and projective field thresholding values. (b) Mean Square Error of the final convolution output with different projective field thresholding and occlusion patch sizes for a sample of Diabetic Retinopathy images.\relax }{figure.caption.11}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {4.3}Adaptive Drill-Down}{11}{subsection.4.3}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {4.4}System Tuning}{11}{subsection.4.4}}
-\@writefile{toc}{\contentsline {section}{\numberline {5}Experimental Evaluation}{11}{section.5}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {5.1}End-to-End Evaluation}{11}{subsection.5.1}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {5.2}Drill-Down Analysis}{11}{subsection.5.2}}
-\@writefile{toc}{\contentsline {section}{References}{11}{section*.13}}
-\newlabel{TotPages}{{11}{11}{}{page.11}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {11}{\ignorespaces (a) SSIM variation and degree two curve fit for different $\tau $ values for a sample of OCT dataset. (b) Cumulative distribution plot for the SSIM deviation for the $\tau $ values obtained from the curve fit for a SSIM value of 0.8.\relax }}{13}{figure.caption.15}}
+\newlabel{fig:system_tuning}{{11}{13}{(a) SSIM variation and degree two curve fit for different $\tau $ values for a sample of OCT dataset. (b) Cumulative distribution plot for the SSIM deviation for the $\tau $ values obtained from the curve fit for a SSIM value of 0.8.\relax }{figure.caption.15}{}}
+\newlabel{TotPages}{{13}{13}{}{page.13}{}}
