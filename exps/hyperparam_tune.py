@@ -34,10 +34,10 @@ torch.set_num_threads(8)
 torch.manual_seed(245)
 np.random.seed(345)
 
-dataset = 'oct'
+dataset = 'chest_xray'
 data_dir = '../data/'+dataset
 
-n_labels = 4
+n_labels = 3
 
 num_epochs = 25
 
@@ -63,80 +63,89 @@ for name, model, image_size, in zip(['VGG16', 'ResNet18', 'Inception3'],
     
     best_acc = 0
     
-    for lr in [1e-2, 1e-4, 1e-6]:
-        for reg in [1e-2, 1e-4, 1e-6]:
+    #for lr in [1e-2, 1e-4, 1e-6]:
+    #for reg in [1e-2, 1e-4, 1e-6]:
     
-            model_ft = model(pretrained=True)
+    model_ft = model(pretrained=True)
 
-            if name == 'VGG16':
-                for param in model_ft.features.parameters():
-                    param.requires_grad = False
+    if name == 'VGG16':
+        #lr = 1e-4
+        #reg = 1e-4
+        
+        for param in model_ft.features.parameters():
+            param.requires_grad = False
 
-                num_ftrs = model_ft.classifier[-1].in_features
-                temp = list(model_ft.classifier.children())[:-1]
-                temp.append(nn.Linear(num_ftrs, n_labels))
-                model_ft.classifier = nn.Sequential(*temp)
+        num_ftrs = model_ft.classifier[-1].in_features
+        temp = list(model_ft.classifier.children())[:-1]
+        temp.append(nn.Linear(num_ftrs, n_labels))
+        model_ft.classifier = nn.Sequential(*temp)
 
-                for param in model_ft.classifier[0:-1].parameters():
-                    param.requires_grad = False
-
-
-                model_ft = model_ft.to(device)
-                criterion = nn.CrossEntropyLoss()
-                optimizer_ft = optim.Adam(model_ft.classifier[-1].parameters(), lr=lr, weight_decay=reg)
-            elif name == 'ResNet18':
-                for param in model_ft.parameters():
-                    param.requires_grad = False
-
-                num_ftrs = model_ft.fc.in_features
-                model_ft.fc = nn.Linear(num_ftrs, n_labels)
-
-                for param in model_ft.fc.parameters():
-                    param.requires_grad = True
+        for param in model_ft.classifier[0:-1].parameters():
+            param.requires_grad = False
 
 
-                model_ft = model_ft.to(device)
-                criterion = nn.CrossEntropyLoss()
-                optimizer_ft = optim.Adam(model_ft.fc.parameters(), lr=lr, weight_decay=reg)
-            elif name == 'Inception3':
-                model_ft.aux_logit = False
-                model_ft = model_ft.eval()
-                for param in model_ft.parameters():
-                    param.requires_grad = False
+        model_ft = model_ft.to(device)
+        criterion = nn.CrossEntropyLoss()
+        optimizer_ft = optim.Adam(model_ft.classifier[-1].parameters(), lr=lr, weight_decay=reg)
+    elif name == 'ResNet18':
+        #lr = 1e-4
+        #reg = 1e-6
+        
+        for param in model_ft.parameters():
+            param.requires_grad = False
 
-                num_ftrs = model_ft.fc.in_features
-                model_ft.fc = nn.Linear(num_ftrs, n_labels)
+        num_ftrs = model_ft.fc.in_features
+        model_ft.fc = nn.Linear(num_ftrs, n_labels)
 
-                for param in model_ft.fc.parameters():
-                    param.requires_grad = True
-
-                model_ft = model_ft.to(device)
-                criterion = nn.CrossEntropyLoss()
-                optimizer_ft = optim.Adam(model_ft.fc.parameters(), lr=lr, weight_decay=reg)
+        for param in model_ft.fc.parameters():
+            param.requires_grad = True
 
 
+        model_ft = model_ft.to(device)
+        criterion = nn.CrossEntropyLoss()
+        optimizer_ft = optim.Adam(model_ft.fc.parameters(), lr=lr, weight_decay=reg)
+    elif name == 'Inception3':
+        #lr = 1e-4
+        #reg = 1e-2
+        
+        model_ft.aux_logit = False
+        model_ft = model_ft.eval()
+        for param in model_ft.parameters():
+            param.requires_grad = False
 
-            model_ft, current_acc = ft_train_model(model_ft, criterion, optimizer_ft, dataloaders, device,
-                          dataset_sizes, class_names, num_epochs=num_epochs)
+        num_ftrs = model_ft.fc.in_features
+        model_ft.fc = nn.Linear(num_ftrs, n_labels)
 
-            if best_acc < current_acc:
-                final_layer = {}
+        for param in model_ft.fc.parameters():
+            param.requires_grad = True
 
-                if name == 'VGG16':
-                    final_layer['fc8_W:0'] = model_ft.classifier[-1].weight.data.cpu().numpy()
-                    final_layer['fc8_b:0'] = model_ft.classifier[-1].bias.data.cpu().numpy()
-                    save_dict_to_hdf5(final_layer, './'+dataset+'_vgg16_ptch.h5')
+        model_ft = model_ft.to(device)
+        criterion = nn.CrossEntropyLoss()
+        optimizer_ft = optim.Adam(model_ft.fc.parameters(), lr=lr, weight_decay=reg)
 
-                elif name == 'ResNet18':
-                    final_layer['fc:w'] = model_ft.fc.weight.data.cpu().numpy()
-                    final_layer['fc:b'] = model_ft.fc.bias.data.cpu().numpy()
-                    save_dict_to_hdf5(final_layer, './'+dataset+'_resnet18_ptch.h5')
 
-                elif name == 'Inception3':
-                    final_layer['482.fc.weight'] = model_ft.fc.weight.data.cpu().numpy()
-                    final_layer['483.fc.bias'] = model_ft.fc.bias.data.cpu().numpy()
-                    save_dict_to_hdf5(final_layer, './'+dataset+'_inception3_ptch.h5')
 
-                best_acc = current_acc
+    model_ft, current_acc = ft_train_model(model_ft, criterion, optimizer_ft, dataloaders, device,
+                  dataset_sizes, class_names, num_epochs=num_epochs)
 
-                print("\n"+name+" best hyper-parameters LR: " + str(lr) + " Reg: " + str(reg) + "\n\n")
+    if best_acc < current_acc:
+        final_layer = {}
+
+        if name == 'VGG16':
+            final_layer['fc8_W:0'] = model_ft.classifier[-1].weight.data.cpu().numpy()
+            final_layer['fc8_b:0'] = model_ft.classifier[-1].bias.data.cpu().numpy()
+            save_dict_to_hdf5(final_layer, './'+dataset+'_vgg16_ptch.h5')
+
+        elif name == 'ResNet18':
+            final_layer['fc:w'] = model_ft.fc.weight.data.cpu().numpy()
+            final_layer['fc:b'] = model_ft.fc.bias.data.cpu().numpy()
+            save_dict_to_hdf5(final_layer, './'+dataset+'_resnet18_ptch.h5')
+
+        elif name == 'Inception3':
+            final_layer['482.fc.weight'] = model_ft.fc.weight.data.cpu().numpy()
+            final_layer['483.fc.bias'] = model_ft.fc.bias.data.cpu().numpy()
+            save_dict_to_hdf5(final_layer, './'+dataset+'_inception3_ptch.h5')
+
+        best_acc = current_acc
+
+        print("\n"+name+" best hyper-parameters LR: " + str(lr) + " Reg: " + str(reg) + "\n\n")

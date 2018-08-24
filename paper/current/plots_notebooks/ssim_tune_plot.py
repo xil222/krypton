@@ -37,15 +37,11 @@ from python.inception3 import Inception3
 gpu = True
 dataset = 'oct'
 batch_size = 256
+patch_size = 16
+stride = 1
+file_amount = 60
 
-def mean_confidence_interval(data, confidence=0.95):
-    a = 1.0 * np.array(data)
-    n = len(a)
-    m, se = np.mean(a), scipy.stats.sem(a)
-    h = se * scipy.stats.t.ppf((1 + confidence) / 2., n-1)
-    if math.isnan(h):
-        h = 0
-    return m, h
+
 
 def inc_inference(model, image_file_path, beta, patch_size=4, stride=1,
                   adaptive=False, weights_data=None, image_size = 224):
@@ -96,15 +92,11 @@ elif dataset == 'imagenet':
         if name.endswith('jpg'):
             image_files.append('../../../data/imagenet-sample/'+name)
 
-file_amount = 32
 image_files = random.sample(image_files, file_amount)
 random.shuffle(image_files)
 
 train_files = image_files[:file_amount//2]
 test_files = image_files[file_amount//2:]
-
-patch_size = 16
-stride = 2
 
 taus = [1.0, 0.9, 0.8, 0.7, 0.6, 0.5, 0.4]
 
@@ -125,6 +117,7 @@ for model,model_name,weight_file in zip([VGG16, ResNet18, Inception3], ['VGG16',
         temp_weights_data = load_dict_from_hdf5('../../../exps/oct_'+model_name.lower()+'_ptch.h5', gpu=gpu)
     
     if model_name == 'VGG16':
+        #continue
         image_size = 224
         if dataset == 'oct':
             weights_data['fc8_W:0'] = temp_weights_data['fc8_W:0']
@@ -135,13 +128,15 @@ for model,model_name,weight_file in zip([VGG16, ResNet18, Inception3], ['VGG16',
             weights_data['fc:w'] = temp_weights_data['fc:w']
             weights_data['fc:b'] = temp_weights_data['fc:b']
     elif model_name == 'Inception3':
+        #continue
         image_size = 299
         if dataset == 'oct':
             weights_data['482.fc.weight'] = temp_weights_data['482.fc.weight']
             weights_data['483.fc.bias'] = temp_weights_data['483.fc.bias']
    
-    y_ssim = {1.0:[],0.9:[],0.8:[],0.7:[],0.6:[],0.5:[],0.4:[]}
-    y_time = {1.0:[],0.9:[],0.8:[],0.7:[],0.6:[],0.5:[],0.4:[]}
+    y_ssim = []#{1.0:[],0.9:[],0.8:[],0.7:[],0.6:[],0.5:[],0.4:[]}
+    y_time = []#{1.0:[],0.9:[],0.8:[],0.7:[],0.6:[],0.5:[],0.4:[]}
+    x_vals = []
     
     for file_path in train_files:
         
@@ -163,48 +158,32 @@ for model,model_name,weight_file in zip([VGG16, ResNet18, Inception3], ['VGG16',
                 win_size=None
             
             ssim_value = ssim(orig_hm, hm, data_range=255, multichannel=True, win_size=win_size)
-            #x_vals.append(beta)
-            y_ssim[beta].append(ssim_value)
-            y_time[beta].append(inc_inference_time)
+            x_vals.append(beta)
+            y_ssim.append(ssim_value)
+            y_time.append(inc_inference_time)
             
             gc.collect()
             torch.cuda.empty_cache()
     
     ssim_curve_fits[model_name] = poly.polyfit(
-        np.array(taus), np.array([mean_confidence_interval(y_ssim[beta])[0] for beta in taus]), 2)
-    time_curve_fits[model_name] = poly.polyfit(
-        np.array(taus), np.array([mean_confidence_interval(y_time[beta])[0] for beta in taus]), 2)
+        np.array(x_vals), np.array(y_ssim), 2)
             
 
     ax = plt.subplot(1,3,i)
-    ax.errorbar(taus, [mean_confidence_interval(y_ssim[beta])[0] for beta in taus],
-                yerr=[mean_confidence_interval(y_ssim[beta])[1] for beta in taus], marker='o', label='data')
+   
+    plt.scatter(x_vals, y_ssim)
+    ax.plot(taus, [poly.Polynomial(ssim_curve_fits[model_name])(t) for t in taus], label='fit', color='orange')
     
-    ax.plot(taus, [poly.Polynomial(ssim_curve_fits[model_name])(t) for t in taus], label='fit')
-    
-    #plt.scatter(x_vals, y_ssim)
     ax.set_title(model_name)
-    plt.xlabel(r'$\tau$')
+    #plt.xlabel(r'$\tau$')
     
     plt.grid()
     plt.xticks(taus, taus)
 
     if i == 1:
         plt.ylabel('SSIM')
-        plt.legend(loc='lower right', ncol=2)
+        plt.legend(loc='lower right', ncol=1)
         
-#     ax = plt.subplot(2,3,i+3)
-#     ax.errorbar(taus, [mean_confidence_interval(y_time[beta])[0] for beta in taus],
-#                 yerr=[mean_confidence_interval(y_time[beta])[1] for beta in taus], marker='o')
-#     #plt.scatter(x_vals, y_time)
-    
-#     plt.grid()
-#     plt.xlabel(r'$\tau$')
-#     plt.xticks(taus, taus)
-
-#     if i == 1:
-#         plt.ylabel('Time (s)')
-
 
     i = i + 1
     
@@ -222,7 +201,7 @@ for model,model_name,weight_file in zip([VGG16, ResNet18, Inception3], ['VGG16',
     
     weights_data = load_dict_from_hdf5(weight_file, gpu=gpu)
     if dataset == 'oct':
-        temp_weights_data = load_dict_from_hdf5('../../../exps/oct_drusen_'+model_name.lower()+'_ptch.h5', gpu=gpu)
+        temp_weights_data = load_dict_from_hdf5('../../../exps/oct_'+model_name.lower()+'_ptch.h5', gpu=gpu)
     
     if model_name == 'VGG16':
         #continue
@@ -259,37 +238,39 @@ for model,model_name,weight_file in zip([VGG16, ResNet18, Inception3], ['VGG16',
     
     ssim_tau = max(math.ceil((ssim_tau)*10)/10, 0.4)
     
+    for name, files in zip(['train', 'test'], [train_files, test_files]):
+    
+        for file_path in files:
+            x, prob, logit_index = inc_inference(model, file_path, 1.0, patch_size=patch_size, stride=stride,
+                                 weights_data=weights_data, image_size=image_size)
 
-    for file_path in test_files:
-        x, prob, logit_index = inc_inference(model, file_path, 1.0, patch_size=patch_size, stride=stride,
+            orig_hm = generate_heatmap(file_path, x, show=False, label="", prob=prob, width=image_size)
+
+            x, prob, logit_index = inc_inference(model, file_path, ssim_tau, patch_size=patch_size, stride=stride,
                              weights_data=weights_data, image_size=image_size)
-        
-        orig_hm = generate_heatmap(file_path, x, show=False, label="", prob=prob, width=image_size)
-        
-        x, prob, logit_index = inc_inference(model, file_path, ssim_tau, patch_size=patch_size, stride=stride,
-                         weights_data=weights_data, image_size=image_size)
-        
-        hm = generate_heatmap(file_path, x, show=False, label="", prob=prob, width=image_size)
 
-        if hm.shape[0] < 7:
-            win_size=3
-        else:
-            win_size=None
-        
-        ssim_value = ssim(orig_hm, hm, data_range=255, multichannel=True, win_size=win_size)
-        y_ssim.append(ssim_threshold-ssim_value)
-        
-    ax = plt.subplot(1,3,i)
-        
-    unique, counts = np.unique(y_ssim, return_counts=True)
-    
-    plt.plot(unique, np.cumsum(counts)/np.sum(counts)*100.0)
-    plt.ticklabel_format(style='sci', axis='x', scilimits=(0,0))
-    plt.xlabel(r'$SSIM_{target}-SSIM_{actual}$', fontsize=8)
-    ax.xaxis.major.formatter._useMathText = True
-    
+            hm = generate_heatmap(file_path, x, show=False, label="", prob=prob, width=image_size)
+
+            if hm.shape[0] < 7:
+                win_size=3
+            else:
+                win_size=None
+
+            ssim_value = ssim(orig_hm, hm, data_range=255, multichannel=True, win_size=win_size)
+            y_ssim.append(ssim_threshold-ssim_value)
+
+        ax = plt.subplot(1,3,i)
+
+        unique, counts = np.unique(y_ssim, return_counts=True)
+
+        plt.plot(unique, np.cumsum(counts)/np.sum(counts)*100.0, label=name)
+        plt.ticklabel_format(style='sci', axis='x', scilimits=(0,0))
+        #plt.xlabel(r'$SSIM_{target}-SSIM_{actual}$', fontsize=8)
+        ax.xaxis.major.formatter._useMathText = True
+
     if i == 1:
         plt.ylabel('Cumulative Percent')
+        plt.legend(loc='lower right', ncol=1)
 
     
     ax.set_title(r'$\tau$='+str(ssim_tau))

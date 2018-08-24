@@ -1,10 +1,13 @@
+import matplotlib
+matplotlib.use('Agg')
+import matplotlib.pyplot as plt
+
 import torch
 import time
 import gc
 import math
 from scipy import ndimage
 import numpy as np
-import matplotlib.pyplot as plt
 from PIL import Image
 import cv2
 import random
@@ -23,22 +26,22 @@ from python.vgg16 import VGG16
 from python.resnet18 import ResNet18
 from python.inception3 import Inception3
 
-image_file_path = "../code/python/dog_resized.jpg"
-
 random.seed(45)
 np.random.seed(45)
 
 torch.set_num_threads(8)
 
 models = [ResNet18]
-patch_sizes = [4, 8, 16]
-strides = [1, 2, 4, 8]
+patch_sizes = [16, 8]
+strides = [4, 2, 1]
 taus = [1.0, 0.9, 0.8, 0.7, 0.6, 0.5, 0.4]
-c = 0.5
+c = 0.0
+file_amount = 10
 
 dataset = 'OCT'
 n_labels = 4
 show = False
+
 
 image_files = []
 temp = os.listdir('../data/oct/test/DRUSEN')
@@ -57,24 +60,23 @@ for name in temp:
         image_files.append('../data/oct/test/CNV/'+name)
         
         
-temp = os.listdir('../data/oct/test/NORMAL')        
+temp = os.listdir('../data/oct/test/NORMAL')
 for name in temp:
     if name.endswith('jpeg'):
         image_files.append('../data/oct/test/NORMAL/'+name)
 
-file_amount = 10
 image_files = random.sample(image_files, file_amount)
 
 weight_files = [
-#     '../code/python/vgg16_weights_ptch.h5',
+    #'../code/python/vgg16_weights_ptch.h5',
     '../code/python/resnet18_weights_ptch.h5',
-#     '../code/python/inception3_weights_ptch.h5'
+    #'../code/python/inception3_weights_ptch.h5'
 ]
 
 fine_tuned_weight_files = [
-#     './oct_vgg16_ptch.h5',
+    #'./oct_vgg16_ptch.h5',
     './oct_resnet18_ptch.h5',
-#     './oct_inception3_ptch.h5'
+    #'./oct_inception3_ptch.h5'
 ]
 
 def mean_confidence_interval(data, confidence=0.95):
@@ -86,7 +88,8 @@ def mean_confidence_interval(data, confidence=0.95):
         h = 0
     return m, h
 
-def inc_inference(beta, patch_size=4, stride=1, adaptive=False, gpu=True, version='v1', weights_data=None):
+def inc_inference(beta, image_file_path, image_size, patch_size=4, stride=1, adaptive=False,
+                  gpu=True, version='v1', weights_data=None):
     if gpu:
         batch_size = 256
     else:
@@ -95,25 +98,23 @@ def inc_inference(beta, patch_size=4, stride=1, adaptive=False, gpu=True, versio
     torch.cuda.synchronize()
     
     with torch.no_grad():
-        x = inc_inference_e2e(model, image_file_path, patch_size, stride,
+        x, prob, logit_index = inc_inference_e2e(model, image_file_path, patch_size, stride,
                               batch_size=batch_size, beta=beta, gpu=gpu, version=version,
-                             image_size=image_size, x_size=x_size, y_size=y_size, weights_data=weights_data,
-                              n_labels=n_labels, c=c)
+                             image_size=image_size, x_size=image_size, y_size=image_size,
+                             weights_data=weights_data, n_labels=n_labels, c=c)
     
     torch.cuda.synchronize()
 
-    return x
+    return x, prob, logit_index
+
 
 log_file = open('cnn_ivm_all.log', 'w')
 
 for model, weight_file, fine_tuned_weight_file in zip(models, weight_files, fine_tuned_weight_files):
 
-    weights_data_gpu = load_dict_from_hdf5(weight_file, gpu=True)
-    file_tuned_weight_data_gpu = load_dict_from_hdf5(fine_tuned_weight_file, gpu=True)
-
     weights_data = load_dict_from_hdf5(weight_file, gpu=False)
     file_tuned_weight_data = load_dict_from_hdf5(fine_tuned_weight_file, gpu=False)
-    
+
     if model == VGG16:
         weights_data['fc8_W:0'] = file_tuned_weight_data['fc8_W:0']
         weights_data['fc8_b:0'] = file_tuned_weight_data['fc8_b:0']
@@ -130,12 +131,8 @@ for model, weight_file, fine_tuned_weight_file in zip(models, weight_files, fine
 
             if model == Inception3:
                 image_size = 299
-                x_size = 299
-                y_size = 299
             else:
                 image_size = 224
-                x_size = 224
-                y_size = 224
 
                     
             times_gpu_custom_global = []
@@ -153,34 +150,36 @@ for model, weight_file, fine_tuned_weight_file in zip(models, weight_files, fine
                 torch.cuda.synchronize()
                 prev_time = time.time()
                 with torch.no_grad():
-                    x = full_inference_e2e(model, image_file_path, patch_size, stride,
+                    x, prob, logit_index = full_inference_e2e(model, image_file_path, patch_size, stride,
                                            batch_size=128, gpu=True, image_size=image_size,
-                                           x_size=x_size, y_size=y_size, weights_data=weights_data,
+                                           x_size=image_size, y_size=image_size, weights_data=weights_data,
                                           n_labels=n_labels, c=c)
 
                 torch.cuda.synchronize()
                 full_inference_gpu_time = time.time() - prev_time
 
+                message = str(model).split('.')[-1][:-2]+" Full Inference GPU Time: " + str(full_inference_gpu_time)
+                print(message)
+                log_file.write(message+"\n")
+                
                 torch.cuda.synchronize()
                 prev_time = time.time()
                 with torch.no_grad():
-                    x = full_inference_e2e(model, image_file_path, patch_size, stride,
+                    x, prob, logit_index = full_inference_e2e(model, image_file_path, patch_size, stride,
                                            batch_size=16, gpu=False, image_size=image_size,
-                                           x_size=x_size, y_size=y_size, weights_data=weights_data,
+                                           x_size=image_size, y_size=image_size, weights_data=weights_data,
                                           n_labels=n_labels, c=c)
 
                 torch.cuda.synchronize()
                 full_inference_cpu_time = time.time() - prev_time
 
-                label = str(model).split('.')[-1][:-2]+" Full Inference GPU Time: " + str(full_inference_gpu_time)
-                print(label)
-                log_file.write(label+"\n")
                 label = str(model).split('.')[-1][:-2]+" Full Inference CPU Time: " + str(full_inference_cpu_time)
-                print(label)
-                log_file.write(label+"\n")
+                print(message)
+                log_file.write(message+"\n")
 
 
-                orig_hm = generate_heatmap(image_file_path, x, show=show, width=image_size)
+                orig_hm = generate_heatmap(image_file_path, x, show=show, width=image_size, prob=prob,
+                                           label=class_names[logit_index])
 
                 gc.collect()
                 torch.cuda.empty_cache()
@@ -199,13 +198,15 @@ for model, weight_file, fine_tuned_weight_file in zip(models, weight_files, fine
                 for beta in taus:    
                     #CPU
                     prev_time = time.time()
-                    x = inc_inference(beta, patch_size=patch_size, stride=stride, gpu=False, version='v2',
-                                      weights_data=weights_data)
+                    x, prob, logit_index = inc_inference(beta, image_file_path, patch_size=patch_size, stride=stride,
+                                gpu=False, version='v2', weights_data=weights_data, image_size=image_size)
+                    
                     inc_inference_time = time.time()-prev_time
                     times_cpu.append(inc_inference_time)
                     speedups_cpu.append(full_inference_cpu_time/inc_inference_time)
 
-                    hm = generate_heatmap(image_file_path, x, show=show, width=image_size)
+                    hm = generate_heatmap(image_file_path, x, show=show, width=image_size, prob=prob,
+                                          label=class_names[logit_index])
 
                     if hm.shape[0] < 7:
                         win_size=3
@@ -214,35 +215,38 @@ for model, weight_file, fine_tuned_weight_file in zip(models, weight_files, fine
 
                     ssim_score = ssim(orig_hm, hm, data_range=255, multichannel=True, win_size=win_size)
                     score_cpu.append(ssim_score)
-                    label = str(model).split('.')[-1][:-2]+" CPU - BETA: " + str(beta) +" Inference Time: " +\
+                    message = str(model).split('.')[-1][:-2]+" CPU - BETA: " + str(beta) +" Inference Time: " +\
                         str(inc_inference_time) + " SSIM: " + str(ssim_score)
-                    print(label)
+                    print(message)
                     log_file.write(label+"\n")
                     gc.collect()
                     torch.cuda.empty_cache()
                     
                     #GPU
                     prev_time = time.time()
-                    x = inc_inference(beta, patch_size=patch_size, stride=stride, gpu=True, version='v2',
-                                      weights_data=weights_data_gpu)
+                    x, prob, logit_index = inc_inference(beta, image_file_path, patch_size=patch_size, stride=stride, gpu=True,
+                                      version='v2', weights_data=weights_data, image_size=image_size)
+                    
                     inc_inference_time = time.time()-prev_time
                     times_gpu.append(inc_inference_time)
                     speedups_gpu.append(full_inference_gpu_time/inc_inference_time)
+                    hm = generate_heatmap(image_file_path, x, show=show, width=image_size, prob=prob)
+                    
                     gc.collect()
                     torch.cuda.empty_cache()
-                    label = str(model).split('.')[-1][:-2]+" GPU: " + str(beta) +" Inference Time: " +\
+                    message = str(model).split('.')[-1][:-2]+" GPU: " + str(beta) +" Inference Time: " +\
                         str(inc_inference_time)
-                    print(label)
+                    print(message)
                     log_file.write(label+"\n")                    
 
                     #GPU Custom
                     prev_time = time.time()
-                    x = inc_inference(beta, patch_size=patch_size, stride=stride, gpu=True, version='v1',
-                                      weights_data=weights_data_gpu)
+                    x, prob, logit_index = inc_inference(beta, image_file_path, patch_size=patch_size, stride=stride, gpu=True,
+                                    version='v1', weights_data=weights_data, image_size=image_size)
                     inc_inference_time = time.time()-prev_time
                     times_gpu_custom.append(inc_inference_time)
                     speedups_gpu_custom.append(full_inference_gpu_time/inc_inference_time)
-                    hm = generate_heatmap(image_file_path, x, show=show, width=image_size)
+                    hm = generate_heatmap(image_file_path, x, show=show, width=image_size, prob=prob, label=[logit_index])
                     if hm.shape[0] < 7:
                         win_size=3
                     else:
@@ -250,9 +254,9 @@ for model, weight_file, fine_tuned_weight_file in zip(models, weight_files, fine
                     
                     ssim_score = ssim(orig_hm, hm, data_range=255, multichannel=True, win_size=win_size)
                     score_gpu_custom.append(ssim_score)
-                    label = str(model).split('.')[-1][:-2]+" GPU Custom - BETA: " + str(beta) + \
+                    message = str(model).split('.')[-1][:-2]+" GPU Custom - BETA: " + str(beta) + \
                         " Inference Time: " + str(inc_inference_time) + " SSIM: " + str(ssim_score)
-                    print(label)
+                    print(message)
                     log_file.write(label+"\n")              
                     
                     gc.collect()
@@ -282,11 +286,12 @@ for model, weight_file, fine_tuned_weight_file in zip(models, weight_files, fine
                 temp_ci.append(h)
             ax1.errorbar(taus, temp_mean, yerr=temp_ci, marker='o', color='tab:blue')
 
-            ax1.grid()
             #ax1.set_xlabel(r'$\tau$')
             #ax1.set_ylabel('SSIM', color='tab:blue')
             ax1.tick_params(axis='y', labelcolor='tab:blue')
-            ax1.xaxis.set_ticks(np.arange(0.4, 1.1, 0.1))
+            #ax1.xaxis.set_ticks(np.arange(0.4, 1.1, 0.1))
+            #ax1.grid()
+            ax1.xaxis.grid(True)
 
             ax2 = ax1.twinx()
 
@@ -316,10 +321,12 @@ for model, weight_file, fine_tuned_weight_file in zip(models, weight_files, fine
 
             #ax2.set_ylabel('Speedup', color='tab:red')
             ax2.tick_params(axis='y', labelcolor='tab:red')
+            ax2.xaxis.set_ticks(np.arange(0.4, 1.1, 0.1))
+            ax2.grid(True)
 
             #fig.legend(loc='lower center', ncol=3, bbox_to_anchor=(0.5,-0.025), frameon=False)
             #fig.tight_layout()
             fig_label = str(model).split('.')[-1][:-2]+"/"+str(dataset)+"/P="+str(patch_size)+"/S="+str(stride)
             fig.suptitle(fig_label)
             plt.savefig('./plots/'+fig_label.replace('/','-')+'.jpg')
-            plt.show()
+            #plt.show()
