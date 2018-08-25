@@ -46,12 +46,6 @@ We also explain incremental implementations of two other linear algebra operator
 \label{table:optimizer_symbols}
 \end{table}
 
-\begin{figure}[ht]
-\includegraphics[width=\columnwidth]{images/dimensions}
-\caption{Simplified representation of input and output patch coordinates and dimensions of Conv. and Pool transformations.}
-\label{fig:dimensions}
-\end{figure}
-
 In Section \ref{sec:preliminaries} we showed that both convolution and polling transformations can be cast into a form of applying a filter along the spatial dimensions of the input volume.
 However, how each transformation operate along the depth dimension is different.
 For our purpose we are interested in finding the propagation of the patches in the input through the consecutive layers and hence both these transformations can be treated similarly.
@@ -64,19 +58,34 @@ Note that due to the overlapping nature of filter positions, to compute the outp
 The starting coordinates of this read-in patch are denoted by $x^\mathcal{R}_\mathcal{P}, y^\mathcal{R}_\mathcal{P}$ and the dimensions are denoted by $W^\mathcal{R}_\mathcal{P}, H^\mathcal{R}_\mathcal{P}$.
 The relationship between the coordinates and dimensions can be expressed as follows:
 
+\begin{figure}[t]
+\includegraphics[width=\columnwidth]{images/dimensions}
+\caption{Simplified representation of input and output patch coordinates and dimensions of Conv. and Pool transformations.}
+\label{fig:dimensions}
+\end{figure}
+
 \begin{align}
 \label{eqn:xcoordinate}
 x^\mathcal{O}_\mathcal{P} =&~ max\big(\lceil (P_x + x^\mathcal{I}_\mathcal{P} - W_\mathcal{K} + 1)/S_x \rceil, 0\big)\\
 \label{eqn:ycoordinate}
-y^\mathcal{O}_\mathcal{P} =&~ max\big(\lceil (P_y + y^\mathcal{I}_\mathcal{P} - H_\mathcal{K} + 1)/S_y \rceil, 0\big)\\
+y^\mathcal{O}_\mathcal{P} =&~ max\big(\lceil (P_y + y^\mathcal{I}_\mathcal{P} - H_\mathcal{K} + 1)/S_y \rceil, 0\big)
+\end{align}
+
+\begin{align}
 \label{eqn:patchwidth}
 W^\mathcal{O}_\mathcal{P} =&~ min\big(\lceil (W^\mathcal{I}_\mathcal{P} + W_\mathcal{K} - 1)/S_x \rceil, W_{\mathcal{O}}\big)\\
 \label{eqn:patchheight}
-H^\mathcal{O}_\mathcal{P} =&~ min\big(\lceil (H^\mathcal{I}_\mathcal{P} + H_\mathcal{K} - 1)/S_y \rceil, H_{\mathcal{O}}\big)\\
+H^\mathcal{O}_\mathcal{P} =&~ min\big(\lceil (H^\mathcal{I}_\mathcal{P} + H_\mathcal{K} - 1)/S_y \rceil, H_{\mathcal{O}}\big)
+\end{align}
+
+\begin{align}
 \label{eqn:xreadcoordinate}
 x^\mathcal{R}_\mathcal{P} =&~ x^\mathcal{O}_\mathcal{P} \times S_x - P_x\\
 \label{eqn:yreadcoordinate}
-y^\mathcal{R}_\mathcal{P} =&~ y^\mathcal{O}_\mathcal{P} \times S_y - P_y\\
+y^\mathcal{R}_\mathcal{P} =&~ y^\mathcal{O}_\mathcal{P} \times S_y - P_y
+\end{align}
+
+\begin{align}
 \label{eqn:readpatchwidth}
 W^\mathcal{R}_\mathcal{P} =&~ W_\mathcal{K} + (W^\mathcal{O}_\mathcal{P}-1) \times S_x\\
 \label{eqn:readpatchheight}
@@ -285,7 +294,7 @@ W^\mathcal{O}_\mathcal{P} = &~ \texttt{min}\big(\lceil (W^\mathcal{I}_\mathcal{P
 \label{eqn:new_in_width}
 & W^\mathcal{I}_{\mathcal{P}_{new}} = W^\mathcal{O}_{\mathcal{P}} \times S_x - W_{\mathcal{K}} + 1\\
 \label{eqn:new_x_coord}
-& x^{\mathcal{I}}_\mathcal{P} \mathrel{+}= \texttt{round}((W^\mathcal{I}_\mathcal{P} - W^\mathcal{I}_{\mathcal{P}_{new}})/2)\\
+& x^{\mathcal{I}}_\mathcal{P} \mathrel{+}= (W^\mathcal{I}_\mathcal{P} - W^\mathcal{I}_{\mathcal{P}_{new}})/2\\
 \label{eqn:new_input_width}
 & W^\mathcal{I}_{\mathcal{P}} = W^\mathcal{I}_{\mathcal{P}_{new}}\\
 \label{eqn:new_output_x}
@@ -304,6 +313,12 @@ Coordinates and dimensions of the vertical dimension can also be computed simila
 \caption{(a) Theoretical speedup ratio with projective field thresholding for different occlusion patch sizes and CNN models. (b) Mean Square Error between exact and approximate output of the final convolution layer for different occlusion patch sizes and CNN models on a sample of OCT dataset. In both (a) and (b) occlusion patches are placed at the center of the image.}
 \label{fig:th_redundancy_ratio}
 \end{figure}
+
+\begin{figure*}[t]
+\includegraphics[width=\textwidth]{images/visual_examples_1}
+\caption{Occlusion heatmaps from a sample OCT image with (a) \textit{incremental inference} and (b) \textit{incremental inference} with \textit{adaptive drill-down} for different \textit{projective field threshold} values (CNN model: VGG16, occlusion patch size: 16, patch color: black, occlusion patch stride: 1).}
+\label{fig:visual_examples_1}
+\end{figure*}
 
 
 \subsection{Adaptive Drill-Down}\label{sec:ada-drill-down}
@@ -347,11 +362,11 @@ During this tuning phase \system~ takes in a sample of images (default 30) from 
 These $\tau$ versus SSIM data points are then used to fit a second degree curve.
 At operational time \system~ requires the user to provide the expected level of quality for the heatmaps in terms of a SSIM value. $\tau$ is then selected from the curve fit to match this target SSIM value.
 Figure \ref{fig:system_tuning} (a) shows the SSIM variation and degree two curve fit for different $\tau$ values and three different CNN models for a train set (n=30) from OCT dataset.
-From the plots it can be seen that the distribution of SSIM against $\tau$ lies in a lower dimensional manifold and when decreasing $\tau$, generally SSIM also decreases.
+From the plots it can be seen that the distribution of SSIM against $\tau$ lies in a lower dimensional manifold and with decreasing $\tau$, generally SSIM also decreases.
 Figure \ref{fig:system_tuning} (b) shows the cumulative percentage plots for SSIM deviation for the train and test sets (n=30) when the system is tuned for a target SSIM of 0.8.
 For a target SSIM of 0.8 system picks $\tau$ values of 0.4, 0.7, and 0.8 for VGG16, ResNet18, and Inception3 models respectively.
-It can be seen that approximately $80 \%$ or more test cases will result in an SSIM value of 0.8 or better.
-Even in cases where it performs worse than 0.8 SSIM, significant portion of them are within +0.1 deviation.
+It can be seen that approximately more than $50\%$ of test cases will result in an SSIM value of 0.8 or greater.
+Even in cases where it performs worse than 0.8 SSIM, significant ($90\%-95\%$) portion of them are within +0.1 deviation.
 
 \vspace{2mm}
 \noindent \textbf{Tuning adaptive drill-down.}
@@ -359,13 +374,13 @@ As explained in section \ref{sec:ada-drill-down} the speedup obtained by \textit
 \system~ requires the user to provide $r_{drill-down}$ and a target \texttt{speedup} value.
 $r_{drill-down}$ should be selected based on the user's experience and understanding on the relative size of interesting regions compared to the full image for a particular occlusion experiment use case.
 This is a fair assumption and in most cases, such as in medical imaging, users will have a fairly good understanding on the relative size of the interesting regions.
-However, if the user is unable to provide this value, \system~ will use a default value (currently 0.5) as $r_{drill-down}$.
+However, if the user is unable to provide this value, \system~ will use a default value (currently 0.25) as $r_{drill-down}$.
 Given $r_{drill-down}$, target \texttt{speedup} value, and original occlusion patch stride value $S_2$ (also called stage two stride) \system~ then calculates the stage one stride value $S_1$ as per equation \ref{eqn:s1}.
 From this equation it can be seen that possible values for the \texttt{speedup} value are upper-bounded by $1/r_{drill-down}$ as shown in equation \ref{eqn:speedup_bound}.
 
 \begin{align}
 \label{eqn:s1}
-S_1 = &~ \sqrt{\frac{1 - r_{drill-down} \times \texttt{speedup}}{\texttt{speedup}}} \times S_2
+S_1 = &~ \sqrt{\frac{\texttt{speedup}}{1 - r_{drill-down} \times \texttt{speedup}}} \times S_2
 \end{align}
 
 \begin{align}

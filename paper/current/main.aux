@@ -72,10 +72,10 @@
 \newlabel{sec:inc_computation}{{4.1}{7}{Incremental Inference}{subsection.4.1}{}}
 \@writefile{lof}{\contentsline {figure}{\numberline {3}{\ignorespaces Simplified representation of input and output patch coordinates and dimensions of Conv. and Pool transformations.\relax }}{7}{figure.caption.7}}
 \newlabel{fig:dimensions}{{3}{7}{Simplified representation of input and output patch coordinates and dimensions of Conv. and Pool transformations.\relax }{figure.caption.7}{}}
-\newlabel{eqn:xcoordinate}{{21}{8}{Incremental Inference}{equation.4.21}{}}
-\newlabel{eqn:ycoordinate}{{22}{8}{Incremental Inference}{equation.4.22}{}}
-\newlabel{eqn:patchwidth}{{23}{8}{Incremental Inference}{equation.4.23}{}}
-\newlabel{eqn:patchheight}{{24}{8}{Incremental Inference}{equation.4.24}{}}
+\newlabel{eqn:xcoordinate}{{21}{7}{Incremental Inference}{equation.4.21}{}}
+\newlabel{eqn:ycoordinate}{{22}{7}{Incremental Inference}{equation.4.22}{}}
+\newlabel{eqn:patchwidth}{{23}{7}{Incremental Inference}{equation.4.23}{}}
+\newlabel{eqn:patchheight}{{24}{7}{Incremental Inference}{equation.4.24}{}}
 \newlabel{eqn:xreadcoordinate}{{25}{8}{Incremental Inference}{equation.4.25}{}}
 \newlabel{eqn:yreadcoordinate}{{26}{8}{Incremental Inference}{equation.4.26}{}}
 \newlabel{eqn:readpatchwidth}{{27}{8}{Incremental Inference}{equation.4.27}{}}
@@ -113,8 +113,14 @@
 \newlabel{sec:ada-drill-down}{{4.3}{11}{Adaptive Drill-Down}{subsection.4.3}{}}
 \@writefile{lof}{\contentsline {figure}{\numberline {8}{\ignorespaces (a) Theoretical speedup ratio with projective field thresholding for different occlusion patch sizes and CNN models. (b) Mean Square Error between exact and approximate output of the final convolution layer for different occlusion patch sizes and CNN models on a sample of OCT dataset. In both (a) and (b) occlusion patches are placed at the center of the image.\relax }}{11}{figure.caption.12}}
 \newlabel{fig:th_redundancy_ratio}{{8}{11}{(a) Theoretical speedup ratio with projective field thresholding for different occlusion patch sizes and CNN models. (b) Mean Square Error between exact and approximate output of the final convolution layer for different occlusion patch sizes and CNN models on a sample of OCT dataset. In both (a) and (b) occlusion patches are placed at the center of the image.\relax }{figure.caption.12}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {9}{\ignorespaces Schematic representation of adaptive drill-down\relax }}{11}{figure.caption.13}}
-\newlabel{fig:adaptive-drill-down}{{9}{11}{Schematic representation of adaptive drill-down\relax }{figure.caption.13}{}}
+\newlabel{eqn:addaptive-drill-down-eqn}{{46}{11}{Adaptive Drill-Down}{equation.4.46}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {9}{\ignorespaces Occlusion heatmaps from a sample OCT image with (a) \textit  {incremental inference} and (b) \textit  {incremental inference} with \textit  {adaptive drill-down} for different \textit  {projective field threshold} values (CNN model: VGG16, occlusion patch size: 16, patch color: black, occlusion patch stride: 1).\relax }}{12}{figure.caption.13}}
+\newlabel{fig:visual_examples_1}{{9}{12}{Occlusion heatmaps from a sample OCT image with (a) \textit {incremental inference} and (b) \textit {incremental inference} with \textit {adaptive drill-down} for different \textit {projective field threshold} values (CNN model: VGG16, occlusion patch size: 16, patch color: black, occlusion patch stride: 1).\relax }{figure.caption.13}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {10}{\ignorespaces Schematic representation of adaptive drill-down\relax }}{12}{figure.caption.14}}
+\newlabel{fig:adaptive-drill-down}{{10}{12}{Schematic representation of adaptive drill-down\relax }{figure.caption.14}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {11}{\ignorespaces Conceptual diagram showing the effect of $S_1$ and $r_{drill-down}$ on speedup.\relax }}{12}{figure.caption.15}}
+\newlabel{fig:r_and_s1}{{11}{12}{Conceptual diagram showing the effect of $S_1$ and $r_{drill-down}$ on speedup.\relax }{figure.caption.15}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.4}System Tuning}{12}{subsection.4.4}}
 \bibstyle{unsrt}
 \bibdata{main}
 \bibcite{alexnet}{{1}{}{{}}{{}}}
@@ -122,16 +128,6 @@
 \bibcite{resnet}{{3}{}{{}}{{}}}
 \bibcite{inception}{{4}{}{{}}{{}}}
 \bibcite{imagenet}{{5}{}{{}}{{}}}
-\@writefile{lof}{\contentsline {figure}{\numberline {10}{\ignorespaces Conceptual diagram showing the effect of $S_1$ and $r_{drill-down}$ on speedup.\relax }}{12}{figure.caption.14}}
-\newlabel{fig:r_and_s1}{{10}{12}{Conceptual diagram showing the effect of $S_1$ and $r_{drill-down}$ on speedup.\relax }{figure.caption.14}{}}
-\newlabel{eqn:addaptive-drill-down-eqn}{{46}{12}{Adaptive Drill-Down}{equation.4.46}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {4.4}System Tuning}{12}{subsection.4.4}}
-\newlabel{eqn:s1}{{47}{12}{System Tuning}{equation.4.47}{}}
-\newlabel{eqn:speedup_bound}{{48}{12}{System Tuning}{equation.4.48}{}}
-\@writefile{toc}{\contentsline {section}{\numberline {5}Experimental Evaluation}{12}{section.5}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {5.1}End-to-End Evaluation}{12}{subsection.5.1}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {5.2}Drill-Down Analysis}{12}{subsection.5.2}}
-\@writefile{toc}{\contentsline {section}{References}{12}{section*.17}}
 \bibcite{transfer-learning-factors}{{6}{}{{}}{{}}}
 \bibcite{kermany2018identifying}{{7}{}{{}}{{}}}
 \bibcite{islam2017abnormality}{{8}{}{{}}{{}}}
@@ -141,6 +137,15 @@
 \bibcite{fdaretinopathy}{{12}{}{{}}{{}}}
 \bibcite{radiologistshortage}{{13}{}{{}}{{}}}
 \bibcite{jung2017deep}{{14}{}{{}}{{}}}
+\@writefile{lof}{\contentsline {figure}{\numberline {12}{\ignorespaces (a) SSIM variation and degree two curve fit for different $\tau $ values for a sample of OCT dataset. (b) Cumulative distribution plot for the SSIM deviation for the $\tau $ values obtained from the curve fit for a SSIM value of 0.8.\relax }}{13}{figure.caption.16}}
+\newlabel{fig:system_tuning}{{12}{13}{(a) SSIM variation and degree two curve fit for different $\tau $ values for a sample of OCT dataset. (b) Cumulative distribution plot for the SSIM deviation for the $\tau $ values obtained from the curve fit for a SSIM value of 0.8.\relax }{figure.caption.16}{}}
+\newlabel{eqn:s1}{{47}{13}{System Tuning}{equation.4.47}{}}
+\newlabel{eqn:speedup_bound}{{48}{13}{System Tuning}{equation.4.48}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {5}Experimental Evaluation}{13}{section.5}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.1}End-to-End Evaluation}{13}{subsection.5.1}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.2}Lesion Study}{13}{subsection.5.2}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.3}Discussion and Limitations}{13}{subsection.5.3}}
+\@writefile{toc}{\contentsline {section}{References}{13}{section*.18}}
 \bibcite{zeiler2014visualizing}{{15}{}{{}}{{}}}
 \bibcite{squeezenet}{{16}{}{{}}{{}}}
 \bibcite{mobilenets}{{17}{}{{}}{{}}}
@@ -159,6 +164,4 @@
 \newlabel{tocindent2}{11.49998pt}
 \newlabel{tocindent3}{0pt}
 \providecommand\NAT@force@numbers{}\NAT@force@numbers
-\@writefile{lof}{\contentsline {figure}{\numberline {11}{\ignorespaces (a) SSIM variation and degree two curve fit for different $\tau $ values for a sample of OCT dataset. (b) Cumulative distribution plot for the SSIM deviation for the $\tau $ values obtained from the curve fit for a SSIM value of 0.8.\relax }}{13}{figure.caption.15}}
-\newlabel{fig:system_tuning}{{11}{13}{(a) SSIM variation and degree two curve fit for different $\tau $ values for a sample of OCT dataset. (b) Cumulative distribution plot for the SSIM deviation for the $\tau $ values obtained from the curve fit for a SSIM value of 0.8.\relax }{figure.caption.15}{}}
-\newlabel{TotPages}{{13}{13}{}{page.13}{}}
+\newlabel{TotPages}{{14}{14}{}{page.14}{}}
