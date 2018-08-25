@@ -1,13 +1,13 @@
 # Fdb version 3
-["bibtex main"] 1535224624 "main.aux" "main.bbl" "main" 1535224625
+["bibtex main"] 1535224624 "main.aux" "main.bbl" "main" 1535232272
   "/usr/local/texlive/2016/texmf-dist/bibtex/bst/base/unsrt.bst" 1292289607 18030 1376b4b231b50c66211e47e42eda2875 ""
-  "main.aux" 1535224625 15624 84eb0310a6f331fa1ed8db22caf4c023 ""
+  "main.aux" 1535232271 15624 84eb0310a6f331fa1ed8db22caf4c023 ""
   "main.bcf" 0 -1 0 ""
   "main.bib" 1534895378 9453 0efedbc89c3b429bda8b74dd4ebea7ec ""
   (generated)
-  "main.bbl"
   "main.blg"
-["pdflatex"] 1535224624 "main.tex" "main.pdf" "main" 1535224625
+  "main.bbl"
+["pdflatex"] 1535232270 "main.tex" "main.pdf" "main" 1535232272
   "/usr/local/texlive/2016/texmf-dist/fonts/map/fontname/texfonts.map" 1272929888 3287 e6b82fe08f5336d4d5ebc73fb1152e87 ""
   "/usr/local/texlive/2016/texmf-dist/fonts/tfm/adobe/zapfding/pzdr.tfm" 1136768653 1528 f853c4d1b4e0550255e02831fdc8496f ""
   "/usr/local/texlive/2016/texmf-dist/fonts/tfm/jknappen/ec/ecrm1000.tfm" 1136768653 3584 adb004a0c8e7c46ee66cad73671f37b4 ""
@@ -164,7 +164,7 @@
   "acmart.cls" 1524690300 85547 eb8461a82cc8d69dc222fdb6a1a442b4 ""
   "appendix.tex" 1531522056 34 c67183932c50ca12c70d4f59fae7273c ""
   "background.tex" 1534839696 4071 5f54350a61e6f2133305622ad2eb7c71 ""
-  "experiments.tex" 1535224620 869 468f72c08c2763c76a647c97ed9bffb2 ""
+  "experiments.tex" 1535232268 854 e955c980830a2b19a364a6f3d46ec15f ""
   "images/adaptive-drill-down.pdf" 1535052196 8096 c20c00733f95c80fb98b2bc216e8b147 ""
   "images/cnn_simplified.pdf" 1535169231 53235 2f391e0683fc6dcccd6b7dcf11108fbf ""
   "images/dimensions.pdf" 1535168717 24227 669085a4f16612508d175b35d3897eac ""
@@ -178,16 +178,16 @@
   "images/system_tuning.pdf" 1535223450 176120 608922c1826f754e127ace9e830edf01 ""
   "images/visual_examples_1.pdf" 1535147464 1627191 030139f869d952be72618c6557b482aa ""
   "introduction.tex" 1534839362 9506 6df6d041d003ea57025beb47a0abaf94 ""
-  "main.aux" 1535224625 15624 84eb0310a6f331fa1ed8db22caf4c023 ""
+  "main.aux" 1535232271 15624 84eb0310a6f331fa1ed8db22caf4c023 ""
   "main.bbl" 1535224624 6491 46c21ddef2147c03997912542d881f3b "bibtex main"
-  "main.out" 1535224625 3004 bf81f7605efa09738f1345f8cf0fb0b3 ""
-  "main.tex" 1535143447 3595 8c188f925375799b9b4c682a879b27e8 ""
+  "main.out" 1535232271 3004 bf81f7605efa09738f1345f8cf0fb0b3 ""
+  "main.tex" 1535230343 3597 7ca0b13ada55447d7cadf85b2a4276a5 ""
   "optimizer.tex" 1535223917 34630 a504e75c27dd428509aa2b34cf90917a ""
   "system_overview.tex" 1535056775 17536 8b599f8409e4fa9e3cd6e7a0a9c47b75 ""
   (generated)
-  "main.aux"
+  "main.out"
   "/home/snakanda/Work/Krypton/paper/current/main.pdf"
+  "/home/snakanda/Work/Krypton/paper/current/main.log"
+  "main.aux"
   "main.log"
   "main.pdf"
-  "/home/snakanda/Work/Krypton/paper/current/main.log"
-  "main.out"
