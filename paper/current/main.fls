@@ -376,6 +376,9 @@ INPUT images/r_and_s1.pdf
 INPUT images/system_tuning.pdf
 INPUT experiments.tex
 INPUT experiments.tex
+INPUT images/5_2_1_GPU.pdf
+INPUT images/5_2_2_GPU.pdf
+INPUT images/5_2_3_GPU.pdf
 INPUT main.bbl
 INPUT main.bbl
 INPUT appendix.tex
