@@ -35,7 +35,7 @@ from python.inception3 import Inception3
 
 
 gpu = True
-dataset = 'oct'
+dataset = 'imagenet'
 batch_size = 256
 patch_size = 16
 stride = 1
@@ -84,6 +84,23 @@ if dataset == 'oct':
     for name in temp:
         if name.endswith('jpeg'):
             image_files.append('../../../data/oct/test/NORMAL/'+name)
+
+elif dataset == 'chest_xray':
+    temp = os.listdir('../../../data/chest_xray/test/BACTERIAL')
+    for name in temp:
+        if name.endswith('jpeg'):
+            image_files.append('../../../data/chest_xray/test/BACTERIAL/'+name)
+            
+    temp = os.listdir('../../../data/chest_xray/test/VIRAL')
+    for name in temp:
+        if name.endswith('jpeg'):
+            image_files.append('../../../data/chest_xray/test/VIRAL/'+name)
+            
+    temp = os.listdir('../../../data/chest_xray/test/NORMAL')
+    for name in temp:
+        if name.endswith('jpeg'):
+            image_files.append('../../../data/chest_xray/test/NORMAL/'+name)
+            
             
 elif dataset == 'imagenet':
 # ImageNet
@@ -113,29 +130,29 @@ for model,model_name,weight_file in zip([VGG16, ResNet18, Inception3], ['VGG16',
     
     weights_data = load_dict_from_hdf5(weight_file, gpu=gpu)
     
-    if dataset == 'oct':
-        temp_weights_data = load_dict_from_hdf5('../../../exps/oct_'+model_name.lower()+'_ptch.h5', gpu=gpu)
+    if dataset in ['oct', 'chest_xray']:
+        temp_weights_data = load_dict_from_hdf5('../../../exps/'+dataset+'_'+model_name.lower()+'_ptch.h5', gpu=gpu)
     
     if model_name == 'VGG16':
         #continue
         image_size = 224
-        if dataset == 'oct':
+        if dataset in ['oct', 'chest_xray']:
             weights_data['fc8_W:0'] = temp_weights_data['fc8_W:0']
             weights_data['fc8_b:0'] = temp_weights_data['fc8_b:0']
     elif model_name == 'ResNet18':
         image_size = 224
-        if dataset == 'oct':
+        if dataset in ['oct', 'chest_xray']:
             weights_data['fc:w'] = temp_weights_data['fc:w']
             weights_data['fc:b'] = temp_weights_data['fc:b']
     elif model_name == 'Inception3':
         #continue
         image_size = 299
-        if dataset == 'oct':
+        if dataset in ['oct', 'chest_xray']:
             weights_data['482.fc.weight'] = temp_weights_data['482.fc.weight']
             weights_data['483.fc.bias'] = temp_weights_data['483.fc.bias']
    
-    y_ssim = []#{1.0:[],0.9:[],0.8:[],0.7:[],0.6:[],0.5:[],0.4:[]}
-    y_time = []#{1.0:[],0.9:[],0.8:[],0.7:[],0.6:[],0.5:[],0.4:[]}
+    y_ssim = []
+    y_time = []
     x_vals = []
     
     for file_path in train_files:
@@ -200,25 +217,25 @@ for model,model_name,weight_file in zip([VGG16, ResNet18, Inception3], ['VGG16',
         '../../../code/python/inception3_weights_ptch.h5']):
     
     weights_data = load_dict_from_hdf5(weight_file, gpu=gpu)
-    if dataset == 'oct':
-        temp_weights_data = load_dict_from_hdf5('../../../exps/oct_'+model_name.lower()+'_ptch.h5', gpu=gpu)
+    if dataset in ['oct', 'chest_xray']:
+        temp_weights_data = load_dict_from_hdf5('../../../exps/'+dataset+'_'+model_name.lower()+'_ptch.h5', gpu=gpu)
     
     if model_name == 'VGG16':
         #continue
         image_size = 224
-        if dataset == 'oct':
+        if dataset in ['oct', 'chest_xray']:
             weights_data['fc8_W:0'] = temp_weights_data['fc8_W:0']
             weights_data['fc8_b:0'] = temp_weights_data['fc8_b:0']
     elif model_name == 'ResNet18':
         #continue
         image_size = 224
-        if dataset == 'oct':
+        if dataset in ['oct', 'chest_xray']:
             weights_data['fc:w'] = temp_weights_data['fc:w']
             weights_data['fc:b'] = temp_weights_data['fc:b']
     elif model_name == 'Inception3':
         #continue
         image_size = 299
-        if dataset == 'oct':
+        if dataset in ['oct', 'chest_xray']:
             weights_data['482.fc.weight'] = temp_weights_data['482.fc.weight']
             weights_data['483.fc.bias'] = temp_weights_data['483.fc.bias']
 
