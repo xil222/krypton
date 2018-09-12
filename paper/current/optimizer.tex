@@ -106,7 +106,7 @@ Since the output patch cannot grow beyond the size of the output, minimum of the
 Once the output patch coordinates and dimensions are calculated, it is straight forward to calculate the read-in patch coordinates as per Equations \ref{eqn:xreadcoordinate} and \ref{eqn:yreadcoordinate} and the dimensions as per Equations \ref{eqn:readpatchwidth} and \ref{eqn:readpatchheight}.
 
 \begin{algorithm}
-    \caption{Incremental Inference Algorithm}\label{euclid}
+    \caption{Incremental Inference Transformation}\label{euclid}
     \label{alg:incinference}
     \begin{flushleft}
      \hspace*{4mm} \textbf{Input:} \\
@@ -176,15 +176,29 @@ A temporary input volume $R$ is initialized to hold the input patches with their
 The \textsc{for} loop iteratively populates $R$ with corresponding patches.
 Finally $T$ is applied on $R$ to compute the output patches.
 In a CNN which has multiple such transformations chained together, the outputs of the \textproc{IncrementalInference} procedure are fed as input again for the incremental inference of the next transformation along with the unchanged pre-materialized input corresponding to the new transformation.
-However at a boundary of local context transformation and a global context transformation, such as in Conv. $\rightarrow$ Fully-Connected or Pool $\rightarrow$ Fully-Connected, full updated output has to created as per \textproc{IncrementalToFullProjection} procedure instead of propagating only the updated patches.
+However at a boundary of local context transformation and a global context transformation, such as in Conv. $\rightarrow$ Fully-Connected or Pool $\rightarrow$ Fully-Connected, full updated output has to be created as per \textproc{IncrementalToFullProjection} procedure instead of propagating only the updated patches.
+The high-level steps taken by the end-to-end incremental inference approach can be summarized as follows:
+
+\begin{enumerate}
+	\item Take in $f$, $\mathcal{I}_{img}$, $C$, $\mathcal{P}$, and $S$ for the $\mathcal{P}$ as input.
+	\item Pre-materialize output of all the transformations in $f$ by feeding in $\mathcal{I}_{img}$.
+	\item Calculate all possible $\mathcal{P}$ positions on $\mathcal{I}_{img}$.
+	\item Prepare the occluded images ($\mathcal{I}^{x,y}_{img}$ s) corresponding to all positions.
+	\item For batches of $\mathcal{I}^{x,y}_{img}$ as the input traverse the transformations in $f$ in a topological order and calculate the corresponding values of $M$.
+	\begin{itemize}
+		\item For local context transformation invoke \textproc{IncrementalInference}.
+		\item For local context transformation that feeds in a global context transformation additionally invoke \textproc{IncrementalToFullProjection}
+		\item For all others invoke the original transformation.
+	\end{itemize}
+	\item Return M as the final output.
+\end{enumerate}
+
 
 \begin{figure}[t]
 \includegraphics[width=\columnwidth]{images/redundancy_ratio}
 \caption{Theoretical speedup for popular CNN architectures with \textit{incremental inference} when a square occlusion patch is placed on the center of the image.}
 \label{fig:redundancy_ratio}
 \end{figure}
-
-\red{TODO: Add end-to-end high level Algorithm}
 
 We analyze the theoretical speedup that can be achieved with \textit{incremental inference} approach when a square occlusion patch is placed on the center\footnote{If the occlusion patch is placed towards to a corner of the input image the theoretical speedup will be slightly higher. But placing the occlusion patch on the center gives us a worst case estimate.} of the input image. Figure \ref{fig:redundancy_ratio} shows the results. VGG16 model results in the maximum theoretical speedup and DenseNet121 model has the lowest theoretical speedup. Most CNN architectures results in a theoretical speedup between 2-3. The theoretical speedup for a CNN with \textit{incremental inference} is determined by the characteristics of it's architecture such as number of layers, the sizes of the filter kernels, and the filter stride values.
 
