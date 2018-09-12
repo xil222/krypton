@@ -1,13 +1,13 @@
 # Fdb version 3
-["bibtex main"] 1536774610 "main.aux" "main.bbl" "main" 1536774679
+["bibtex main"] 1536774610 "main.aux" "main.bbl" "main" 1536775430
   "/usr/local/texlive/2016/texmf-dist/bibtex/bst/base/unsrt.bst" 1292289607 18030 1376b4b231b50c66211e47e42eda2875 ""
-  "main.aux" 1536774679 20250 843daab3ea243927c16815fc63c036b9 ""
+  "main.aux" 1536775429 20250 843daab3ea243927c16815fc63c036b9 ""
   "main.bcf" 0 -1 0 ""
   "main.bib" 1536710325 8784 6ac398dce1079968f5680ed787b52cfa ""
   (generated)
   "main.blg"
   "main.bbl"
-["pdflatex"] 1536774678 "main.tex" "main.pdf" "main" 1536774679
+["pdflatex"] 1536775428 "main.tex" "main.pdf" "main" 1536775430
   "/usr/local/texlive/2016/texmf-dist/fonts/map/fontname/texfonts.map" 1272929888 3287 e6b82fe08f5336d4d5ebc73fb1152e87 ""
   "/usr/local/texlive/2016/texmf-dist/fonts/tfm/adobe/zapfding/pzdr.tfm" 1136768653 1528 f853c4d1b4e0550255e02831fdc8496f ""
   "/usr/local/texlive/2016/texmf-dist/fonts/tfm/jknappen/ec/ecrm1000.tfm" 1136768653 3584 adb004a0c8e7c46ee66cad73671f37b4 ""
@@ -185,16 +185,16 @@
   "images/system_tuning.pdf" 1536699646 186249 1cd389e0a502fa754343706dde5a8d60 ""
   "images/visual_examples_1.pdf" 1536640315 1613295 8b66d8e088bdab06757a5feb69b8e4fa ""
   "introduction.tex" 1536734243 9415 75426b8eab509019b1f2a5f871f1e9ed ""
-  "main.aux" 1536774679 20250 843daab3ea243927c16815fc63c036b9 ""
+  "main.aux" 1536775429 20250 843daab3ea243927c16815fc63c036b9 ""
   "main.bbl" 1536774610 5848 7f54dce098faf5334317f005ca411c41 "bibtex main"
-  "main.out" 1536774679 3577 622c21dc5ded54952a53a3f556903e8c ""
+  "main.out" 1536775429 3577 622c21dc5ded54952a53a3f556903e8c ""
   "main.tex" 1536734248 3726 2acd7a953c3bc025b5f55f29f1f1bcfe ""
-  "optimizer.tex" 1536774674 34342 c3714e46c218815facb5e3db228f5235 ""
+  "optimizer.tex" 1536775426 34405 1bed29f89aa180ef6a0139f63d24ed16 ""
   "system_overview.tex" 1536734744 16916 b085f8e9ba20ebc3193e98ad1b6e73ab ""
   (generated)
-  "/home/snakanda/Work/Krypton/paper/current/main.pdf"
-  "/home/snakanda/Work/Krypton/paper/current/main.log"
-  "main.out"
   "main.aux"
   "main.pdf"
+  "main.out"
   "main.log"
+  "/home/snakanda/Work/Krypton/paper/current/main.log"
+  "/home/snakanda/Work/Krypton/paper/current/main.pdf"

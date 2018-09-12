@@ -104,3 +104,5 @@ ENV/
 .idea/*
 
 *.h5
+
+.DS_Store

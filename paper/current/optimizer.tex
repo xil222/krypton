@@ -180,11 +180,11 @@ However at a boundary of local context transformation and a global context trans
 The high-level steps taken by the end-to-end incremental inference approach can be summarized as follows:
 
 \begin{enumerate}
-	\item Take in $f$, $\mathcal{I}_{img}$, $C$, $\mathcal{P}$, and $S$ for the $\mathcal{P}$ as input.
+	\item Take in CNN $f$, image $\mathcal{I}_{img}$, predicted class label $C$, occlusion patch $\mathcal{P}$, and stride $S$ for the $\mathcal{P}$ as input.
 	\item Pre-materialize output of all the transformations in $f$ by feeding in $\mathcal{I}_{img}$.
 	\item Calculate all possible $\mathcal{P}$ positions on $\mathcal{I}_{img}$.
 	\item Prepare the occluded images ($\mathcal{I}^{x,y}_{img}$ s) corresponding to all positions.
-	\item For batches of $\mathcal{I}^{x,y}_{img}$ as the input traverse the transformations in $f$ in a topological order and calculate the corresponding values of $M$.
+	\item For batches of $\mathcal{I}^{x,y}_{img}$ as the input traverse the transformations in $f$ in a topological order and calculate the corresponding values of heatmap $M$.
 	\begin{itemize}
 		\item For local context transformation invoke \textproc{IncrementalInference}.
 		\item For local context transformation that feeds in a global context transformation additionally invoke \textproc{IncrementalToFullProjection}
