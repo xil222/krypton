@@ -1,7 +1,7 @@
 \begin{thebibliography}{10}
 
 \bibitem{alexnet}
-Alex Krizhevsky, Ilya Sutskever, and Geoffrey~E Hinton.
+Alex Krizhevsky et~al.
 \newblock Imagenet classification with deep convolutional neural networks.
 \newblock In {\em Advances in neural information processing systems}, pages
   1097--1105, 2012.
@@ -12,55 +12,42 @@ Karen Simonyan and Andrew Zisserman.
 \newblock {\em arXiv preprint arXiv:1409.1556}, 2014.
 
 \bibitem{resnet}
-Kaiming He, Xiangyu Zhang, Shaoqing Ren, and Jian Sun.
+Kaiming He et~al.
 \newblock Deep residual learning for image recognition.
 \newblock In {\em Proceedings of the IEEE conference on computer vision and
   pattern recognition}, pages 770--778, 2016.
 
 \bibitem{inception}
-Christian Szegedy, Vincent Vanhoucke, Sergey Ioffe, Jon Shlens, and Zbigniew
-  Wojna.
+Christian Szegedy et~al.
 \newblock Rethinking the inception architecture for computer vision.
 \newblock In {\em Proceedings of the IEEE Conference on Computer Vision and
   Pattern Recognition}, pages 2818--2826, 2016.
 
 \bibitem{imagenet}
-Olga Russakovsky, Jia Deng, Hao Su, Jonathan Krause, Sanjeev Satheesh, Sean Ma,
-  Zhiheng Huang, Andrej Karpathy, Aditya Khosla, Michael Bernstein, et~al.
+Olga Russakovsky et~al.
 \newblock Imagenet large scale visual recognition challenge.
 \newblock {\em International Journal of Computer Vision}, 115(3):211--252,
   2015.
 
-\bibitem{transfer-learning-factors}
-Hossein Azizpour, Ali~Sharif Razavian, Josephine Sullivan, Atsuto Maki, and
-  Stefan Carlsson.
-\newblock Factors of transferability for a generic convnet representation.
-\newblock {\em IEEE transactions on pattern analysis and machine intelligence},
-  38(9):1790--1802, 2016.
-
 \bibitem{kermany2018identifying}
-Daniel~S Kermany, Michael Goldbaum, Wenjia Cai, Carolina~CS Valentim, Huiying
-  Liang, Sally~L Baxter, Alex McKeown, Ge~Yang, Xiaokang Wu, Fangbing Yan,
-  et~al.
+Daniel~S Kermany et~al.
 \newblock Identifying medical diagnoses and treatable diseases by image-based
   deep learning.
 \newblock {\em Cell}, 172(5):1122--1131, 2018.
 
 \bibitem{islam2017abnormality}
-Mohammad~Tariqul Islam, Md~Abdul Aowal, Ahmed~Tahseen Minhaz, and Khalid
-  Ashraf.
+Mohammad~Tariqul Islam et~al.
 \newblock Abnormality detection and localization in chest x-rays using deep
   convolutional neural networks.
 \newblock {\em arXiv preprint arXiv:1705.09850}, 2017.
 
 \bibitem{mohanty2016using}
-Sharada~P Mohanty, David~P Hughes, and Marcel Salath{\'e}.
+Sharada~P Mohanty et~al.
 \newblock Using deep learning for image-based plant disease detection.
 \newblock {\em Frontiers in plant science}, 7:1419, 2016.
 
 \bibitem{arbabzadah2016identifying}
-Farhad Arbabzadah, Gr{\'e}goire Montavon, Klaus-Robert M{\"u}ller, and Wojciech
-  Samek.
+Farhad Arbabzadah et~al.
 \newblock Identifying individual facial expressions by deconstructing a neural
   network.
 \newblock In {\em German Conference on Pattern Recognition}, pages 344--354.
@@ -86,7 +73,7 @@ Radiologists are often in short supply and overworked – deep learning to the
 \newblock Accessed September 31, 2018.
 
 \bibitem{jung2017deep}
-Kyu-Hwan Jung, Hyunho Park, and Woochan Hwang.
+Kyu-Hwan Jung et~al.
 \newblock Deep learning for medical image analysis: Applications to computed
   tomography and magnetic resonance imaging.
 \newblock {\em Hanyang Medical Reviews}, 37(2):61--70, 2017.
@@ -98,15 +85,13 @@ Matthew~D Zeiler and Rob Fergus.
   Springer, 2014.
 
 \bibitem{squeezenet}
-Forrest~N Iandola, Song Han, Matthew~W Moskewicz, Khalid Ashraf, William~J
-  Dally, and Kurt Keutzer.
+Forrest~N Iandola et~al.
 \newblock Squeezenet: Alexnet-level accuracy with 50x fewer parameters and< 0.5
   mb model size.
 \newblock {\em arXiv preprint arXiv:1602.07360}, 2016.
 
 \bibitem{mobilenets}
-Andrew~G Howard, Menglong Zhu, Bo~Chen, Dmitry Kalenichenko, Weijun Wang,
-  Tobias Weyand, Marco Andreetto, and Hartwig Adam.
+Andrew~G Howard et~al.
 \newblock Mobilenets: Efficient convolutional neural networks for mobile vision
   applications.
 \newblock {\em arXiv preprint arXiv:1704.04861}, 2017.
@@ -118,7 +103,7 @@ Tim Miller.
 \newblock {\em arXiv preprint arXiv:1706.07269}, 2017.
 
 \bibitem{zintgraf2017visualizing}
-Luisa~M Zintgraf, Taco~S Cohen, Tameem Adel, and Max Welling.
+Luisa~M Zintgraf et~al.
 \newblock Visualizing deep neural network decisions: Prediction difference
   analysis.
 \newblock {\em arXiv preprint arXiv:1702.04595}, 2017.
@@ -134,7 +119,7 @@ Models and examples built with tensorflow.
 \newblock Accessed September 31, 2018.
 
 \bibitem{wang2004image}
-Zhou Wang, Alan~C Bovik, Hamid~R Sheikh, and Eero~P Simoncelli.
+Zhou Wang et~al.
 \newblock Image quality assessment: from error visibility to structural
   similarity.
 \newblock {\em IEEE transactions on image processing}, 13(4):600--612, 2004.
@@ -152,15 +137,32 @@ Basic operations in a convolutional neural network - cse@iit delhi.
 \newblock Accessed September 31, 2018.
 
 \bibitem{de2011projective}
-Saskia~EJ de~Vries, Stephen~A Baccus, and Markus Meister.
+Saskia~EJ de~Vries et~al.
 \newblock The projective field of a retinal amacrine cell.
 \newblock {\em Journal of Neuroscience}, 31(23):8595--8604, 2011.
 
 \bibitem{luo2016understanding}
-Wenjie Luo, Yujia Li, Raquel Urtasun, and Richard Zemel.
+Wenjie Luo et~al.
 \newblock Understanding the effective receptive field in deep convolutional
   neural networks.
 \newblock In {\em Advances in neural information processing systems}, pages
   4898--4906, 2016.
+
+\bibitem{deng2009imagenet}
+Jia Deng, Wei Dong, et~al.
+\newblock Imagenet: A large-scale hierarchical image database.
+\newblock In {\em Computer Vision and Pattern Recognition, 2009. CVPR 2009.
+  IEEE Conference on}, pages 248--255. Ieee, 2009.
+
+\bibitem{torchvisionmodels}
+torch vison models.
+\newblock
+  \url{https://github.com/pytorch/vision/tree/master/torchvision/models}.
+\newblock Accessed September 31, 2018.
+
+\bibitem{kingma2014adam}
+Diederik~P Kingma and Jimmy Ba.
+\newblock Adam: A method for stochastic optimization.
+\newblock {\em arXiv preprint arXiv:1412.6980}, 2014.
 
 \end{thebibliography}

@@ -1,7 +1,7 @@
 %!TEX root = <main.tex>
 \section{Optimizations}
 
-In this section we explain \textit{incremental inference} and the two \textit{approximate inference} approaches, \textit{projective field thresholding} and \textit{adaptive drill-down}, in detail.
+In this section we explain \textit{incremental inference} and the two \textit{approximate inference} approaches, \textit{projective field thresholding} and \textit{adaptive drill-down} in detail.
 In \system~ these optimizations are applied on top of the current dominant approach of performing CNN inference on batches of images where each image corresponds to an occluded instance of the original image.
 Batched inference is important as it reduces per image inference time by amortizing the fixed overheads.
 In our experiments we found that this simple optimization alone can give up to ~1.4X speedups on CPU environments and ~2X speedups on the GPU environment compared to the per image inference approach.
@@ -10,10 +10,10 @@ Finally we explain how \system~ configures it's internal system configurations f
 \subsection{Incremental Inference}\label{sec:inc_computation}
 
 As explained earlier, occlusion experiments in it's naive form performs many redundant computations.
-In order to avoid these redundancies, layers in a CNN has to be change aware and operate in an incremental manner i.e. reuse previous computations as much as possible and compute only the required ones.
+In order to avoid these redundancies, layers in a CNN have to be change aware and operate in an incremental manner i.e. reuse previous computations as much as possible and compute only the required ones.
 In this section we focus on transformations that operate on a local spatial context (i.e. Convolution and Pooling) as other types either has no redundancies (global context transformations) or is trivial to make incremental (point transformations).
-The choice of CPUs vs GPUs for CNN inference also brings up new concerns for the batched implementation of these incremental transformations and we explain two version of implementations, one which is a naive implementation of batched incremental inference approach and the other a GPU optimized version.
-We also explain incremental implementations of two other linear algebra operators, element-wise addition and depth-wise concatenation.
+% We also explain incremental implementations of two other linear algebra operators, element-wise addition and depth-wise concatenation.
+% The choice of CPUs vs GPUs for CNN inference also brings up new concerns for the batched implementation of these incremental transformations and we explain two version of implementations, one which is a naive implementation of batched incremental inference approach and the other a GPU optimized version.
 
 \vspace{2mm}
 \noindent \textbf{Incremental Convolution and Pooling.}
@@ -46,15 +46,15 @@ We also explain incremental implementations of two other linear algebra operator
 \label{table:optimizer_symbols}
 \end{table}
 
-In Section \ref{sec:preliminaries} we showed that both convolution and polling transformations can be cast into a form of applying a filter along the spatial dimensions of the input volume.
+In Section \ref{sec:preliminaries} we explained that both convolution and polling transformations can be cast into a form of applying a filter along the spatial dimensions of the input volume.
 However, how each transformation operate along the depth dimension is different.
 For our purpose we are interested in finding the propagation of the patches in the input through the consecutive layers and hence both these transformations can be treated similarly.
 The coordinates and the dimensions (i.e. height and width) of the modified patch in the output volume caused by a modified patch in the input volume are determined by the coordinates and the dimensions of the input patch, sizes of the filter kernel ($H_\mathcal{K}$ and $W_\mathcal{K}$), padding values ($P_x$ and $P_y$), and the strides ($S_x$ and $S_y$).
 For example consider simplified demonstration showing a cross-section of input and output in Figure \ref{fig:dimensions}.
 We use a coordinate system whose origin is placed at the top left corner of the input.
-A patch is placed on the input starting off at $x^\mathcal{I}_\mathcal{P}, y^\mathcal{I}_\mathcal{P}$ coordinates and has a height of $H^\mathcal{I}_\mathcal{P}$ and width of $W^\mathcal{I}_\mathcal{P}$.
+A patch, marked in red, is placed on the input starting off at $x^\mathcal{I}_\mathcal{P}, y^\mathcal{I}_\mathcal{P}$ coordinates and has a height of $H^\mathcal{I}_\mathcal{P}$ and width of $W^\mathcal{I}_\mathcal{P}$.
 The updated patch in the output starts off at $x^\mathcal{O}_\mathcal{P}, y^\mathcal{O}_\mathcal{P}$ and has a height of $H^\mathcal{O}_\mathcal{P}$ and width of $W^\mathcal{O}_\mathcal{P}$.
-Note that due to the overlapping nature of filter positions, to compute the output patch, transformations may have to read a slightly larger context than the input patch. This read in context is shown by the blue shaded area in Figure \ref{fig:dimensions}.
+Note that due to the overlapping nature of filter positions, to compute the output patch, transformations have to read a slightly larger context than the updated patch. This read in context is shown by the blue shaded area in Figure \ref{fig:dimensions}.
 The starting coordinates of this read-in patch are denoted by $x^\mathcal{R}_\mathcal{P}, y^\mathcal{R}_\mathcal{P}$ and the dimensions are denoted by $W^\mathcal{R}_\mathcal{P}, H^\mathcal{R}_\mathcal{P}$.
 The relationship between the coordinates and dimensions can be expressed as follows:
 
@@ -104,38 +104,6 @@ Similar to output coordinates calculations, the span of the input patch is incre
 Dividing the above values by the stride values $S_x$ and $S_y$ and taking the \texttt{ceil} gives the width and height of the output patch.
 Since the output patch cannot grow beyond the size of the output, minimum of the output dimension or the above value should be taken as the final.
 Once the output patch coordinates and dimensions are calculated, it is straight forward to calculate the read-in patch coordinates as per Equations \ref{eqn:xreadcoordinate} and \ref{eqn:yreadcoordinate} and the dimensions as per Equations \ref{eqn:readpatchwidth} and \ref{eqn:readpatchheight}.
-
-
-\begin{figure}[t]
-\includegraphics[width=\columnwidth]{images/less_one_example}
-\caption{One dimensional representation showing special situations under which actual output size will be smaller than the values calculated by Equations \ref{eqn:xcoordinate} and \ref{eqn:ycoordinate}. (a) and (b) shows a situation with filter stride being equal to the filter size. (c) and (d) shows a situation with input patch being placed at the edge of the input.}
-\label{fig:less_one_example}
-\end{figure}
-
-It is important to note that there are special situations under which the actual output patch size can be smaller than above calculated value. Consider the simplified one dimensional situation shown in Figure \ref{fig:less_one_example} (a), where the stride value\footnote{Note that the stride value is generally less than or equal to the filter size.} (3) is same as the filter size (3). In this situation the the size of the output patch is one less than the value calculated by Equation \ref{eqn:patchwidth}. However it is not the case in Figure \ref{fig:less_one_example} (b) which has the same input patch size but is placed at a different location.
-% This issue arises only when the stride value is same as the filter size.
-Another situation arises when the input patch is placed at the edge of the input as shown in Figure \ref{fig:less_one_example} (c). In this situation it is not possible for the filter to move freely through all filter positions as it hits the input boundary compared to having the input patch on the middle of the input as shown in Figure \ref{fig:less_one_example} (c).
-In \system~ we do not treat theses differences separately and use the values calculated by Equation \ref{eqn:patchwidth} and \ref{eqn:patchheight} as they act as an upper bound. In case of a smaller output patch, \system~ simply reads off and updates slightly bigger patches to preserve uniformity.
-This also requires updating the starting coordinates of the patches as shown in Equations \ref{eqn:width_subtract} and \ref{eqn:height_subtract}.
-Such uniform treatment is required for performing batched inference operations which out of the box gives significant speedups compared to per image inference.
-
-\vspace{2mm}
-\hspace{4mm} If $x^\mathcal{O}_\mathcal{P} + W^\mathcal{O}_\mathcal{P} > W_{\mathcal{O}}:$
-\begin{align}
-\label{eqn:width_subtract}
-x^\mathcal{O}_\mathcal{P} = &~ W_{\mathcal{O}} - W^\mathcal{O}_\mathcal{P}\\
-x^\mathcal{I}_\mathcal{P} = &~ W_{\mathcal{I}} - W^\mathcal{I}_\mathcal{P}\\
-x^\mathcal{R}_\mathcal{P} = &~ W_{\mathcal{I}} - W^\mathcal{R}_\mathcal{P}
-\end{align}
-
-\hspace{4mm} If $y^\mathcal{O}_\mathcal{P} + H^\mathcal{O}_\mathcal{P} > H_{\mathcal{O}}:$
-\begin{align}
-\label{eqn:height_subtract}
-y^\mathcal{O}_\mathcal{P} = &~ H_{\mathcal{O}} - H^\mathcal{O}_\mathcal{P}\\
-y^\mathcal{I}_\mathcal{P} = &~ H_{\mathcal{I}} - H^\mathcal{I}_\mathcal{P}\\
-y^\mathcal{R}_\mathcal{P} = &~ H_{\mathcal{I}} - H^\mathcal{R}_\mathcal{P}
-\end{align}
-
 
 \begin{algorithm}
     \caption{Incremental Inference Algorithm}\label{euclid}
@@ -212,27 +180,28 @@ However at a boundary of local context transformation and a global context trans
 
 \begin{figure}[t]
 \includegraphics[width=\columnwidth]{images/redundancy_ratio}
-\caption{Theoretical speedup ratios for popular CNN architectures when a square occlusion patch of different sizes is placed on the center of the image.}
+\caption{Theoretical speedup for popular CNN architectures with \textit{incremental inference} when a square occlusion patch is placed on the center of the image.}
 \label{fig:redundancy_ratio}
 \end{figure}
 
-We analyze the theoretical speedup ratios for popular CNN architectures with \textit{incremental inference} approach when a square occlusion patch of different sizes is placed on the center\footnote{If the occlusion patch is placed towards to a corner of the input image the theoretical speedup ratio will be slightly higher. But placing the occlusion on the center gives us a worst case estimate.} of the input image. Figure \ref{fig:redundancy_ratio} shows the results. VGG 16-layer version results in the maximum speedup ratio and Inception V3 model has the lowest speedup ratio. Most CNN architectures results in a redundancy ratio between 2-3 except VGG 16, VGG 19, and Squeezenet 1.0 CNNs which results in higher redundancy ratios. The attainable redundancy ratio of a CNN is determined by the characteristics of it's internal architecture such as number of layers, the size of the filter kernels, and the filter stride values.
+\red{TODO: Add end-to-end high level Algorithm}
+
+We analyze the theoretical speedup that can be achieved with \textit{incremental inference} approach when a square occlusion patch is placed on the center\footnote{If the occlusion patch is placed towards to a corner of the input image the theoretical speedup will be slightly higher. But placing the occlusion patch on the center gives us a worst case estimate.} of the input image. Figure \ref{fig:redundancy_ratio} shows the results. VGG16 model results in the maximum theoretical speedup and DenseNet121 model has the lowest theoretical speedup. Most CNN architectures results in a theoretical speedup between 2-3. The theoretical speedup for a CNN with \textit{incremental inference} is determined by the characteristics of it's architecture such as number of layers, the sizes of the filter kernels, and the filter stride values.
 
 
 \vspace{2mm}
 \noindent \textbf{CPU versus GPU implementation concerns.}
-Through our experiments we found that even though a straight-forward implementation of \textit{incremental inference} approach as shown in Algorithm \ref{alg:incinference} produces expected speedups for the CPU environment, it performs poorly on the GPU environment.
+Through our experiments we found that even though a straight-forward implementation of \textit{incremental inference} approach as shown in Algorithm \ref{alg:incinference} produces expected speedups for the CPU environment it performs poorly on the GPU environment.
 The for loop on the line \ref{alg:line:memcpy_loop} of Algorithm \ref{alg:incinference} is essentially preparing the input for $T$ by copying values from one part of the memory to another sequentially.
 This sequential operation becomes a bottleneck for the GPU implementation as it cannot exploit the available parallelism of the GPU efficiently.
-To overcome this a custom GPU kernel which performs the input preparation more efficiently by parallelly executing the memory copying is needed.
-
+To overcome this, we have extended PyTorch by adding a custom kernel written in CUDA language which performs the input preparation more efficiently by parallelly copying the memory regions for all items in the batch and then invoke the CNN transformation.
 
 \vspace{2mm}
 \noindent \textbf{Element-wise addition and depth-wise concatenation.}
 Element-wise addition and depth-wise concatenation are two widely used linear algebra operators in CNNs.
-Element-wise addition operator requires the two input volumes to have the same dimensions and the depth-wise concatenation requires them to have same spatial dimensions.
-Consider a situation for these operators as shown in figure \ref{fig:la_operators} where the first input has incremental spatial update starting at $x^\mathcal{I}_{\mathcal{P}_1},y^\mathcal{I}_{\mathcal{P}_1}$ coordinates with dimensions of $H^\mathcal{I}_{\mathcal{P}_1}$ and $W^\mathcal{I}_{\mathcal{P}_1}$ and for the second input starting at $x^\mathcal{I}_{\mathcal{P}_2},y^\mathcal{I}_{\mathcal{P}_2}$ coordinates with dimensions of $H^\mathcal{I}_{\mathcal{P}_2}$ and $W^\mathcal{I}_{\mathcal{P}_2}$.
-Then the coordinates and the dimensions of the output and read-in patches is essentially finding the bounding box for the two patches and can be expressed as follows:
+Element-wise addition operator requires the two input volumes to have exact same dimensions and the depth-wise concatenation requires them to have same height and width dimensions.
+Consider a situation for these operators as shown in Figure \ref{fig:la_operators} where the first input has incremental spatial update starting at $x^\mathcal{I}_{\mathcal{P}_1},y^\mathcal{I}_{\mathcal{P}_1}$ coordinates with dimensions of $H^\mathcal{I}_{\mathcal{P}_1}$ and $W^\mathcal{I}_{\mathcal{P}_1}$ and for the second input starting at $x^\mathcal{I}_{\mathcal{P}_2},y^\mathcal{I}_{\mathcal{P}_2}$ coordinates with dimensions of $H^\mathcal{I}_{\mathcal{P}_2}$ and $W^\mathcal{I}_{\mathcal{P}_2}$.
+Then computing the coordinates and the dimensions of the output and read-in patches is essentially finding the bounding box for the two patches and can be expressed as follows:
 
 
 \begin{figure}[t]
@@ -263,7 +232,7 @@ The amount of increase in a local context transformation is determined the filte
 
 \begin{figure}[t]
 \includegraphics[width=\columnwidth]{images/pf_truncate}
-\caption{(a) One dimensional convolution demonstrating projective field growth (filter size = 2, stride = 1). (b) Projective field thresholding with $\tau = 5/7$. Histograms denote the number of unique change propagation paths.}
+\caption{(a) One dimensional Convolution demonstrating projective field growth (filter size = 2, stride = 1). (b) \textit{Projective field thresholding} with $\tau = 5/7$. Histograms denote the number of unique change propagation paths.}
 \label{fig:pf_truncate}
 \end{figure}
 
@@ -301,22 +270,22 @@ W^\mathcal{O}_\mathcal{P} = &~ \texttt{min}\big(\lceil (W^\mathcal{I}_\mathcal{P
 x^\mathcal{O}_\mathcal{P} = & \texttt{max}\big(\lceil (P_x + x^\mathcal{I}_\mathcal{P} - W_\mathcal{K} + 1)/S_x \rceil, 0\big)
 \end{align}
 
-Equation \ref{eqn:normal_width_calc} calculates output width assuming no thresholding. But if the output width exceeds the threshold defined by $\tau$, output width is set to the threshold value as per equation \ref{eqn:new_width_calc_with_tau}.
+Equation \ref{eqn:normal_width_calc} calculates output width assuming no thresholding. But if the output width exceeds the threshold defined by $\tau$, output width is set to the threshold value as per Equation \ref{eqn:new_width_calc_with_tau}.
 Equation \ref{eqn:new_in_width} calculates the input width that would produce an output of width $W^\mathcal{O}_\mathcal{P}$ (think of this as making $W^{\mathcal{I}}_{\mathcal{P}}$ the subject of equation \ref{eqn:normal_width_calc}).
-If the new input width is smaller than the original input width, the starting x coordinate should be updated as per equation \ref{eqn:new_x_coord} such that the updated coordinates correspond to a center crop from the original.
-Equation \ref{eqn:new_input_width} set the input width to the newly calculated input width and equation \ref{eqn:new_output_x} calculates the x coordinate of the output patch from the updated values.
+If the new input width is smaller than the original input width, the starting x coordinate should be updated as per Equation \ref{eqn:new_x_coord} such that the updated coordinates correspond to a center crop from the original.
+Equation \ref{eqn:new_input_width} set the input width to the newly calculated input width and Equation \ref{eqn:new_output_x} calculates the x coordinate of the output patch from the updated values.
 Coordinates and dimensions of the vertical dimension can also be computed similarly.
 
 
 \begin{figure}[t]
 \includegraphics[width=\columnwidth]{images/proj_thresholding}
-\caption{(a) Theoretical speedup ratio with projective field thresholding for different occlusion patch sizes and CNN models. (b) Mean Square Error between exact and approximate output of the final convolution layer for different occlusion patch sizes and CNN models on a sample (n=30) of OCT dataset. In both (a) and (b) occlusion patches are placed at the center of the image.}
+\caption{(a) Theoretical speedup ratio with projective field thresholding for different occlusion patch sizes and CNN models. (b) Mean Square Error between exact and approximate output of the final activation volume produce by a conv. or a pool layer for different occlusion patch sizes and CNN models on a sample (n=30) of OCT dataset. In both (a) and (b) occlusion patches are placed at the center of the image.}
 \label{fig:th_redundancy_ratio}
 \end{figure}
 
 \begin{figure*}[t]
 \includegraphics[width=\textwidth]{images/visual_examples_1}
-\caption{Occlusion heatmaps from a sample OCT image with (a) \textit{incremental inference} and (b) \textit{incremental inference} with \textit{adaptive drill-down} for different \textit{projective field threshold} values (CNN model = VGG16, occlusion patch size = 16, patch color = black, occlusion patch stride = 1).}
+\caption{Occlusion heatmaps from a sample OCT image with (a) \textit{incremental inference} and (b) \textit{incremental inference} with \textit{adaptive drill-down} for different \textit{projective field threshold} values (CNN model = VGG16, occlusion patch size = 16, patch color = black, occlusion patch stride $(S~or~S_2)$ = 4, $r_{drill\_down}=0.1$, target \texttt{speedup}=5).}
 \label{fig:visual_examples_1}
 \end{figure*}
 
@@ -324,21 +293,21 @@ Coordinates and dimensions of the vertical dimension can also be computed simila
 \subsection{Adaptive Drill-Down}\label{sec:ada-drill-down}
 \textit{Adaptive drill-down} approach is based on the observation that in many occlusion based explainability workloads, such as in medical imaging, the regions of interest will occupy only a small fraction of the entire image.
 In such cases it is unnecessary to inspect the entire image at a higher resolution with a small stride value for the occlusion patch.
-In \textit{adaptive-drill-down} the final occlusion heatmap will be generated using a two stage process. At the first stage a low resolution heatmap will be generated by using a larger stride which we call stage one stride ($S_1$). From the heatmap generated at stage one, a predefined drill-down fraction ($r_{drill-down}$) of regions with highest probability drop for the predicted class is identified. At stage two, a high resolution occlusion map is generated using the original user provided stride value, also called stage two stride ($S_2$), only for the selected region. A schematic representation of \textit{adaptive drill-down} is shown in figure \ref{fig:adaptive-drill-down}.
+In \textit{adaptive-drill-down} the final occlusion heatmap will be generated using a two stage process. At the first stage a low resolution heatmap will be generated by using a larger stride which we call stage one stride ($S_1$). From the heatmap generated at stage one, a predefined drill-down fraction ($r_{drill-down}$) of regions with highest probability drop for the predicted class is identified. At stage two, a high resolution occlusion map is generated using the original user provided stride value, also called stage two stride ($S_2$), only for the selected region. A schematic representation of \textit{adaptive drill-down} is shown in Figure \ref{fig:adaptive-drill-down}.
 
 \begin{figure}[t]
 \includegraphics[width=\columnwidth]{images/adaptive-drill-down}
-\caption{Schematic representation of adaptive drill-down}
+\caption{Schematic representation of \textit{adaptive drill-down}}
 \label{fig:adaptive-drill-down}
 \end{figure}
 
 The amount of speedup that can be obtained from \textit{adaptive drill-down} is determined by both $r_{drill-down}$ and $S_1$.
 If $r_{drill-down}$ is low, only a small region has to be examined at a higher resolution and thus will be faster.
-However, this smaller region may not be sufficient to cover all the interested regions on the image and hence can result in loosing important information.
+However, this smaller region may not be sufficient to cover all the interesting regions on the image and hence can result in loosing important information.
 Larger $S_1$ also reduces the overall runtime as it reduces the time taken for stage one. But it has the risk of mis-identifying interesting regions specially when the granularity of those regions is smaller than the occlusion patch size.
 The speedup obtained by \textit{adaptive drill-down} approach is equal to the ratio between the number of individual occlusion patch positions generated for the normal and \textit{adaptive drill-down} approach.
 Number of individual occlusion patch positions generated with a stride value of $S$ is proportional to $1/S^2$ (total number of patch positions is equal to $\frac{H_{\mathcal{I}_{img}}}{S} \times \frac{W_{\mathcal{I}_{img}}}{S}$).
-Hence the speedup can  be expressed as per equation \ref{eqn:addaptive-drill-down-eqn}.
+Hence the speedup can  be expressed as per Equation \ref{eqn:addaptive-drill-down-eqn}.
 Figure \ref{fig:r_and_s1} shows conceptually how the speedup would vary with $S_1$ when $r_{drill-down}$ is fixed and with $r_{drill-down}$ when $S_1$ is fixed.
 
 \begin{align}
@@ -358,25 +327,32 @@ In this section we explain how \system~ sets it's internal configuration paramet
 \vspace{2mm}
 \noindent \textbf{Tuning projective field threshold.}
 Tuning \textit{projective field threshold} ($\tau$) requires a special initial tuning phase.
-During this tuning phase \system~ takes in a sample of images (default 30) from the operational workload and evaluates SSIM value of the approximate heatmap (compared to the exact heatmap) for different $\tau$ values (default values are 0.9, 0.8, ..., 0.4).
+During this tuning phase \system~ takes in a sample of images (default 30) from the operational workload and evaluates SSIM value of the approximate heatmap (compared to the exact heatmap) for different $\tau$ values (default values are 1.0, 0.9, 0.8, ..., 0.4).
 These $\tau$ versus SSIM data points are then used to fit a second degree curve.
-At operational time \system~ requires the user to provide the expected level of quality for the heatmaps in terms of a SSIM value. $\tau$ is then selected from the curve fit to match this target SSIM value.
-Figure \ref{fig:system_tuning} (a) shows the SSIM variation and degree two curve fit for different $\tau$ values and three different CNN models for a train set (n=30) from OCT dataset.
-From the plots it can be seen that the distribution of SSIM against $\tau$ lies in a lower dimensional manifold and with decreasing $\tau$, generally SSIM also decreases.
-Figure \ref{fig:system_tuning} (b) shows the cumulative percentage plots for SSIM deviation for the train and test sets (n=30) when the system is tuned for a target SSIM of 0.8.
-For a target SSIM of 0.8 system picks $\tau$ values of 0.4, 0.7, and 0.8 for VGG16, ResNet18, and Inception3 models respectively.
-It can be seen that approximately more than $50\%$ of test cases will result in an SSIM value of 0.8 or greater.
-Even in cases where it performs worse than 0.8 SSIM, significant ($90\%-95\%$) portion of them are within +0.1 deviation.
+At operational time, \system~ requires the user to provide the expected level of quality for the heatmaps in terms of a SSIM value. $\tau$ is then selected from the curve fit to match this target SSIM value.
+Figure \ref{fig:system_tuning} (a) shows the SSIM variation and degree two curve fit for different $\tau$ values and three different CNN models for a tuning set (n=30) from OCT dataset.
+From the plots it can be seen that the distribution of SSIM versus $\tau$ lies in a lower dimensional manifold and with increasing $\tau$, SSIM also increases.
+Figure \ref{fig:system_tuning} (b) shows the cumulative percentage plots for SSIM deviation for the tune and test sets (n=30) when the system is tuned for a target SSIM of 0.9.
+For a target SSIM of 0.9 system picks $\tau$ values of 0.5, 0.7, and 0.9 for VGG16, ResNet18, and Inception3 models respectively.
+It can be seen that approximately more than $50\%$ of test cases will result in an SSIM value of 0.9 or greater.
+Even in cases where it performs worse than 0.9 SSIM, significant ($95\%-100\%$) portion of them are within +0.1 deviation.
 
 \vspace{2mm}
 \noindent \textbf{Tuning adaptive drill-down.}
 As explained in section \ref{sec:ada-drill-down} the speedup obtained by \textit{adaptive drill-down} approach is determined by two factors, stage one stride value ($S_1$) and drill-down fraction ($r_{drill-down}$).
-\system~ requires the user to provide $r_{drill-down}$ and a target \texttt{speedup} value.
-$r_{drill-down}$ should be selected based on the user's experience and understanding on the relative size of interesting regions compared to the full image for a particular occlusion experiment use case.
+Figure \ref{fig:adaptive_ssim} shows how the SSIM value of approximate heat maps would change when changing $r_{drill-down}$ and $S_1$ with all other configurations kept fixed.
+A general trend of increasing SSIM with increasing $r_{drill-down}$ and decreasing $S_1$ can be observed from the plots.
+For configuring \textit{adaptive drill-down}, \system~ requires the user to provide $r_{drill-down}$ and a target \texttt{speedup} value.
+$r_{drill-down}$ should be selected based on the user's experience and understanding on the relative size of interesting regions compared to the full image.
 This is a fair assumption and in most cases, such as in medical imaging, users will have a fairly good understanding on the relative size of the interesting regions.
-However, if the user is unable to provide this value, \system~ will use a default value (currently 0.25) as $r_{drill-down}$.
+However, if the user is unable to provide this value, \system~ will use a default value, currently 0.25, as $r_{drill-down}$.
+The \texttt{speedup} value basically captures user's input on how much faster the occlusion experiment should run.
+Higher speedup values will sacrifice the quality of non-interesting (1-$r_{drill-down}$) regions for faster execution.
+The default value for \texttt{speedup} value is three.
+The way how \system~ configures \textit{adaptive drill-down} is different to how it configures \textit{projective field thresholding}.
+The reason for this is, unlike in \textit{projective field thresholding}, in \textit{adaptive drill-down}, users have more intuition on the outcomes of $r_{drill-down}$ and target \texttt{speedup} compared to the SSIM quality value of the final output.
 Given $r_{drill-down}$, target \texttt{speedup} value, and original occlusion patch stride value $S_2$ (also called stage two stride) \system~ then calculates the stage one stride value $S_1$ as per equation \ref{eqn:s1}.
-From this equation it can be seen that possible values for the \texttt{speedup} value are upper-bounded by $1/r_{drill-down}$ as shown in equation \ref{eqn:speedup_bound}.
+As $S_1$ cannot be greater than the height ($H_{img}$) or width ($W_{img}$) of the image it can be seen that possible values for the \texttt{speedup} value are upper-bounded as per equation \ref{eqn:speedup_bound}.
 
 \begin{align}
 \label{eqn:s1}
@@ -386,14 +362,21 @@ S_1 = &~ \sqrt{\frac{\texttt{speedup}}{1 - r_{drill-down} \times \texttt{speedup
 \begin{align}
 \label{eqn:speedup_bound}
 \begin{split}
-1 - r_{drill-down} \times \texttt{speedup} > &~ 0 \\
-\frac{1}{r_{drill-down}} > &~ \texttt{speedup}
+S_1 = \sqrt{\frac{\texttt{speedup}}{1 - r_{drill-down} \times \texttt{speedup}}} \times S_2 < W_{img}\\
+\texttt{speedup} < \frac{W^2_{img}}{S^2_2+r_{drill-down}\times W^2_{img}}
 \end{split}
 \end{align}
 
 
 \begin{figure}[t]
 \includegraphics[width=\columnwidth]{images/system_tuning}
-\caption{(a) SSIM variation and degree two curve fit for different $\tau$ values for a sample of OCT dataset. (b) Cumulative distribution plot for the SSIM deviation for the $\tau$ values obtained from the curve fit for a SSIM value of 0.8.}
+\caption{(a) SSIM variation and degree two curve fit for different $\tau$ values for a sample of OCT dataset. (b) Cumulative distribution plot for the SSIM deviation for the $\tau$ values obtained from the curve fit for a SSIM value of 0.9.}
 \label{fig:system_tuning}
 \end{figure}
+
+\begin{figure}[t]
+\includegraphics[width=\columnwidth]{images/adaptive_ssim}
+\caption{(a) SSIM variation for changing $r_{drill\_down}$ fixing $\tau=1$, $S_1=12$, and $S_2=4$. (b) SSIM variation for changing $S_1$ fixing $\tau=1.0$, $S_2=4$, and $r_{drill\_down}=0.3$ for a sample $(n=30)$ of OCT dataset.}
+\label{fig:adaptive_ssim}
+\end{figure}
+
