@@ -383,7 +383,7 @@ INPUT images/5_1_all_edited.pdf
 INPUT /usr/local/texlive/2016/texmf-dist/fonts/tfm/public/libertine/LinLibertineTB-tlf-sc-t1.tfm
 INPUT images/5_2_1_edited.pdf
 INPUT images/5_2_2_edited.pdf
-INPUT images/5_2_3_GPU.pdf
+INPUT images/5_2_3_edited.pdf
 INPUT main.bbl
 INPUT main.bbl
 INPUT appendix.tex
