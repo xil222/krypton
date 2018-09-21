@@ -74,3 +74,13 @@ Chest X-Ray & 3,463 & 1,237 & 1,156 \\ \hline
 \label{tbl:finetune_accuracies}
 \end{table}
 
+\section{Visual Examples}
+
+Figure \ref{fig:visual_examples} presents occlusion heatmaps for a sample image from each dataset with (a) \textit{incremental inference} and (b) \textit{incremental inference} with \textit{adaptive drill-down} for different \textit{projective field threshold} values. The predicted class label for \textit{OCT}, \textit{Chest X-Ray}, and \textit{ImageNet} are DME, VIRAL, and OBOE respectively.
+
+\begin{figure*}[t]
+\includegraphics[width=\textwidth]{images/visual_examples}
+\caption{Occlusion heatmaps for sample images (CNN model = VGG16, occlusion patch size = 16, patch color = black, occlusion patch stride $(S~or~S_2)$ = 4. For \textit{OCT} $r_{drill\_down}=0.1$ and target \texttt{speedup}=5. For \textit{Chest X-Ray} $r_{drill\_down}=0.4$ and target \texttt{speedup}=2. For \textit{ImageNet} $r_{drill\_down}=0.25$ and target \texttt{speedup}=3).}
+\label{fig:visual_examples}
+\end{figure*}
+

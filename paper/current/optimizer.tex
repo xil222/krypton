@@ -297,12 +297,6 @@ Coordinates and dimensions of the vertical dimension can also be computed simila
 \label{fig:th_redundancy_ratio}
 \end{figure}
 
-\begin{figure*}[t]
-\includegraphics[width=\textwidth]{images/visual_examples_1}
-\caption{Occlusion heatmaps from a sample OCT image with (a) \textit{incremental inference} and (b) \textit{incremental inference} with \textit{adaptive drill-down} for different \textit{projective field threshold} values (CNN model = VGG16, occlusion patch size = 16, patch color = black, occlusion patch stride $(S~or~S_2)$ = 4, $r_{drill\_down}=0.1$, target \texttt{speedup}=5).}
-\label{fig:visual_examples_1}
-\end{figure*}
-
 
 \subsection{Adaptive Drill-Down}\label{sec:ada-drill-down}
 \textit{Adaptive drill-down} approach is based on the observation that in many occlusion based explainability workloads, such as in medical imaging, the regions of interest will occupy only a small fraction of the entire image.
@@ -354,8 +348,8 @@ Even in cases where it performs worse than 0.9 SSIM, significant ($95\%-100\%$) 
 \vspace{2mm}
 \noindent \textbf{Tuning adaptive drill-down.}
 As explained in section \ref{sec:ada-drill-down} the speedup obtained by \textit{adaptive drill-down} approach is determined by two factors, stage one stride value ($S_1$) and drill-down fraction ($r_{drill-down}$).
-Figure \ref{fig:adaptive_ssim} shows how the SSIM value of approximate heat maps would change when changing $r_{drill-down}$ and $S_1$ with all other configurations kept fixed.
-A general trend of increasing SSIM with increasing $r_{drill-down}$ and decreasing $S_1$ can be observed from the plots.
+% Figure \ref{fig:adaptive_ssim} shows how the SSIM value of approximate heat maps would change when changing $r_{drill-down}$ and $S_1$ with all other configurations kept fixed.
+% A general trend of increasing SSIM with increasing $r_{drill-down}$ and decreasing $S_1$ can be observed from the plots.
 For configuring \textit{adaptive drill-down}, \system~ requires the user to provide $r_{drill-down}$ and a target \texttt{speedup} value.
 $r_{drill-down}$ should be selected based on the user's experience and understanding on the relative size of interesting regions compared to the full image.
 This is a fair assumption and in most cases, such as in medical imaging, users will have a fairly good understanding on the relative size of the interesting regions.
@@ -388,9 +382,9 @@ S_1 = \sqrt{\frac{\texttt{speedup}}{1 - r_{drill-down} \times \texttt{speedup}}}
 \label{fig:system_tuning}
 \end{figure}
 
-\begin{figure}[t]
-\includegraphics[width=\columnwidth]{images/adaptive_ssim}
-\caption{(a) SSIM variation for changing $r_{drill\_down}$ fixing $\tau=1$, $S_1=12$, and $S_2=4$. (b) SSIM variation for changing $S_1$ fixing $\tau=1.0$, $S_2=4$, and $r_{drill\_down}=0.3$ for a sample $(n=30)$ of OCT dataset.}
-\label{fig:adaptive_ssim}
-\end{figure}
+% \begin{figure}[t]
+% \includegraphics[width=\columnwidth]{images/adaptive_ssim}
+% \caption{(a) SSIM variation for changing $r_{drill\_down}$ fixing $\tau=1$, $S_1=12$, and $S_2=4$. (b) SSIM variation for changing $S_1$ fixing $\tau=1.0$, $S_2=4$, and $r_{drill\_down}=0.3$ for a sample $(n=30)$ of OCT dataset.}
+% \label{fig:adaptive_ssim}
+% \end{figure}
 

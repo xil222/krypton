@@ -109,35 +109,29 @@
 \newlabel{sec:ada-drill-down}{{4.3}{10}{Adaptive Drill-Down}{subsection.4.3}{}}
 \@writefile{lof}{\contentsline {figure}{\numberline {7}{\ignorespaces (a) Theoretical speedup ratio with projective field thresholding for different occlusion patch sizes and CNN models. (b) Mean Square Error between exact and approximate output of the final activation volume produce by a conv. or a pool layer for different occlusion patch sizes and CNN models on a sample (n=30) of OCT dataset. In both (a) and (b) occlusion patches are placed at the center of the image.\relax }}{10}{figure.caption.11}}
 \newlabel{fig:th_redundancy_ratio}{{7}{10}{(a) Theoretical speedup ratio with projective field thresholding for different occlusion patch sizes and CNN models. (b) Mean Square Error between exact and approximate output of the final activation volume produce by a conv. or a pool layer for different occlusion patch sizes and CNN models on a sample (n=30) of OCT dataset. In both (a) and (b) occlusion patches are placed at the center of the image.\relax }{figure.caption.11}{}}
-\newlabel{eqn:addaptive-drill-down-eqn}{{37}{10}{Adaptive Drill-Down}{equation.4.37}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {4.4}System Tuning}{10}{subsection.4.4}}
-\@writefile{lof}{\contentsline {figure}{\numberline {8}{\ignorespaces Occlusion heatmaps from a sample OCT image with (a) \textit  {incremental inference} and (b) \textit  {incremental inference} with \textit  {adaptive drill-down} for different \textit  {projective field threshold} values (CNN model = VGG16, occlusion patch size = 16, patch color = black, occlusion patch stride $(S\nonbreakingspace or\nonbreakingspace S_2)$ = 4, $r_{drill\_down}=0.1$, target \texttt  {speedup}=5).\relax }}{11}{figure.caption.12}}
-\newlabel{fig:visual_examples_1}{{8}{11}{Occlusion heatmaps from a sample OCT image with (a) \textit {incremental inference} and (b) \textit {incremental inference} with \textit {adaptive drill-down} for different \textit {projective field threshold} values (CNN model = VGG16, occlusion patch size = 16, patch color = black, occlusion patch stride $(S~or~S_2)$ = 4, $r_{drill\_down}=0.1$, target \texttt {speedup}=5).\relax }{figure.caption.12}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {9}{\ignorespaces Schematic representation of \textit  {adaptive drill-down}\relax }}{11}{figure.caption.13}}
-\newlabel{fig:adaptive-drill-down}{{9}{11}{Schematic representation of \textit {adaptive drill-down}\relax }{figure.caption.13}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {10}{\ignorespaces Conceptual diagram showing the effect of $S_1$ and $r_{drill-down}$ on speedup.\relax }}{11}{figure.caption.14}}
-\newlabel{fig:r_and_s1}{{10}{11}{Conceptual diagram showing the effect of $S_1$ and $r_{drill-down}$ on speedup.\relax }{figure.caption.14}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {8}{\ignorespaces Schematic representation of \textit  {adaptive drill-down}\relax }}{10}{figure.caption.12}}
+\newlabel{fig:adaptive-drill-down}{{8}{10}{Schematic representation of \textit {adaptive drill-down}\relax }{figure.caption.12}{}}
 \citation{kermany2018identifying}
 \citation{deng2009imagenet}
+\@writefile{lof}{\contentsline {figure}{\numberline {9}{\ignorespaces Conceptual diagram showing the effect of $S_1$ and $r_{drill-down}$ on speedup.\relax }}{11}{figure.caption.13}}
+\newlabel{fig:r_and_s1}{{9}{11}{Conceptual diagram showing the effect of $S_1$ and $r_{drill-down}$ on speedup.\relax }{figure.caption.13}{}}
+\newlabel{eqn:addaptive-drill-down-eqn}{{37}{11}{Adaptive Drill-Down}{equation.4.37}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.4}System Tuning}{11}{subsection.4.4}}
+\newlabel{eqn:s1}{{38}{11}{System Tuning}{equation.4.38}{}}
+\newlabel{eqn:speedup_bound}{{39}{11}{System Tuning}{equation.4.39}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {5}Experimental Evaluation}{11}{section.5}}
 \citation{vggnet}
 \citation{resnet}
 \citation{inception}
 \citation{torchvisionmodels}
-\@writefile{lof}{\contentsline {figure}{\numberline {11}{\ignorespaces (a) SSIM variation and degree two curve fit for different $\tau $ values for a sample of OCT dataset. (b) Cumulative distribution plot for the SSIM deviation for the $\tau $ values obtained from the curve fit for a SSIM value of 0.9.\relax }}{12}{figure.caption.15}}
-\newlabel{fig:system_tuning}{{11}{12}{(a) SSIM variation and degree two curve fit for different $\tau $ values for a sample of OCT dataset. (b) Cumulative distribution plot for the SSIM deviation for the $\tau $ values obtained from the curve fit for a SSIM value of 0.9.\relax }{figure.caption.15}{}}
-\newlabel{eqn:s1}{{38}{12}{System Tuning}{equation.4.38}{}}
-\newlabel{eqn:speedup_bound}{{39}{12}{System Tuning}{equation.4.39}{}}
-\@writefile{toc}{\contentsline {section}{\numberline {5}Experimental Evaluation}{12}{section.5}}
-\@writefile{lof}{\contentsline {figure}{\numberline {12}{\ignorespaces (a) SSIM variation for changing $r_{drill\_down}$ fixing $\tau =1$, $S_1=12$, and $S_2=4$. (b) SSIM variation for changing $S_1$ fixing $\tau =1.0$, $S_2=4$, and $r_{drill\_down}=0.3$ for a sample $(n=30)$ of OCT dataset.\relax }}{12}{figure.caption.16}}
-\newlabel{fig:adaptive_ssim}{{12}{12}{(a) SSIM variation for changing $r_{drill\_down}$ fixing $\tau =1$, $S_1=12$, and $S_2=4$. (b) SSIM variation for changing $S_1$ fixing $\tau =1.0$, $S_2=4$, and $r_{drill\_down}=0.3$ for a sample $(n=30)$ of OCT dataset.\relax }{figure.caption.16}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {5.1}End-to-End Evaluation}{13}{subsection.5.1}}
+\@writefile{lof}{\contentsline {figure}{\numberline {10}{\ignorespaces (a) SSIM variation and degree two curve fit for different $\tau $ values for a sample of OCT dataset. (b) Cumulative distribution plot for the SSIM deviation for the $\tau $ values obtained from the curve fit for a SSIM value of 0.9.\relax }}{12}{figure.caption.14}}
+\newlabel{fig:system_tuning}{{10}{12}{(a) SSIM variation and degree two curve fit for different $\tau $ values for a sample of OCT dataset. (b) Cumulative distribution plot for the SSIM deviation for the $\tau $ values obtained from the curve fit for a SSIM value of 0.9.\relax }{figure.caption.14}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.1}End-to-End Evaluation}{12}{subsection.5.1}}
+\@writefile{lof}{\contentsline {figure}{\numberline {11}{\ignorespaces End-to-end efficiency achieved by \textsc  {Krypton}\nonbreakingspace  over naive approaches.\relax }}{13}{figure.caption.15}}
+\newlabel{fig:5_1_all_edited}{{11}{13}{End-to-end efficiency achieved by \system ~ over naive approaches.\relax }{figure.caption.15}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {12}{\ignorespaces Theoretical versus empirical speedup for \textit  {incremental inference} with varying occlusion patch sizes and different CNN models (Occlusion patch stride $S=4$).\relax }}{13}{figure.caption.16}}
+\newlabel{fig:5_2_1_edited}{{12}{13}{Theoretical versus empirical speedup for \textit {incremental inference} with varying occlusion patch sizes and different CNN models (Occlusion patch stride $S=4$).\relax }{figure.caption.16}{}}
 \@writefile{toc}{\contentsline {subsection}{\numberline {5.2}Lesion Study}{13}{subsection.5.2}}
-\@writefile{lof}{\contentsline {figure}{\numberline {13}{\ignorespaces End-to-end efficiency achieved by \textsc  {Krypton}\nonbreakingspace  over naive approaches.\relax }}{14}{figure.caption.17}}
-\newlabel{fig:5_1_all_edited}{{13}{14}{End-to-end efficiency achieved by \system ~ over naive approaches.\relax }{figure.caption.17}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {14}{\ignorespaces Theoretical versus empirical speedup for \textit  {incremental inference} with varying occlusion patch sizes and different CNN models (Occlusion patch stride $S=4$).\relax }}{14}{figure.caption.18}}
-\newlabel{fig:5_2_1_edited}{{14}{14}{Theoretical versus empirical speedup for \textit {incremental inference} with varying occlusion patch sizes and different CNN models (Occlusion patch stride $S=4$).\relax }{figure.caption.18}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {15}{\ignorespaces Theoretical versus empirical speedup for \textit  {incremental inference} with \textit  {projective field thresholding} with varying threshold values ($\tau $) and different CNN models (Occlusion patch size = $16 \times 16$, stride $S=4$).\relax }}{14}{figure.caption.19}}
-\newlabel{fig:5_2_2_edited}{{15}{14}{Theoretical versus empirical speedup for \textit {incremental inference} with \textit {projective field thresholding} with varying threshold values ($\tau $) and different CNN models (Occlusion patch size = $16 \times 16$, stride $S=4$).\relax }{figure.caption.19}{}}
 \bibstyle{unsrt}
 \bibdata{main}
 \bibcite{alexnet}{{1}{}{{}}{{}}}
@@ -146,6 +140,13 @@
 \bibcite{inception}{{4}{}{{}}{{}}}
 \bibcite{imagenet}{{5}{}{{}}{{}}}
 \bibcite{kermany2018identifying}{{6}{}{{}}{{}}}
+\@writefile{lof}{\contentsline {figure}{\numberline {13}{\ignorespaces Theoretical versus empirical speedup for \textit  {incremental inference} with \textit  {projective field thresholding} with varying threshold values ($\tau $) and different CNN models (Occlusion patch size = $16 \times 16$, stride $S=4$).\relax }}{14}{figure.caption.17}}
+\newlabel{fig:5_2_2_edited}{{13}{14}{Theoretical versus empirical speedup for \textit {incremental inference} with \textit {projective field thresholding} with varying threshold values ($\tau $) and different CNN models (Occlusion patch size = $16 \times 16$, stride $S=4$).\relax }{figure.caption.17}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {14}{\ignorespaces Theoretical versus empirical speedup for \textit  {adaptive drill-down} with (a) varying drill-down ratios ($r_{drill-down}$) and (b) varying stage one stride $S_1$ values for different CNN models (Occlusion patch size = $16 \times 16$, stage two stride $S_2=4$, projective field threshold $\tau =1.0$).\relax }}{14}{figure.caption.18}}
+\newlabel{fig:5_2_3_edited}{{14}{14}{Theoretical versus empirical speedup for \textit {adaptive drill-down} with (a) varying drill-down ratios ($r_{drill-down}$) and (b) varying stage one stride $S_1$ values for different CNN models (Occlusion patch size = $16 \times 16$, stage two stride $S_2=4$, projective field threshold $\tau =1.0$).\relax }{figure.caption.18}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {6}Other Related Work}{14}{section.6}}
+\@writefile{toc}{\contentsline {section}{\numberline {7}Conclusions And Future Work}{14}{section.7}}
+\@writefile{toc}{\contentsline {section}{References}{14}{section*.20}}
 \bibcite{islam2017abnormality}{{7}{}{{}}{{}}}
 \bibcite{mohanty2016using}{{8}{}{{}}{{}}}
 \bibcite{arbabzadah2016identifying}{{9}{}{{}}{{}}}
@@ -165,14 +166,13 @@
 \bibcite{basiccnnoperations}{{23}{}{{}}{{}}}
 \bibcite{de2011projective}{{24}{}{{}}{{}}}
 \bibcite{luo2016understanding}{{25}{}{{}}{{}}}
-\@writefile{lof}{\contentsline {figure}{\numberline {16}{\ignorespaces Theoretical versus empirical speedup for \textit  {adaptive drill-down} with (a) varying drill-down ratios ($r_{drill-down}$) and (b) varying stage one stride $S_1$ values for different CNN models (Occlusion patch size = $16 \times 16$, stage two stride $S_2=4$, projective field threshold $\tau =1.0$).\relax }}{15}{figure.caption.20}}
-\newlabel{fig:5_2_3_edited}{{16}{15}{Theoretical versus empirical speedup for \textit {adaptive drill-down} with (a) varying drill-down ratios ($r_{drill-down}$) and (b) varying stage one stride $S_1$ values for different CNN models (Occlusion patch size = $16 \times 16$, stage two stride $S_2=4$, projective field threshold $\tau =1.0$).\relax }{figure.caption.20}{}}
-\@writefile{toc}{\contentsline {section}{\numberline {6}Other Related Work}{15}{section.6}}
-\@writefile{toc}{\contentsline {section}{\numberline {7}Conclusions And Future Work}{15}{section.7}}
-\@writefile{toc}{\contentsline {section}{References}{15}{section*.22}}
 \bibcite{deng2009imagenet}{{26}{}{{}}{{}}}
 \bibcite{torchvisionmodels}{{27}{}{{}}{{}}}
 \bibcite{kingma2014adam}{{28}{}{{}}{{}}}
+\@writefile{lof}{\contentsline {figure}{\numberline {15}{\ignorespaces One dimensional representation showing special situations under which actual output size will be smaller than the values calculated by Equations \ref  {eqn:xcoordinate} and \ref  {eqn:ycoordinate}. (a) and (b) shows a situation with filter stride being equal to the filter size. (c) and (d) shows a situation with input patch being placed at the edge of the input.\relax }}{15}{figure.caption.21}}
+\newlabel{fig:less_one_example}{{15}{15}{One dimensional representation showing special situations under which actual output size will be smaller than the values calculated by Equations \ref {eqn:xcoordinate} and \ref {eqn:ycoordinate}. (a) and (b) shows a situation with filter stride being equal to the filter size. (c) and (d) shows a situation with input patch being placed at the edge of the input.\relax }{figure.caption.21}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {A}Special Situations with Incremental Inference}{15}{appendix.A}}
+\newlabel{eqn:width_subtract}{{40}{15}{Special Situations with Incremental Inference}{equation.A.40}{}}
 \citation{kingma2014adam}
 \newlabel{tocindent-1}{0pt}
 \newlabel{tocindent0}{0pt}
@@ -180,14 +180,13 @@
 \newlabel{tocindent2}{15.0pt}
 \newlabel{tocindent3}{0pt}
 \providecommand\NAT@force@numbers{}\NAT@force@numbers
-\@writefile{lof}{\contentsline {figure}{\numberline {17}{\ignorespaces One dimensional representation showing special situations under which actual output size will be smaller than the values calculated by Equations \ref  {eqn:xcoordinate} and \ref  {eqn:ycoordinate}. (a) and (b) shows a situation with filter stride being equal to the filter size. (c) and (d) shows a situation with input patch being placed at the edge of the input.\relax }}{16}{figure.caption.23}}
-\newlabel{fig:less_one_example}{{17}{16}{One dimensional representation showing special situations under which actual output size will be smaller than the values calculated by Equations \ref {eqn:xcoordinate} and \ref {eqn:ycoordinate}. (a) and (b) shows a situation with filter stride being equal to the filter size. (c) and (d) shows a situation with input patch being placed at the edge of the input.\relax }{figure.caption.23}{}}
-\@writefile{toc}{\contentsline {section}{\numberline {A}Special Situations with Incremental Inference}{16}{appendix.A}}
-\newlabel{eqn:width_subtract}{{40}{16}{Special Situations with Incremental Inference}{equation.A.40}{}}
 \newlabel{eqn:height_subtract}{{41}{16}{Special Situations with Incremental Inference}{equation.A.41}{}}
 \@writefile{toc}{\contentsline {section}{\numberline {B}Fine-tuning CNNs}{16}{appendix.B}}
-\@writefile{lot}{\contentsline {table}{\numberline {3}{\ignorespaces Train-validation-test split size for each dataset.\relax }}{16}{table.caption.24}}
-\newlabel{tbl:dataset_sizes}{{3}{16}{Train-validation-test split size for each dataset.\relax }{table.caption.24}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {4}{\ignorespaces Train and test accuracies after fine-tuning.\relax }}{16}{table.caption.25}}
-\newlabel{tbl:finetune_accuracies}{{4}{16}{Train and test accuracies after fine-tuning.\relax }{table.caption.25}{}}
-\newlabel{TotPages}{{16}{16}{}{page.16}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {3}{\ignorespaces Train-validation-test split size for each dataset.\relax }}{16}{table.caption.22}}
+\newlabel{tbl:dataset_sizes}{{3}{16}{Train-validation-test split size for each dataset.\relax }{table.caption.22}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {4}{\ignorespaces Train and test accuracies after fine-tuning.\relax }}{16}{table.caption.23}}
+\newlabel{tbl:finetune_accuracies}{{4}{16}{Train and test accuracies after fine-tuning.\relax }{table.caption.23}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {C}Visual Examples}{16}{appendix.C}}
+\@writefile{lof}{\contentsline {figure}{\numberline {16}{\ignorespaces Occlusion heatmaps for sample images (CNN model = VGG16, occlusion patch size = 16, patch color = black, occlusion patch stride $(S\nonbreakingspace or\nonbreakingspace S_2)$ = 4. For \textit  {OCT} $r_{drill\_down}=0.1$ and target \texttt  {speedup}=5. For \textit  {Chest X-Ray} $r_{drill\_down}=0.4$ and target \texttt  {speedup}=2. For \textit  {ImageNet} $r_{drill\_down}=0.25$ and target \texttt  {speedup}=3).\relax }}{17}{figure.caption.24}}
+\newlabel{fig:visual_examples}{{16}{17}{Occlusion heatmaps for sample images (CNN model = VGG16, occlusion patch size = 16, patch color = black, occlusion patch stride $(S~or~S_2)$ = 4. For \textit {OCT} $r_{drill\_down}=0.1$ and target \texttt {speedup}=5. For \textit {Chest X-Ray} $r_{drill\_down}=0.4$ and target \texttt {speedup}=2. For \textit {ImageNet} $r_{drill\_down}=0.25$ and target \texttt {speedup}=3).\relax }{figure.caption.24}{}}
+\newlabel{TotPages}{{17}{17}{}{page.17}{}}

@@ -369,14 +369,9 @@ INPUT /usr/local/texlive/2016/texmf-dist/fonts/tfm/public/libertine/LinLibertine
 INPUT images/la_operators.pdf
 INPUT images/pf_truncate.pdf
 INPUT images/proj_thresholding.pdf
-INPUT images/visual_examples_1.pdf
-INPUT /usr/local/texlive/2016/texmf-dist/fonts/tfm/public/libertine/LinLibertineTB-tlf-t1.tfm
-INPUT /usr/local/texlive/2016/texmf-dist/fonts/tfm/public/libertine/LinLibertineTB-tlf-t1.tfm
-INPUT /usr/local/texlive/2016/texmf-dist/fonts/tfm/public/inconsolata/t1-zi4b-4.tfm
 INPUT images/adaptive-drill-down.pdf
 INPUT images/r_and_s1.pdf
 INPUT images/system_tuning.pdf
-INPUT images/adaptive_ssim.pdf
 INPUT experiments.tex
 INPUT experiments.tex
 INPUT images/5_1_all_edited.pdf
@@ -389,4 +384,8 @@ INPUT main.bbl
 INPUT appendix.tex
 INPUT appendix.tex
 INPUT images/less_one_example.pdf
+INPUT images/visual_examples.pdf
+INPUT /usr/local/texlive/2016/texmf-dist/fonts/tfm/public/libertine/LinLibertineTB-tlf-t1.tfm
+INPUT /usr/local/texlive/2016/texmf-dist/fonts/tfm/public/libertine/LinLibertineTB-tlf-t1.tfm
+INPUT /usr/local/texlive/2016/texmf-dist/fonts/tfm/public/inconsolata/t1-zi4b-4.tfm
 INPUT main.aux

@@ -36,7 +36,8 @@ For \textit{OCT} images the region of interest is relative small and hence a $r_
 For \textit{Chest X-Ray} images the region of interest can be large and hence a $r_{drill-down}$ value of 0.4 and a target \texttt{speedup} of 2 is used.
 For \textit{ImageNet} experiments we use a $r_{drill-down}$ value of $0.25$ and a target \texttt{speedup} value of 3, which are also the \system~ default values.
 For all experiments, $\tau$ is configured using a separate tuning image dataset $(n=30)$ for a target SSIM of $0.9$.
-Figure \ref{fig:5_1_all_edited} presents the results.
+Visual examples for each dataset is shown in Appendix X.
+Figure \ref{fig:5_1_all_edited} presents the final results.
 
 We see that \system~ improves the efficiency of the occlusion based explainability workload across the board.
 \system-Approximate for \textit{OCT} results in the highest speedup with VGG16 on both CPU and GPU environments (16X for CPU and 34.5X for GPU).
