@@ -17,7 +17,6 @@
 \providecommand*\HyPL@Entry[1]{}
 \citation{alexnet,vggnet,resnet,inception}
 \citation{imagenet}
-\citation{transfer-learning-factors}
 \citation{kermany2018identifying,islam2017abnormality}
 \citation{mohanty2016using}
 \citation{arbabzadah2016identifying}
@@ -29,98 +28,110 @@
 \HyPL@Entry{0<</S/D>>}
 \@writefile{toc}{\contentsline {section}{Abstract}{1}{section*.1}}
 \@writefile{toc}{\contentsline {section}{\numberline {1}Introduction}{1}{section.1}}
-\@writefile{lof}{\contentsline {figure}{\numberline {1}{\ignorespaces (A) Simplified representation depicting how OCT images are used for predicting Diabetic Retinopathy using CNNs. (B) Occluding parts of the OCT image changes the predicted probability for the disease. (C) By systematically moving patch along vertical and horizontal axes an output heat map is generated where each individual value corresponds to the predicted disease probability when the occlusion patch was placed on that position.\relax }}{2}{figure.caption.3}}
-\providecommand*\caption@xref[2]{\@setref\relax\@undefined{#1}}
-\newlabel{fig:krypton_overview}{{1}{2}{(A) Simplified representation depicting how OCT images are used for predicting Diabetic Retinopathy using CNNs. (B) Occluding parts of the OCT image changes the predicted probability for the disease. (C) By systematically moving patch along vertical and horizontal axes an output heat map is generated where each individual value corresponds to the predicted disease probability when the occlusion patch was placed on that position.\relax }{figure.caption.3}{}}
 \citation{alexnet}
 \citation{vggnet}
 \citation{inception}
 \citation{resnet}
 \citation{squeezenet}
 \citation{mobilenets}
+\@writefile{lof}{\contentsline {figure}{\numberline {1}{\ignorespaces (A) Simplified representation depicting how OCT images are used for predicting Diabetic Retinopathy using CNNs. (B) Occluding parts of the OCT image changes the predicted probability for the disease. (C) By systematically moving patch along vertical and horizontal axes an output heat map is generated where each individual value corresponds to the predicted disease probability when the occlusion patch was placed on that position.\relax }}{2}{figure.caption.3}}
+\providecommand*\caption@xref[2]{\@setref\relax\@undefined{#1}}
+\newlabel{fig:krypton_overview}{{1}{2}{(A) Simplified representation depicting how OCT images are used for predicting Diabetic Retinopathy using CNNs. (B) Occluding parts of the OCT image changes the predicted probability for the disease. (C) By systematically moving patch along vertical and horizontal axes an output heat map is generated where each individual value corresponds to the predicted disease probability when the occlusion patch was placed on that position.\relax }{figure.caption.3}{}}
 \citation{zeiler2014visualizing}
 \citation{miller2017explanation}
 \citation{jung2017deep}
 \citation{zintgraf2017visualizing}
 \@writefile{toc}{\contentsline {section}{\numberline {2}Background}{3}{section.2}}
+\@writefile{lot}{\contentsline {table}{\numberline {1}{\ignorespaces Symbols used in the Preliminaries Section\relax }}{3}{table.caption.4}}
+\newlabel{table:preliminaries_symbols}{{1}{3}{Symbols used in the Preliminaries Section\relax }{table.caption.4}{}}
 \@writefile{toc}{\contentsline {section}{\numberline {3}Preliminaries and Overview}{3}{section.3}}
 \newlabel{sec:preliminaries}{{3}{3}{Preliminaries and Overview}{section.3}{}}
 \@writefile{toc}{\contentsline {subsection}{\numberline {3.1}Problem Statement and Assumptions}{3}{subsection.3.1}}
 \citation{caffemodelzoo,tfmodelzoo}
-\@writefile{lot}{\contentsline {table}{\numberline {1}{\ignorespaces Symbols used in the Preliminaries Section\relax }}{4}{table.caption.4}}
-\newlabel{table:preliminaries_symbols}{{1}{4}{Symbols used in the Preliminaries Section\relax }{table.caption.4}{}}
 \newlabel{eqn:mheight}{{1}{4}{Problem Statement and Assumptions}{equation.3.1}{}}
 \newlabel{eqn:mwidth}{{2}{4}{Problem Statement and Assumptions}{equation.3.2}{}}
 \newlabel{eqn:patchimpose}{{5}{4}{Problem Statement and Assumptions}{equation.3.5}{}}
 \newlabel{eqn:outputval}{{6}{4}{Problem Statement and Assumptions}{equation.3.6}{}}
 \@writefile{toc}{\contentsline {subsection}{\numberline {3.2}Deep CNN Internals}{4}{subsection.3.2}}
 \@writefile{lof}{\contentsline {figure}{\numberline {2}{\ignorespaces Simplified representation of selected layers of a Deep CNN. For simplicity sake addition of bias is not shown in the Conv. transformation. The values marked in red shows how a small spatial update in the first input would propagate through subsequent transformations. Notation used is explained in Table \nonbreakingspace \ref  {table:preliminaries_symbols}.\relax }}{5}{figure.caption.5}}
+\newlabel{fig:cnn_simplified}{{2}{5}{Simplified representation of selected layers of a Deep CNN. For simplicity sake addition of bias is not shown in the Conv. transformation. The values marked in red shows how a small spatial update in the first input would propagate through subsequent transformations. Notation used is explained in Table ~\ref {table:preliminaries_symbols}.\relax }{figure.caption.5}{}}
 \newlabel{eqn:conv_operator}{{11}{5}{Deep CNN Internals}{equation.3.11}{}}
 \citation{wang2004image}
 \citation{wang2004image}
-\newlabel{eqn:pool_operator}{{13}{6}{Deep CNN Internals}{equation.3.13}{}}
-\newlabel{eqn:full_local}{{16}{6}{Deep CNN Internals}{equation.3.16}{}}
-\newlabel{eqn:full_all}{{17}{6}{Deep CNN Internals}{equation.3.17}{}}
-\newlabel{eqn:inc_local}{{18}{6}{Deep CNN Internals}{equation.3.18}{}}
-\newlabel{eqn:inc_all}{{19}{6}{Deep CNN Internals}{equation.3.19}{}}
-\newlabel{eqn:redundancy_ratio}{{20}{6}{Deep CNN Internals}{equation.3.20}{}}
+\newlabel{eqn:full_local}{{13}{6}{Deep CNN Internals}{equation.3.13}{}}
+\newlabel{eqn:full_all}{{14}{6}{Deep CNN Internals}{equation.3.14}{}}
+\newlabel{eqn:inc_local}{{15}{6}{Deep CNN Internals}{equation.3.15}{}}
+\newlabel{eqn:inc_all}{{16}{6}{Deep CNN Internals}{equation.3.16}{}}
+\newlabel{eqn:redundancy_ratio}{{17}{6}{Deep CNN Internals}{equation.3.17}{}}
 \@writefile{toc}{\contentsline {subsection}{\numberline {3.3}Estimating the Quality of Generated Approximate Heat Maps}{6}{subsection.3.3}}
 \@writefile{toc}{\contentsline {section}{\numberline {4}Optimizations}{6}{section.4}}
-\@writefile{lot}{\contentsline {table}{\numberline {2}{\ignorespaces Additional symbols used in the Optimizations Section\relax }}{7}{table.caption.6}}
-\newlabel{table:optimizer_symbols}{{2}{7}{Additional symbols used in the Optimizations Section\relax }{table.caption.6}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {4.1}Incremental Inference}{7}{subsection.4.1}}
-\newlabel{sec:inc_computation}{{4.1}{7}{Incremental Inference}{subsection.4.1}{}}
+\newlabel{sec:optimizer}{{4}{6}{Optimizations}{section.4}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {2}{\ignorespaces Additional symbols used in the Optimizations Section\relax }}{6}{table.caption.6}}
+\newlabel{table:optimizer_symbols}{{2}{6}{Additional symbols used in the Optimizations Section\relax }{table.caption.6}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.1}Incremental Inference}{6}{subsection.4.1}}
+\newlabel{sec:inc_computation}{{4.1}{6}{Incremental Inference}{subsection.4.1}{}}
 \@writefile{lof}{\contentsline {figure}{\numberline {3}{\ignorespaces Simplified representation of input and output patch coordinates and dimensions of Conv. and Pool transformations.\relax }}{7}{figure.caption.7}}
 \newlabel{fig:dimensions}{{3}{7}{Simplified representation of input and output patch coordinates and dimensions of Conv. and Pool transformations.\relax }{figure.caption.7}{}}
-\newlabel{eqn:xcoordinate}{{21}{7}{Incremental Inference}{equation.4.21}{}}
-\newlabel{eqn:ycoordinate}{{22}{7}{Incremental Inference}{equation.4.22}{}}
-\newlabel{eqn:patchwidth}{{23}{7}{Incremental Inference}{equation.4.23}{}}
-\newlabel{eqn:patchheight}{{24}{7}{Incremental Inference}{equation.4.24}{}}
-\newlabel{eqn:xreadcoordinate}{{25}{8}{Incremental Inference}{equation.4.25}{}}
-\newlabel{eqn:yreadcoordinate}{{26}{8}{Incremental Inference}{equation.4.26}{}}
-\newlabel{eqn:readpatchwidth}{{27}{8}{Incremental Inference}{equation.4.27}{}}
-\newlabel{eqn:readpatchheight}{{28}{8}{Incremental Inference}{equation.4.28}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {4}{\ignorespaces One dimensional representation showing special situations under which actual output size will be smaller than the values calculated by Equations \ref  {eqn:xcoordinate} and \ref  {eqn:ycoordinate}. (a) and (b) shows a situation with filter stride being equal to the filter size. (c) and (d) shows a situation with input patch being placed at the edge of the input.\relax }}{8}{figure.caption.8}}
-\newlabel{fig:less_one_example}{{4}{8}{One dimensional representation showing special situations under which actual output size will be smaller than the values calculated by Equations \ref {eqn:xcoordinate} and \ref {eqn:ycoordinate}. (a) and (b) shows a situation with filter stride being equal to the filter size. (c) and (d) shows a situation with input patch being placed at the edge of the input.\relax }{figure.caption.8}{}}
-\newlabel{eqn:width_subtract}{{29}{8}{Incremental Inference}{equation.4.29}{}}
-\newlabel{eqn:height_subtract}{{32}{8}{Incremental Inference}{equation.4.32}{}}
-\@writefile{loa}{\contentsline {algorithm}{\numberline {1}{\ignorespaces Incremental Inference Algorithm\relax }}{9}{algorithm.1}}
-\newlabel{euclid}{{1}{9}{Incremental Inference Algorithm\relax }{algorithm.1}{}}
-\newlabel{alg:incinference}{{1}{9}{Incremental Inference Algorithm\relax }{algorithm.1}{}}
-\newlabel{alg:line:memcpy_loop}{{5}{9}{Incremental Inference Algorithm\relax }{algorithm.1}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {5}{\ignorespaces Theoretical speedup ratios for popular CNN architectures when a square occlusion patch of different sizes is placed on the center of the image.\relax }}{9}{figure.caption.9}}
-\newlabel{fig:redundancy_ratio}{{5}{9}{Theoretical speedup ratios for popular CNN architectures when a square occlusion patch of different sizes is placed on the center of the image.\relax }{figure.caption.9}{}}
+\newlabel{eqn:xcoordinate}{{18}{7}{Incremental Inference}{equation.4.18}{}}
+\newlabel{eqn:ycoordinate}{{19}{7}{Incremental Inference}{equation.4.19}{}}
+\newlabel{eqn:patchwidth}{{20}{7}{Incremental Inference}{equation.4.20}{}}
+\newlabel{eqn:patchheight}{{21}{7}{Incremental Inference}{equation.4.21}{}}
+\newlabel{eqn:xreadcoordinate}{{22}{7}{Incremental Inference}{equation.4.22}{}}
+\newlabel{eqn:yreadcoordinate}{{23}{7}{Incremental Inference}{equation.4.23}{}}
+\newlabel{eqn:readpatchwidth}{{24}{7}{Incremental Inference}{equation.4.24}{}}
+\newlabel{eqn:readpatchheight}{{25}{7}{Incremental Inference}{equation.4.25}{}}
+\@writefile{loa}{\contentsline {algorithm}{\numberline {1}{\ignorespaces Incremental Inference Transformation\relax }}{8}{algorithm.1}}
+\newlabel{euclid}{{1}{8}{Incremental Inference Transformation\relax }{algorithm.1}{}}
+\newlabel{alg:incinference}{{1}{8}{Incremental Inference Transformation\relax }{algorithm.1}{}}
+\newlabel{alg:line:memcpy_loop}{{5}{8}{Incremental Inference Transformation\relax }{algorithm.1}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {4}{\ignorespaces Theoretical speedup for popular CNN architectures with \textit  {incremental inference} when a square occlusion patch is placed on the center of the image.\relax }}{8}{figure.caption.8}}
+\newlabel{fig:redundancy_ratio}{{4}{8}{Theoretical speedup for popular CNN architectures with \textit {incremental inference} when a square occlusion patch is placed on the center of the image.\relax }{figure.caption.8}{}}
 \citation{le2017receptive,basiccnnoperations}
 \citation{de2011projective}
 \citation{luo2016understanding}
-\@writefile{lof}{\contentsline {figure}{\numberline {6}{\ignorespaces Input-Output coordinate and dimension mapping for element-wise addition and depth-wise concatenation.\relax }}{10}{figure.caption.10}}
-\newlabel{fig:la_operators}{{6}{10}{Input-Output coordinate and dimension mapping for element-wise addition and depth-wise concatenation.\relax }{figure.caption.10}{}}
-\newlabel{eqn:laxcoordinate}{{35}{10}{Incremental Inference}{equation.4.35}{}}
-\newlabel{eqn:laycoordinate}{{36}{10}{Incremental Inference}{equation.4.36}{}}
-\newlabel{eqn:lapatchwidth}{{37}{10}{Incremental Inference}{equation.4.37}{}}
-\newlabel{eqn:lapatchheight}{{38}{10}{Incremental Inference}{equation.4.38}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {4.2}Projective Field Thresholding}{10}{subsection.4.2}}
-\@writefile{lof}{\contentsline {figure}{\numberline {7}{\ignorespaces (a) One dimensional convolution demonstrating projective field growth (filter size = 2, stride = 1). (b) Projective field thresholding with $\tau = 5/7$. Histograms denote the number of unique change propagation paths.\relax }}{10}{figure.caption.11}}
-\newlabel{fig:pf_truncate}{{7}{10}{(a) One dimensional convolution demonstrating projective field growth (filter size = 2, stride = 1). (b) Projective field thresholding with $\tau = 5/7$. Histograms denote the number of unique change propagation paths.\relax }{figure.caption.11}{}}
-\newlabel{eqn:normal_width_calc}{{39}{11}{Projective Field Thresholding}{equation.4.39}{}}
-\newlabel{eqn:check_tau}{{40}{11}{Projective Field Thresholding}{equation.4.40}{}}
-\newlabel{eqn:new_width_calc_with_tau}{{41}{11}{Projective Field Thresholding}{equation.4.41}{}}
-\newlabel{eqn:new_in_width}{{42}{11}{Projective Field Thresholding}{equation.4.42}{}}
-\newlabel{eqn:new_x_coord}{{43}{11}{Projective Field Thresholding}{equation.4.43}{}}
-\newlabel{eqn:new_input_width}{{44}{11}{Projective Field Thresholding}{equation.4.44}{}}
-\newlabel{eqn:new_output_x}{{45}{11}{Projective Field Thresholding}{equation.4.45}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {4.3}Adaptive Drill-Down}{11}{subsection.4.3}}
-\newlabel{sec:ada-drill-down}{{4.3}{11}{Adaptive Drill-Down}{subsection.4.3}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {8}{\ignorespaces (a) Theoretical speedup ratio with projective field thresholding for different occlusion patch sizes and CNN models. (b) Mean Square Error between exact and approximate output of the final convolution layer for different occlusion patch sizes and CNN models on a sample (n=30) of OCT dataset. In both (a) and (b) occlusion patches are placed at the center of the image.\relax }}{11}{figure.caption.12}}
-\newlabel{fig:th_redundancy_ratio}{{8}{11}{(a) Theoretical speedup ratio with projective field thresholding for different occlusion patch sizes and CNN models. (b) Mean Square Error between exact and approximate output of the final convolution layer for different occlusion patch sizes and CNN models on a sample (n=30) of OCT dataset. In both (a) and (b) occlusion patches are placed at the center of the image.\relax }{figure.caption.12}{}}
-\newlabel{eqn:addaptive-drill-down-eqn}{{46}{11}{Adaptive Drill-Down}{equation.4.46}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {9}{\ignorespaces Occlusion heatmaps from a sample OCT image with (a) \textit  {incremental inference} and (b) \textit  {incremental inference} with \textit  {adaptive drill-down} for different \textit  {projective field threshold} values (CNN model = VGG16, occlusion patch size = 16, patch color = black, occlusion patch stride = 1).\relax }}{12}{figure.caption.13}}
-\newlabel{fig:visual_examples_1}{{9}{12}{Occlusion heatmaps from a sample OCT image with (a) \textit {incremental inference} and (b) \textit {incremental inference} with \textit {adaptive drill-down} for different \textit {projective field threshold} values (CNN model = VGG16, occlusion patch size = 16, patch color = black, occlusion patch stride = 1).\relax }{figure.caption.13}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {10}{\ignorespaces Schematic representation of adaptive drill-down\relax }}{12}{figure.caption.14}}
-\newlabel{fig:adaptive-drill-down}{{10}{12}{Schematic representation of adaptive drill-down\relax }{figure.caption.14}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {11}{\ignorespaces Conceptual diagram showing the effect of $S_1$ and $r_{drill-down}$ on speedup.\relax }}{12}{figure.caption.15}}
-\newlabel{fig:r_and_s1}{{11}{12}{Conceptual diagram showing the effect of $S_1$ and $r_{drill-down}$ on speedup.\relax }{figure.caption.15}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {4.4}System Tuning}{12}{subsection.4.4}}
+\@writefile{lof}{\contentsline {figure}{\numberline {5}{\ignorespaces Input-Output coordinate and dimension mapping for element-wise addition and depth-wise concatenation.\relax }}{9}{figure.caption.9}}
+\newlabel{fig:la_operators}{{5}{9}{Input-Output coordinate and dimension mapping for element-wise addition and depth-wise concatenation.\relax }{figure.caption.9}{}}
+\newlabel{eqn:laxcoordinate}{{26}{9}{Incremental Inference}{equation.4.26}{}}
+\newlabel{eqn:laycoordinate}{{27}{9}{Incremental Inference}{equation.4.27}{}}
+\newlabel{eqn:lapatchwidth}{{28}{9}{Incremental Inference}{equation.4.28}{}}
+\newlabel{eqn:lapatchheight}{{29}{9}{Incremental Inference}{equation.4.29}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.2}Projective Field Thresholding}{9}{subsection.4.2}}
+\@writefile{lof}{\contentsline {figure}{\numberline {6}{\ignorespaces (a) One dimensional Convolution demonstrating projective field growth (filter size = 2, stride = 1). (b) \textit  {Projective field thresholding} with $\tau = 5/7$. Histograms denote the number of unique change propagation paths.\relax }}{9}{figure.caption.10}}
+\newlabel{fig:pf_truncate}{{6}{9}{(a) One dimensional Convolution demonstrating projective field growth (filter size = 2, stride = 1). (b) \textit {Projective field thresholding} with $\tau = 5/7$. Histograms denote the number of unique change propagation paths.\relax }{figure.caption.10}{}}
+\newlabel{eqn:normal_width_calc}{{30}{10}{Projective Field Thresholding}{equation.4.30}{}}
+\newlabel{eqn:check_tau}{{31}{10}{Projective Field Thresholding}{equation.4.31}{}}
+\newlabel{eqn:new_width_calc_with_tau}{{32}{10}{Projective Field Thresholding}{equation.4.32}{}}
+\newlabel{eqn:new_in_width}{{33}{10}{Projective Field Thresholding}{equation.4.33}{}}
+\newlabel{eqn:new_x_coord}{{34}{10}{Projective Field Thresholding}{equation.4.34}{}}
+\newlabel{eqn:new_input_width}{{35}{10}{Projective Field Thresholding}{equation.4.35}{}}
+\newlabel{eqn:new_output_x}{{36}{10}{Projective Field Thresholding}{equation.4.36}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.3}Adaptive Drill-Down}{10}{subsection.4.3}}
+\newlabel{sec:ada-drill-down}{{4.3}{10}{Adaptive Drill-Down}{subsection.4.3}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {7}{\ignorespaces (a) Theoretical speedup ratio with projective field thresholding for different occlusion patch sizes and CNN models. (b) Mean Square Error between exact and approximate output of the final activation volume produce by a conv. or a pool layer for different occlusion patch sizes and CNN models on a sample (n=30) of OCT dataset. In both (a) and (b) occlusion patches are placed at the center of the image.\relax }}{10}{figure.caption.11}}
+\newlabel{fig:th_redundancy_ratio}{{7}{10}{(a) Theoretical speedup ratio with projective field thresholding for different occlusion patch sizes and CNN models. (b) Mean Square Error between exact and approximate output of the final activation volume produce by a conv. or a pool layer for different occlusion patch sizes and CNN models on a sample (n=30) of OCT dataset. In both (a) and (b) occlusion patches are placed at the center of the image.\relax }{figure.caption.11}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {8}{\ignorespaces Schematic representation of \textit  {adaptive drill-down}\relax }}{10}{figure.caption.12}}
+\newlabel{fig:adaptive-drill-down}{{8}{10}{Schematic representation of \textit {adaptive drill-down}\relax }{figure.caption.12}{}}
+\citation{kermany2018identifying}
+\citation{deng2009imagenet}
+\@writefile{lof}{\contentsline {figure}{\numberline {9}{\ignorespaces Conceptual diagram showing the effect of $S_1$ and $r_{drill-down}$ on speedup.\relax }}{11}{figure.caption.13}}
+\newlabel{fig:r_and_s1}{{9}{11}{Conceptual diagram showing the effect of $S_1$ and $r_{drill-down}$ on speedup.\relax }{figure.caption.13}{}}
+\newlabel{eqn:addaptive-drill-down-eqn}{{37}{11}{Adaptive Drill-Down}{equation.4.37}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.4}System Tuning}{11}{subsection.4.4}}
+\newlabel{eqn:s1}{{38}{11}{System Tuning}{equation.4.38}{}}
+\newlabel{eqn:speedup_bound}{{39}{11}{System Tuning}{equation.4.39}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {5}Experimental Evaluation}{11}{section.5}}
+\citation{vggnet}
+\citation{resnet}
+\citation{inception}
+\citation{torchvisionmodels}
+\@writefile{lof}{\contentsline {figure}{\numberline {10}{\ignorespaces (a) SSIM variation and degree two curve fit for different $\tau $ values for a sample of OCT dataset. (b) Cumulative distribution plot for the SSIM deviation for the $\tau $ values obtained from the curve fit for a SSIM value of 0.9.\relax }}{12}{figure.caption.14}}
+\newlabel{fig:system_tuning}{{10}{12}{(a) SSIM variation and degree two curve fit for different $\tau $ values for a sample of OCT dataset. (b) Cumulative distribution plot for the SSIM deviation for the $\tau $ values obtained from the curve fit for a SSIM value of 0.9.\relax }{figure.caption.14}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.1}End-to-End Evaluation}{12}{subsection.5.1}}
+\@writefile{lof}{\contentsline {figure}{\numberline {11}{\ignorespaces End-to-end efficiency achieved by \textsc  {Krypton}\nonbreakingspace  over naive approaches.\relax }}{13}{figure.caption.15}}
+\newlabel{fig:5_1_all_edited}{{11}{13}{End-to-end efficiency achieved by \system ~ over naive approaches.\relax }{figure.caption.15}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {12}{\ignorespaces Theoretical versus empirical speedup for \textit  {incremental inference} with varying occlusion patch sizes and different CNN models (Occlusion patch stride $S=4$).\relax }}{13}{figure.caption.16}}
+\newlabel{fig:5_2_1_edited}{{12}{13}{Theoretical versus empirical speedup for \textit {incremental inference} with varying occlusion patch sizes and different CNN models (Occlusion patch stride $S=4$).\relax }{figure.caption.16}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.2}Lesion Study}{13}{subsection.5.2}}
 \bibstyle{unsrt}
 \bibdata{main}
 \bibcite{alexnet}{{1}{}{{}}{{}}}
@@ -128,46 +139,54 @@
 \bibcite{resnet}{{3}{}{{}}{{}}}
 \bibcite{inception}{{4}{}{{}}{{}}}
 \bibcite{imagenet}{{5}{}{{}}{{}}}
-\@writefile{lof}{\contentsline {figure}{\numberline {12}{\ignorespaces (a) SSIM variation and degree two curve fit for different $\tau $ values for a sample of OCT dataset. (b) Cumulative distribution plot for the SSIM deviation for the $\tau $ values obtained from the curve fit for a SSIM value of 0.8.\relax }}{13}{figure.caption.16}}
-\newlabel{fig:system_tuning}{{12}{13}{(a) SSIM variation and degree two curve fit for different $\tau $ values for a sample of OCT dataset. (b) Cumulative distribution plot for the SSIM deviation for the $\tau $ values obtained from the curve fit for a SSIM value of 0.8.\relax }{figure.caption.16}{}}
-\newlabel{eqn:s1}{{47}{13}{System Tuning}{equation.4.47}{}}
-\newlabel{eqn:speedup_bound}{{48}{13}{System Tuning}{equation.4.48}{}}
-\@writefile{toc}{\contentsline {section}{\numberline {5}Experimental Evaluation}{13}{section.5}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {5.1}End-to-End Evaluation}{13}{subsection.5.1}}
-\@writefile{lof}{\contentsline {figure}{\numberline {13}{\ignorespaces Theoretical versus empirical speedup for \textit  {incremental inference} with varying occlusion patch sizes and different CNN models (Occlusion patch stride $S=1$).\relax }}{13}{figure.caption.17}}
-\newlabel{fig:5_2_1_GPU}{{13}{13}{Theoretical versus empirical speedup for \textit {incremental inference} with varying occlusion patch sizes and different CNN models (Occlusion patch stride $S=1$).\relax }{figure.caption.17}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {14}{\ignorespaces Theoretical versus empirical speedup for \textit  {incremental inference} with \textit  {projective field thresholding} with varying threshold values ($\tau $) and different CNN models (Occlusion patch size = $16 \times 16$, stride $S=1$).\relax }}{13}{figure.caption.18}}
-\newlabel{fig:5_2_1_GPU}{{14}{13}{Theoretical versus empirical speedup for \textit {incremental inference} with \textit {projective field thresholding} with varying threshold values ($\tau $) and different CNN models (Occlusion patch size = $16 \times 16$, stride $S=1$).\relax }{figure.caption.18}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {5.2}Lesion Study}{13}{subsection.5.2}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {5.3}Discussion and Limitations}{13}{subsection.5.3}}
-\@writefile{toc}{\contentsline {section}{References}{13}{section*.21}}
-\bibcite{transfer-learning-factors}{{6}{}{{}}{{}}}
-\bibcite{kermany2018identifying}{{7}{}{{}}{{}}}
-\bibcite{islam2017abnormality}{{8}{}{{}}{{}}}
-\bibcite{mohanty2016using}{{9}{}{{}}{{}}}
-\bibcite{arbabzadah2016identifying}{{10}{}{{}}{{}}}
-\bibcite{wang2017deep}{{11}{}{{}}{{}}}
-\bibcite{fdaretinopathy}{{12}{}{{}}{{}}}
-\bibcite{radiologistshortage}{{13}{}{{}}{{}}}
-\bibcite{jung2017deep}{{14}{}{{}}{{}}}
-\bibcite{zeiler2014visualizing}{{15}{}{{}}{{}}}
-\bibcite{squeezenet}{{16}{}{{}}{{}}}
-\bibcite{mobilenets}{{17}{}{{}}{{}}}
-\bibcite{miller2017explanation}{{18}{}{{}}{{}}}
-\bibcite{zintgraf2017visualizing}{{19}{}{{}}{{}}}
-\bibcite{caffemodelzoo}{{20}{}{{}}{{}}}
-\bibcite{tfmodelzoo}{{21}{}{{}}{{}}}
-\bibcite{wang2004image}{{22}{}{{}}{{}}}
-\bibcite{le2017receptive}{{23}{}{{}}{{}}}
-\bibcite{basiccnnoperations}{{24}{}{{}}{{}}}
-\bibcite{de2011projective}{{25}{}{{}}{{}}}
-\bibcite{luo2016understanding}{{26}{}{{}}{{}}}
+\bibcite{kermany2018identifying}{{6}{}{{}}{{}}}
+\@writefile{lof}{\contentsline {figure}{\numberline {13}{\ignorespaces Theoretical versus empirical speedup for \textit  {incremental inference} with \textit  {projective field thresholding} with varying threshold values ($\tau $) and different CNN models (Occlusion patch size = $16 \times 16$, stride $S=4$).\relax }}{14}{figure.caption.17}}
+\newlabel{fig:5_2_2_edited}{{13}{14}{Theoretical versus empirical speedup for \textit {incremental inference} with \textit {projective field thresholding} with varying threshold values ($\tau $) and different CNN models (Occlusion patch size = $16 \times 16$, stride $S=4$).\relax }{figure.caption.17}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {14}{\ignorespaces Theoretical versus empirical speedup for \textit  {adaptive drill-down} with (a) varying drill-down ratios ($r_{drill-down}$) and (b) varying stage one stride $S_1$ values for different CNN models (Occlusion patch size = $16 \times 16$, stage two stride $S_2=4$, projective field threshold $\tau =1.0$).\relax }}{14}{figure.caption.18}}
+\newlabel{fig:5_2_3_edited}{{14}{14}{Theoretical versus empirical speedup for \textit {adaptive drill-down} with (a) varying drill-down ratios ($r_{drill-down}$) and (b) varying stage one stride $S_1$ values for different CNN models (Occlusion patch size = $16 \times 16$, stage two stride $S_2=4$, projective field threshold $\tau =1.0$).\relax }{figure.caption.18}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {6}Other Related Work}{14}{section.6}}
+\@writefile{toc}{\contentsline {section}{\numberline {7}Conclusions And Future Work}{14}{section.7}}
+\@writefile{toc}{\contentsline {section}{References}{14}{section*.20}}
+\bibcite{islam2017abnormality}{{7}{}{{}}{{}}}
+\bibcite{mohanty2016using}{{8}{}{{}}{{}}}
+\bibcite{arbabzadah2016identifying}{{9}{}{{}}{{}}}
+\bibcite{wang2017deep}{{10}{}{{}}{{}}}
+\bibcite{fdaretinopathy}{{11}{}{{}}{{}}}
+\bibcite{radiologistshortage}{{12}{}{{}}{{}}}
+\bibcite{jung2017deep}{{13}{}{{}}{{}}}
+\bibcite{zeiler2014visualizing}{{14}{}{{}}{{}}}
+\bibcite{squeezenet}{{15}{}{{}}{{}}}
+\bibcite{mobilenets}{{16}{}{{}}{{}}}
+\bibcite{miller2017explanation}{{17}{}{{}}{{}}}
+\bibcite{zintgraf2017visualizing}{{18}{}{{}}{{}}}
+\bibcite{caffemodelzoo}{{19}{}{{}}{{}}}
+\bibcite{tfmodelzoo}{{20}{}{{}}{{}}}
+\bibcite{wang2004image}{{21}{}{{}}{{}}}
+\bibcite{le2017receptive}{{22}{}{{}}{{}}}
+\bibcite{basiccnnoperations}{{23}{}{{}}{{}}}
+\bibcite{de2011projective}{{24}{}{{}}{{}}}
+\bibcite{luo2016understanding}{{25}{}{{}}{{}}}
+\bibcite{deng2009imagenet}{{26}{}{{}}{{}}}
+\bibcite{torchvisionmodels}{{27}{}{{}}{{}}}
+\bibcite{kingma2014adam}{{28}{}{{}}{{}}}
+\@writefile{lof}{\contentsline {figure}{\numberline {15}{\ignorespaces One dimensional representation showing special situations under which actual output size will be smaller than the values calculated by Equations \ref  {eqn:xcoordinate} and \ref  {eqn:ycoordinate}. (a) and (b) shows a situation with filter stride being equal to the filter size. (c) and (d) shows a situation with input patch being placed at the edge of the input.\relax }}{15}{figure.caption.21}}
+\newlabel{fig:less_one_example}{{15}{15}{One dimensional representation showing special situations under which actual output size will be smaller than the values calculated by Equations \ref {eqn:xcoordinate} and \ref {eqn:ycoordinate}. (a) and (b) shows a situation with filter stride being equal to the filter size. (c) and (d) shows a situation with input patch being placed at the edge of the input.\relax }{figure.caption.21}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {A}Special Situations with Incremental Inference}{15}{appendix.A}}
+\newlabel{eqn:width_subtract}{{40}{15}{Special Situations with Incremental Inference}{equation.A.40}{}}
+\citation{kingma2014adam}
 \newlabel{tocindent-1}{0pt}
 \newlabel{tocindent0}{0pt}
-\newlabel{tocindent1}{4.65pt}
-\newlabel{tocindent2}{11.49998pt}
+\newlabel{tocindent1}{7.01pt}
+\newlabel{tocindent2}{15.0pt}
 \newlabel{tocindent3}{0pt}
 \providecommand\NAT@force@numbers{}\NAT@force@numbers
-\@writefile{lof}{\contentsline {figure}{\numberline {15}{\ignorespaces Theoretical versus empirical speedup for \textit  {adaptive drill-down} with (a) varying drill-down ratios ($r_{drill-down}$) and (b) varying stage one stride $S_1$ values for different CNN models (Occlusion patch size = $16 \times 16$, stage two stride $S_2=1$, projective field threshold $\tau =1.0$).\relax }}{14}{figure.caption.19}}
-\newlabel{fig:5_2_3_GPU}{{15}{14}{Theoretical versus empirical speedup for \textit {adaptive drill-down} with (a) varying drill-down ratios ($r_{drill-down}$) and (b) varying stage one stride $S_1$ values for different CNN models (Occlusion patch size = $16 \times 16$, stage two stride $S_2=1$, projective field threshold $\tau =1.0$).\relax }{figure.caption.19}{}}
-\newlabel{TotPages}{{14}{14}{}{page.14}{}}
+\newlabel{eqn:height_subtract}{{41}{16}{Special Situations with Incremental Inference}{equation.A.41}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {B}Fine-tuning CNNs}{16}{appendix.B}}
+\@writefile{lot}{\contentsline {table}{\numberline {3}{\ignorespaces Train-validation-test split size for each dataset.\relax }}{16}{table.caption.22}}
+\newlabel{tbl:dataset_sizes}{{3}{16}{Train-validation-test split size for each dataset.\relax }{table.caption.22}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {4}{\ignorespaces Train and test accuracies after fine-tuning.\relax }}{16}{table.caption.23}}
+\newlabel{tbl:finetune_accuracies}{{4}{16}{Train and test accuracies after fine-tuning.\relax }{table.caption.23}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {C}Visual Examples}{16}{appendix.C}}
+\@writefile{lof}{\contentsline {figure}{\numberline {16}{\ignorespaces Occlusion heatmaps for sample images (CNN model = VGG16, occlusion patch size = 16, patch color = black, occlusion patch stride $(S\nonbreakingspace or\nonbreakingspace S_2)$ = 4. For \textit  {OCT} $r_{drill\_down}=0.1$ and target \texttt  {speedup}=5. For \textit  {Chest X-Ray} $r_{drill\_down}=0.4$ and target \texttt  {speedup}=2. For \textit  {ImageNet} $r_{drill\_down}=0.25$ and target \texttt  {speedup}=3).\relax }}{17}{figure.caption.24}}
+\newlabel{fig:visual_examples}{{16}{17}{Occlusion heatmaps for sample images (CNN model = VGG16, occlusion patch size = 16, patch color = black, occlusion patch stride $(S~or~S_2)$ = 4. For \textit {OCT} $r_{drill\_down}=0.1$ and target \texttt {speedup}=5. For \textit {Chest X-Ray} $r_{drill\_down}=0.4$ and target \texttt {speedup}=2. For \textit {ImageNet} $r_{drill\_down}=0.25$ and target \texttt {speedup}=3).\relax }{figure.caption.24}{}}
+\newlabel{TotPages}{{17}{17}{}{page.17}{}}
