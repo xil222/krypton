@@ -317,13 +317,24 @@ class Inception3(nn.Module):
             remove = 0
             orig_patch_size = patch_size
             out_p_size = int(min(math.ceil((patch_size + k - 1.0)/s), size))
-            in_p_size = k + (out_p_size-1)*s
             
+            #in_p_size = k + (out_p_size-1)*s
+            
+            #if out_p_size > round(size*beta):
+            #    temp_out_p_size = int(round(size*beta))
+            #    remove = (out_p_size-temp_out_p_size)*s
+            #    in_p_size -= remove
+            #    out_p_size = temp_out_p_size
+            
+                
             if out_p_size > round(size*beta):
                 temp_out_p_size = int(round(size*beta))
-                remove = (out_p_size-temp_out_p_size)*s
-                in_p_size -= remove
+                new_patch_size = temp_out_p_size*s-k+1
+                remove = patch_size - new_patch_size
                 out_p_size = temp_out_p_size
+                
+            in_p_size = k + (out_p_size-1)*s            
+                            
             
             out_locations = self.__get_output_locations(in_locations, out_p_size, s, p, k, prev_size, size, remove=remove)
             
@@ -459,7 +470,7 @@ class Inception3(nn.Module):
 
         for mods in [self.mixed_5a.children(), self.mixed_5b.children(), self.mixed_5c.children()]:
             mods = list(mods)
-            for mod_count in range(0, len(mods), 2):
+            for mod_count in range(0, len(mods)-2, 2):
                 mods[mod_count][0].weight.data = values[count]
                 mods[mod_count][0].bias.data.fill_(0.0)
                 mods[mod_count+1][0].weight.data = values[count]
@@ -480,7 +491,7 @@ class Inception3(nn.Module):
 
 
         mods = list(self.mixed_6a.children())
-        for mod_count in range(0, len(mods), 2):                
+        for mod_count in range(0, len(mods)-2, 2):                
             mods[mod_count][0].weight.data = values[count]
             mods[mod_count+1][0].weight.data = values[count]
             mods[mod_count][0].bias.data.fill_(0.0)
@@ -502,7 +513,7 @@ class Inception3(nn.Module):
         for mods in [self.mixed_6b.children(), self.mixed_6c.children(), self.mixed_6d.children(),
                      self.mixed_6e.children()]:
             mods = list(mods)
-            for mod_count in range(0, len(mods), 2):
+            for mod_count in range(0, len(mods)-2, 2):
                 mods[mod_count][0].weight.data = values[count]
                 mods[mod_count][0].bias.data.fill_(0.0)
                 mods[mod_count+1][0].weight.data = values[count]
@@ -524,7 +535,7 @@ class Inception3(nn.Module):
         count += 12
         
         mods = list(self.mixed_7a.children())
-        for mod_count in range(0, len(mods), 2):
+        for mod_count in range(0, len(mods)-2, 2):
             mods[mod_count][0].weight.data = values[count]
             mods[mod_count][0].bias.data.fill_(0.0)
             mods[mod_count+1][0].weight.data = values[count]
@@ -546,7 +557,7 @@ class Inception3(nn.Module):
             
         for mods in [self.mixed_7b.children(), self.mixed_7c.children()]:
             mods = list(mods)
-            for mod_count in range(0, len(mods), 2):
+            for mod_count in range(0, len(mods)-2, 2):
                 mods[mod_count][0].weight.data = values[count]
                 mods[mod_count][0].bias.data.fill_(0.0)
                 mods[mod_count+1][0].weight.data = values[count]
@@ -637,6 +648,9 @@ class InceptionA(nn.Module):
                                             nn.BatchNorm2d(pool_features, eps=0.001),
                                             nn.ReLU(inplace=True))
         
+        self.avg_pool_op = nn.AvgPool2d(kernel_size=3, stride=1, padding=1)
+        self.avg_pool_inc_op = nn.AvgPool2d(kernel_size=3, stride=1, padding=0)
+        
         self.beta = beta
         self.gpu = gpu
         self.in_channels = in_channels
@@ -649,7 +663,7 @@ class InceptionA(nn.Module):
         b3 = self.b3_1_op(x)
         b3 = self.b3_2_op(b3)
         b3 = self.b3_3_op(b3)
-        b_pool = nn.AvgPool2d(kernel_size=3, stride=1, padding=1)(x)
+        b_pool = self.avg_pool_op(x)
         b_pool = self.branch_pool_op(b_pool)
         x = torch.cat([b1, b5, b3, b_pool], 1)
         return x
@@ -664,7 +678,7 @@ class InceptionA(nn.Module):
         self.b3_1 = self.b3_1_op(x)
         self.b3_2 = self.b3_2_op(self.b3_1)
         self.b3_3 = self.b3_3_op(self.b3_2)
-        self.b_pool_1 = nn.AvgPool2d(kernel_size=3, stride=1, padding=1)(x)
+        self.b_pool_1 = self.avg_pool_op(x)
         self.b_pool_2 = self.branch_pool_op(self.b_pool_1)
 
         self.concat = torch.cat([self.b1, self.b5_2, self.b3_3, self.b_pool_2], 1)
@@ -781,7 +795,7 @@ class InceptionA(nn.Module):
         x3, locations3, p_height3, p_width3 = self.__pytch_single_layer(batch_size, self.b3_2_inc_op, self.b3_1.data, 64, 35, 35, 1, 1, 1, 1, 3, 3, x3, p_height3, p_width3, locations3)
         x3, locations3, p_height3, p_width3 = self.__pytch_single_layer(batch_size, self.b3_3_inc_op, self.b3_2.data, 96, 35, 35, 1, 1, 1, 1, 3, 3, x3, p_height3, p_width3, locations3)
         
-        xp, locationsp, p_heightp, p_widthp = self.__pytch_single_layer(batch_size, nn.AvgPool2d(kernel_size=3, stride=1), self.input.data, self.in_channels, 35, 35, 1, 1, 1, 1, 3, 3, patches, p_height, p_width, in_locations)
+        xp, locationsp, p_heightp, p_widthp = self.__pytch_single_layer(batch_size, self.avg_pool_inc_op, self.input.data, self.in_channels, 35, 35, 1, 1, 1, 1, 3, 3, patches, p_height, p_width, in_locations)
         xp, locationsp, p_heightp, p_widthp = self.__pytch_single_layer(batch_size, self.branch_pool_inc_op, self.b_pool_1.data, self.in_channels, 35, 35, 1, 1, 0, 0, 1, 1, xp, p_heightp, p_heightp, locationsp)
         
         if 'stack' in self.tensor_cache:
@@ -816,22 +830,39 @@ class InceptionA(nn.Module):
         out_p_height = int(min(math.ceil((p_height + k_y - 1.0)/s_y), size))
         out_p_width = int(min(math.ceil((p_width + k_x - 1.0)/s_x), size))
         
-        in_p_height = k_y + (out_p_height-1)*s_y
-        in_p_width = k_x + (out_p_width-1)*s_x
+        #in_p_height = k_y + (out_p_height-1)*s_y
+        #in_p_width = k_x + (out_p_width-1)*s_x
 
+        #if (out_p_height > round(size*self.beta)) or (out_p_width > round(size*self.beta)):
+        #    temp_out_p_height = min(int(round(size*self.beta)), out_p_height)
+        #    temp_out_p_width = min(int(round(size*self.beta)), out_p_width)
+        #    
+        #    remove_y = (out_p_height-temp_out_p_height)*s_y
+        #    remove_x = (out_p_width-temp_out_p_width)*s_x
+        #    
+        #    in_p_height -= remove_y
+        #    in_p_width -= remove_x
+        #    
+        #    out_p_height = temp_out_p_height
+        #    out_p_width = temp_out_p_width
+            
+            
         if (out_p_height > round(size*self.beta)) or (out_p_width > round(size*self.beta)):
             temp_out_p_height = min(int(round(size*self.beta)), out_p_height)
             temp_out_p_width = min(int(round(size*self.beta)), out_p_width)
             
-            remove_y = (out_p_height-temp_out_p_height)*s_y
-            remove_x = (out_p_width-temp_out_p_width)*s_x
+            new_p_height = temp_out_p_height*s_y-k_y+1
+            new_p_width = temp_out_p_width*s_x-k_x+1            
             
-            in_p_height -= remove_y
-            in_p_width -= remove_x
+            remove_y = p_height - new_p_height
+            remove_x = p_width - new_p_width
             
             out_p_height = temp_out_p_height
             out_p_width = temp_out_p_width
 
+        in_p_height = k_y + (out_p_height-1)*s_y
+        in_p_width = k_x + (out_p_width-1)*s_x         
+                        
         out_locations = self.__get_output_locations(in_locations, out_p_height, out_p_width, s_y, s_x,
                                                     p_y, p_x, k_y, k_x, prev_size, size, remove_y=remove_y, remove_x=remove_x)
 
@@ -922,6 +953,9 @@ class InceptionB(nn.Module):
         self.b3_db_3_inc_op = nn.Sequential(nn.Conv2d(96, 96, kernel_size=3, stride=2),
                                 nn.BatchNorm2d(96, eps=0.001), nn.ReLU(inplace=True))
 
+        self.max_pool_op = nn.MaxPool2d(kernel_size=3, stride=2)
+        self.max_pool_inc_op = nn.MaxPool2d(kernel_size=3, stride=2)
+
         self.in_channels = in_channels
         self.beta = beta
         self.gpu = gpu
@@ -934,7 +968,7 @@ class InceptionB(nn.Module):
         b3_db = self.b3_db_2_op(b3_db)
         b3_db = self.b3_db_3_op(b3_db)
 
-        b_pool = nn.MaxPool2d(kernel_size=3, stride=2)(x)
+        b_pool = self.max_pool_op(x)
 
         outputs = [b3, b3_db, b_pool]
         x = torch.cat(outputs, 1)
@@ -952,7 +986,7 @@ class InceptionB(nn.Module):
         self.b3_db_2 = self.b3_db_2_op(self.b3_db_1)
         self.b3_db_3 = self.b3_db_3_op(self.b3_db_2)
 
-        self.b_pool = nn.MaxPool2d(kernel_size=3, stride=2)(x)
+        self.b_pool = self.max_pool_op(x)
 
         outputs = [self.b3, self.b3_db_3, self.b_pool]
         self.concat = torch.cat(outputs, 1)
@@ -1036,7 +1070,7 @@ class InceptionB(nn.Module):
         x3_db, locations3_db, p_height3_db, p_width3_db = self.__pytch_single_layer(batch_size, self.b3_db_2_inc_op, self.b3_db_1, 64, 35, 35, 1, 1, 1, 1, 3, 3, x3_db, p_height3_db, p_width3_db, locations3_db)
         x3_db, locations3_db, p_height3_db, p_width3_db = self.__pytch_single_layer(batch_size, self.b3_db_3_inc_op, self.b3_db_2, 96, 35, 17, 2, 2, 0, 0, 3, 3, x3_db, p_height3_db, p_width3_db, locations3_db)
 
-        xp, locationsp, p_heightp, p_widthp = self.__pytch_single_layer(batch_size, nn.MaxPool2d(kernel_size=3, stride=2), self.input, self.in_channels, 35, 17, 2, 2, 0, 0, 3, 3, patches, p_height, p_width, in_locations)
+        xp, locationsp, p_heightp, p_widthp = self.__pytch_single_layer(batch_size, self.max_pool_inc_op, self.input, self.in_channels, 35, 17, 2, 2, 0, 0, 3, 3, patches, p_height, p_width, in_locations)
 
         if 'stack' in self.tensor_cache:
             stack = self.tensor_cache['stack']
@@ -1066,21 +1100,37 @@ class InceptionB(nn.Module):
         out_p_height = int(min(math.ceil((p_height + k_y - 1.0)/s_y), size))
         out_p_width = int(min(math.ceil((p_width + k_x - 1.0)/s_x), size))
         
-        in_p_height = k_y + (out_p_height-1)*s_y
-        in_p_width = k_x + (out_p_width-1)*s_x
+#         in_p_height = k_y + (out_p_height-1)*s_y
+#         in_p_width = k_x + (out_p_width-1)*s_x
 
+#         if (out_p_height > round(size*self.beta)) or (out_p_width > round(size*self.beta)):
+#             temp_out_p_height = min(int(round(size*self.beta)), out_p_height)
+#             temp_out_p_width = min(int(round(size*self.beta)), out_p_width)
+            
+#             remove_y = (out_p_height-temp_out_p_height)*s_y
+#             remove_x = (out_p_width-temp_out_p_width)*s_x
+            
+#             in_p_height -= remove_y
+#             in_p_width -= remove_x
+            
+#             out_p_height = temp_out_p_height
+#             out_p_width = temp_out_p_width
+            
         if (out_p_height > round(size*self.beta)) or (out_p_width > round(size*self.beta)):
             temp_out_p_height = min(int(round(size*self.beta)), out_p_height)
             temp_out_p_width = min(int(round(size*self.beta)), out_p_width)
             
-            remove_y = (out_p_height-temp_out_p_height)*s_y
-            remove_x = (out_p_width-temp_out_p_width)*s_x
+            new_p_height = temp_out_p_height*s_y-k_y+1
+            new_p_width = temp_out_p_width*s_x-k_x+1            
             
-            in_p_height -= remove_y
-            in_p_width -= remove_x
+            remove_y = p_height - new_p_height
+            remove_x = p_width - new_p_width
             
             out_p_height = temp_out_p_height
             out_p_width = temp_out_p_width
+
+        in_p_height = k_y + (out_p_height-1)*s_y
+        in_p_width = k_x + (out_p_width-1)*s_x             
 
         out_locations = self.__get_output_locations(in_locations, out_p_height, out_p_width, s_y, s_x,
                                                     p_y, p_x, k_y, k_x, prev_size, size, remove_y=remove_y, remove_x=remove_x)
@@ -1199,6 +1249,9 @@ class InceptionC(nn.Module):
         self.branch_pool_inc_op = nn.Sequential(nn.Conv2d(in_channels, 192, kernel_size=1),
                                      nn.BatchNorm2d(192, eps=0.001), nn.ReLU(inplace=True))
         
+        self.avg_pool_op = nn.AvgPool2d(kernel_size=3, stride=1, padding=1)
+        self.avg_pool_inc_op = nn.AvgPool2d(kernel_size=3, stride=1)
+        
         self.in_channels = in_channels
         self.gpu = gpu
         self.beta = beta
@@ -1219,7 +1272,7 @@ class InceptionC(nn.Module):
         b7_db = self.b7_db_4_op(b7_db)
         b7_db = self.b7_db_5_op(b7_db)     
     
-        b_pool = nn.AvgPool2d(kernel_size=3, stride=1, padding=1)(x)
+        b_pool = self.avg_pool_op(x)
         b_pool = self.branch_pool_op(b_pool)        
         
         outputs = [b1, b7, b7_db, b_pool]
@@ -1242,7 +1295,7 @@ class InceptionC(nn.Module):
         self.b7_db_4 = self.b7_db_4_op(self.b7_db_3)
         self.b7_db_5 = self.b7_db_5_op(self.b7_db_4 )
 
-        self.b_pool_1 = nn.AvgPool2d(kernel_size=3, stride=1, padding=1)(x)
+        self.b_pool_1 = self.avg_pool_op(x)
         self.b_pool_2 = self.branch_pool_op(self.b_pool_1)
 
         outputs = [self.b1, self.b7_3, self.b7_db_5, self.b_pool_2]
@@ -1381,7 +1434,7 @@ class InceptionC(nn.Module):
         x7_db, locations7_db, p_height7_db, p_width7_db = self.__pytch_single_layer(batch_size, self.b7_db_5_inc_op, self.b7_db_4, self.c7, 17, 17, 1, 1, 0, 3, 1, 7, x7_db, p_height7_db, p_width7_db, locations7_db)        
         
         
-        xp, locationsp, p_heightp, p_widthp = self.__pytch_single_layer(batch_size, nn.AvgPool2d(kernel_size=3, stride=1), self.input, self.in_channels, 17, 17, 1, 1, 1, 1, 3, 3, patches, p_height, p_width, in_locations)
+        xp, locationsp, p_heightp, p_widthp = self.__pytch_single_layer(batch_size, self.avg_pool_inc_op, self.input, self.in_channels, 17, 17, 1, 1, 1, 1, 3, 3, patches, p_height, p_width, in_locations)
         xp, locationsp, p_heightp, p_widthp = self.__pytch_single_layer(batch_size, self.branch_pool_inc_op, self.b_pool_1, self.in_channels, 17, 17, 1, 1, 0, 0, 1, 1, xp, p_heightp, p_widthp, locationsp)
         
         
@@ -1417,21 +1470,37 @@ class InceptionC(nn.Module):
         out_p_height = int(min(math.ceil((p_height + k_y - 1.0)/s_y), size))
         out_p_width = int(min(math.ceil((p_width + k_x - 1.0)/s_x), size))
         
-        in_p_height = k_y + (out_p_height-1)*s_y
-        in_p_width = k_x + (out_p_width-1)*s_x
+#         in_p_height = k_y + (out_p_height-1)*s_y
+#         in_p_width = k_x + (out_p_width-1)*s_x
 
+#         if (out_p_height > round(size*self.beta)) or (out_p_width > round(size*self.beta)):
+#             temp_out_p_height = min(int(round(size*self.beta)), out_p_height)
+#             temp_out_p_width = min(int(round(size*self.beta)), out_p_width)
+            
+#             remove_y = (out_p_height-temp_out_p_height)*s_y
+#             remove_x = (out_p_width-temp_out_p_width)*s_x
+            
+#             in_p_height -= remove_y
+#             in_p_width -= remove_x
+            
+#             out_p_height = temp_out_p_height
+#             out_p_width = temp_out_p_width
+            
         if (out_p_height > round(size*self.beta)) or (out_p_width > round(size*self.beta)):
             temp_out_p_height = min(int(round(size*self.beta)), out_p_height)
             temp_out_p_width = min(int(round(size*self.beta)), out_p_width)
             
-            remove_y = (out_p_height-temp_out_p_height)*s_y
-            remove_x = (out_p_width-temp_out_p_width)*s_x
+            new_p_height = temp_out_p_height*s_y-k_y+1
+            new_p_width = temp_out_p_width*s_x-k_x+1            
             
-            in_p_height -= remove_y
-            in_p_width -= remove_x
+            remove_y = p_height - new_p_height
+            remove_x = p_width - new_p_width
             
             out_p_height = temp_out_p_height
             out_p_width = temp_out_p_width
+
+        in_p_height = k_y + (out_p_height-1)*s_y
+        in_p_width = k_x + (out_p_width-1)*s_x             
 
         out_locations = self.__get_output_locations(in_locations, out_p_height, out_p_width, s_y, s_x,
                                                     p_y, p_x, k_y, k_x, prev_size, size, remove_y=remove_y, remove_x=remove_x)
@@ -1533,6 +1602,9 @@ class InceptionD(nn.Module):
         self.b7_4_inc_op = nn.Sequential(nn.Conv2d(192, 192, kernel_size=3, stride=2),
                                      nn.BatchNorm2d(192, eps=0.001), nn.ReLU(inplace=True))
         
+        self.max_pool_op = nn.MaxPool2d(kernel_size=3, stride=2)
+        self.max_pool_inc_op = nn.MaxPool2d(kernel_size=3, stride=2)
+        
         self.beta = beta
         self.gpu = gpu
         self.tensor_cache = {}
@@ -1548,7 +1620,7 @@ class InceptionD(nn.Module):
         b7 = self.b7_3_op(b7)
         b7 = self.b7_4_op(b7)
 
-        b_pool = nn.MaxPool2d(kernel_size=3, stride=2)(x)
+        b_pool = self.max_pool_op(x)
     
         outputs = [b3, b7, b_pool]
         return torch.cat(outputs, 1)
@@ -1566,7 +1638,7 @@ class InceptionD(nn.Module):
         self.b7_3 = self.b7_3_op(self.b7_2)
         self.b7_4 = self.b7_4_op(self.b7_3)
 
-        self.b_pool = nn.MaxPool2d(kernel_size=3, stride=2)(x)
+        self.b_pool = self.max_pool_op(x)
         outputs = [self.b3_2, self.b7_4, self.b_pool]
         self.concat = torch.cat(outputs, 1)
         return self.concat
@@ -1672,7 +1744,7 @@ class InceptionD(nn.Module):
         x7, locations7, p_height7, p_width7 = self.__pytch_single_layer(batch_size, self.b7_3_inc_op, self.b7_2.data, 192, 17, 17, 1, 1, 3, 0, 7, 1, x7, p_height7, p_width7, locations7)
         x7, locations7, p_height7, p_width7 = self.__pytch_single_layer(batch_size, self.b7_4_inc_op, self.b7_3.data, 192, 17, 8, 2, 2, 0, 0, 3, 3, x7, p_height7, p_width7, locations7)
         
-        xp, locationsp, p_heightp, p_widthp = self.__pytch_single_layer(batch_size, nn.MaxPool2d(kernel_size=3, stride=2), self.input, self.in_channels, 17, 8, 2, 2, 0, 0, 3, 3, patches, p_height, p_width, in_locations)
+        xp, locationsp, p_heightp, p_widthp = self.__pytch_single_layer(batch_size, self.max_pool_inc_op, self.input, self.in_channels, 17, 8, 2, 2, 0, 0, 3, 3, patches, p_height, p_width, in_locations)
         
         if 'stack' in self.tensor_cache:
             stack = self.tensor_cache['stack']
@@ -1702,21 +1774,37 @@ class InceptionD(nn.Module):
         out_p_height = int(min(math.ceil((p_height + k_y - 1.0)/s_y), size))
         out_p_width = int(min(math.ceil((p_width + k_x - 1.0)/s_x), size))
         
-        in_p_height = k_y + (out_p_height-1)*s_y
-        in_p_width = k_x + (out_p_width-1)*s_x
+#         in_p_height = k_y + (out_p_height-1)*s_y
+#         in_p_width = k_x + (out_p_width-1)*s_x
 
+#         if (out_p_height > round(size*self.beta)) or (out_p_width > round(size*self.beta)):
+#             temp_out_p_height = min(int(round(size*self.beta)), out_p_height)
+#             temp_out_p_width = min(int(round(size*self.beta)), out_p_width)
+            
+#             remove_y = (out_p_height-temp_out_p_height)*s_y
+#             remove_x = (out_p_width-temp_out_p_width)*s_x
+            
+#             in_p_height -= remove_y
+#             in_p_width -= remove_x
+            
+#             out_p_height = temp_out_p_height
+#             out_p_width = temp_out_p_width
+            
         if (out_p_height > round(size*self.beta)) or (out_p_width > round(size*self.beta)):
             temp_out_p_height = min(int(round(size*self.beta)), out_p_height)
             temp_out_p_width = min(int(round(size*self.beta)), out_p_width)
             
-            remove_y = (out_p_height-temp_out_p_height)*s_y
-            remove_x = (out_p_width-temp_out_p_width)*s_x
+            new_p_height = temp_out_p_height*s_y-k_y+1
+            new_p_width = temp_out_p_width*s_x-k_x+1            
             
-            in_p_height -= remove_y
-            in_p_width -= remove_x
+            remove_y = p_height - new_p_height
+            remove_x = p_width - new_p_width
             
             out_p_height = temp_out_p_height
             out_p_width = temp_out_p_width
+
+        in_p_height = k_y + (out_p_height-1)*s_y
+        in_p_width = k_x + (out_p_width-1)*s_x             
 
         out_locations = self.__get_output_locations(in_locations, out_p_height, out_p_width, s_y, s_x,
                                                     p_y, p_x, k_y, k_x, prev_size, size, remove_y=remove_y, remove_x=remove_x)
@@ -1830,6 +1918,9 @@ class InceptionE(nn.Module):
         self.branch_pool_inc_op = nn.Sequential(nn.Conv2d(in_channels, 192, kernel_size=1),
                                      nn.BatchNorm2d(192, eps=0.001), nn.ReLU(inplace=True))
         
+        self.branch_avg_pool_op = nn.AvgPool2d(kernel_size=3, stride=1, padding=1)
+        self.branch_avg_pool_inc_op = nn.AvgPool2d(kernel_size=3, stride=1, padding=0)
+        
         self.beta = beta
         self.gpu = gpu
         self.in_channels = in_channels
@@ -1855,7 +1946,7 @@ class InceptionE(nn.Module):
         ]
         b3_db = torch.cat(b3_db, 1)
 
-        branch_pool = nn.AvgPool2d(kernel_size=3, stride=1, padding=1)(x)
+        branch_pool = self.branch_avg_pool_op(x)
         branch_pool = self.branch_pool_op(branch_pool)
     
         outputs = [b1, b3, b3_db, branch_pool]
@@ -1886,7 +1977,7 @@ class InceptionE(nn.Module):
         ]
         self.b3_db = torch.cat(b3_db, 1)
 
-        self.b_pool_1 = nn.AvgPool2d(kernel_size=3, stride=1, padding=1)(x)
+        self.b_pool_1 = self.branch_avg_pool_op(x)
         self.b_pool_2 = self.branch_pool_op(self.b_pool_1)
 
         outputs = [self.b1, self.b3, self.b3_db, self.b_pool_2]
@@ -1965,7 +2056,7 @@ class InceptionE(nn.Module):
             stack3_db[i,384:384*2,:,:] = temp[:,locations3_db[i][0]:locations3_db[i][0]+p_height3_db,locations3_db[i][1]:locations3_db[i][1]+p_width3_db]
         
     
-        xp, locationsp, p_heightp, p_widthp = self.__pytch_single_layer(batch_size, nn.AvgPool2d(kernel_size=3, stride=1), self.input, self.in_channels, 8, 8, 1, 1, 1, 1, 3, 3, patches, p_height, p_width, in_locations)
+        xp, locationsp, p_heightp, p_widthp = self.__pytch_single_layer(batch_size, self.branch_avg_pool_inc_op, self.input, self.in_channels, 8, 8, 1, 1, 1, 1, 3, 3, patches, p_height, p_width, in_locations)
         xp, locationsp, p_heightp, p_widthp = self.__pytch_single_layer(batch_size, self.branch_pool_inc_op, self.b_pool_1.data, self.in_channels, 8, 8, 1, 1, 0, 0, 1, 1, xp, p_heightp, p_widthp, locationsp)
 
         if 'stack' in self.tensor_cache:
@@ -2133,21 +2224,37 @@ class InceptionE(nn.Module):
         out_p_height = int(min(math.ceil((p_height + k_y - 1.0)/s_y), size))
         out_p_width = int(min(math.ceil((p_width + k_x - 1.0)/s_x), size))
         
-        in_p_height = k_y + (out_p_height-1)*s_y
-        in_p_width = k_x + (out_p_width-1)*s_x
+#         in_p_height = k_y + (out_p_height-1)*s_y
+#         in_p_width = k_x + (out_p_width-1)*s_x
 
+#         if (out_p_height > round(size*self.beta)) or (out_p_width > round(size*self.beta)):
+#             temp_out_p_height = min(int(round(size*self.beta)), out_p_height)
+#             temp_out_p_width = min(int(round(size*self.beta)), out_p_width)
+            
+#             remove_y = (out_p_height-temp_out_p_height)*s_y
+#             remove_x = (out_p_width-temp_out_p_width)*s_x
+            
+#             in_p_height -= remove_y
+#             in_p_width -= remove_x
+            
+#             out_p_height = temp_out_p_height
+#             out_p_width = temp_out_p_width
+            
         if (out_p_height > round(size*self.beta)) or (out_p_width > round(size*self.beta)):
             temp_out_p_height = min(int(round(size*self.beta)), out_p_height)
             temp_out_p_width = min(int(round(size*self.beta)), out_p_width)
             
-            remove_y = (out_p_height-temp_out_p_height)*s_y
-            remove_x = (out_p_width-temp_out_p_width)*s_x
+            new_p_height = temp_out_p_height*s_y-k_y+1
+            new_p_width = temp_out_p_width*s_x-k_x+1            
             
-            in_p_height -= remove_y
-            in_p_width -= remove_x
+            remove_y = p_height - new_p_height
+            remove_x = p_width - new_p_width
             
             out_p_height = temp_out_p_height
             out_p_width = temp_out_p_width
+
+        in_p_height = k_y + (out_p_height-1)*s_y
+        in_p_width = k_x + (out_p_width-1)*s_x             
 
         out_locations = self.__get_output_locations(in_locations, out_p_height, out_p_width, s_y, s_x,
                                                     p_y, p_x, k_y, k_x, prev_size, size, remove_y=remove_y, remove_x=remove_x)

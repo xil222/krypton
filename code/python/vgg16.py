@@ -106,6 +106,7 @@ class VGG16(nn.Module):
         x = self.conv5_3_op(x)
         x = self.pool5_op(x)
         #return x
+    
         x = x.view(x.size(0), -1)
         x = self.classifier(x)
         
@@ -345,13 +346,22 @@ class VGG16(nn.Module):
             remove = 0
             orig_patch_size = patch_size
             out_p_size = int(min(math.ceil((patch_size + k - 1.0)/s), size))
-            in_p_size = k + (out_p_size-1)*s
             
+            #in_p_size = k + (out_p_size-1)*s
+            
+            #if out_p_size > round(size*beta):
+            #    temp_out_p_size = int(round(size*beta))
+            #    remove = (out_p_size-temp_out_p_size)*s
+            #    in_p_size -= remove
+            #    out_p_size = temp_out_p_size
+                
             if out_p_size > round(size*beta):
                 temp_out_p_size = int(round(size*beta))
-                remove = (out_p_size-temp_out_p_size)*s
-                in_p_size -= remove
+                new_patch_size = temp_out_p_size*s-k+1
+                remove = patch_size - new_patch_size
                 out_p_size = temp_out_p_size
+                
+            in_p_size = k + (out_p_size-1)*s                
             
             out_locations = self.__get_output_locations(in_locations, out_p_size, s, p, k, prev_size, size, remove=remove)
             

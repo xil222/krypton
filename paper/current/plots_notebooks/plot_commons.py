@@ -79,15 +79,14 @@ def calculate_ivm_flops(model, x, patch_size_x, patch_size_y, patch_x0, patch_y0
     counter = 0
     for node in nodes:
         if node.kind() in ['onnx::Conv', 'onnx::MaxPool', 'onnx::AveragePool']:
-            kernel_height, kernel_width = node['kernel_shape']
+            kernel_width, kernel_height = node['kernel_shape']
             stride_x, stride_y = node['strides']
 
+            padding_x, padding_y, _, _ = node['pads']
             if node.kind() == 'onnx::Conv':
-                padding_x, _, padding_y, _ = node['pads']
                 group = node['group']
             else:
                 group = 1
-                padding_x, _, padding_y,_ = node['pads']
 
             inputs = list(node.inputs())
             outputs = list(node.outputs())
@@ -98,53 +97,22 @@ def calculate_ivm_flops(model, x, patch_size_x, patch_size_y, patch_x0, patch_y0
             output_width = ((in_width - kernel_width + 2 * padding_x) // stride_x + 1)
             output_height = ((in_height - kernel_height + 2 * padding_y) // stride_y + 1)
 
+            _, _, _, _, patch_x0, patch_x1, patch_y0, patch_y1 = get_ivm_patch_coordinates(
+                patch_x1 - patch_x0, patch_y1 - patch_y0, patch_x0, patch_y0, padding_x, padding_y,
+                kernel_width, kernel_height, stride_x, stride_y, in_width, in_height, output_width, output_height, tau)
+            
             if node.kind() == 'onnx::Conv':
                 out_channels, _, _, _ = inputs[1].type().sizes()
 
-                _, _, _, _, patch_x0, patch_x1, patch_y0, patch_y1 = get_ivm_patch_coordinates(patch_x1 - patch_x0,
-                                                                                               patch_y1 - patch_y0,
-                                                                                               patch_x0,
-                                                                                               patch_y0,
-                                                                                               padding_x,
-                                                                                               padding_y,
-                                                                                               kernel_width,
-                                                                                               kernel_height,
-                                                                                               stride_x,
-                                                                                               stride_y,
-                                                                                               in_width,
-                                                                                               in_height,
-                                                                                               output_width,
-                                                                                               output_height,
-                                                                                               tau)
-
                 temp = (patch_x1 - patch_x0) * (
-                patch_y1 - patch_y0) * out_channels * (kernel_width ** 2) * in_channels / group
+                patch_y1 - patch_y0) * out_channels * (kernel_width * kernel_height) * in_channels / group
 
                 if debug:
-                    print (counter, "FLOPS:", node.kind(), temp / (1000 ** 2), (int(output_width), int(output_width)),
-                           (patch_x0, patch_x1, patch_y0, patch_y1, int(out_channels)), ((int(kernel_width),
-                                                                                                  int(kernel_width)),
-                                                                                                 int(in_channels/group)))
+                    print (counter, "FLOPS:", node.kind(), temp / (1000 ** 2), int(out_channels), (int(output_width), int(output_width)), (patch_x0, patch_x1, patch_y0, patch_y1), ((int(kernel_width), int(kernel_height)), int(in_channels/group)))
                     counter += 1
 
                 ops_count += temp
-            else:
-
-                _, _, _, _, patch_x0, patch_x1, patch_y0, patch_y1 = get_ivm_patch_coordinates(patch_x1 - patch_x0,
-                                                                                               patch_y1 - patch_y0,
-                                                                                               patch_x0,
-                                                                                               patch_y0,
-                                                                                               padding_x,
-                                                                                               padding_y,
-                                                                                               kernel_width,
-                                                                                               kernel_height,
-                                                                                               stride_x,
-                                                                                               stride_y,
-                                                                                               in_width,
-                                                                                               in_height,
-                                                                                               output_width,
-                                                                                               output_height,
-                                                                                               tau)
+ 
 
             coordinates[outputs[0].uniqueName()] = (patch_x0, patch_x1, patch_y0, patch_y1)
             
@@ -198,12 +166,12 @@ def calculate_flops(model, x, debug=True, graph=None):
         if node.kind() in ['onnx::Conv', 'onnx::MaxPool', 'onnx::AveragePool']:
             kernel_width, kernel_height = node['kernel_shape']
             stride_x, stride_y = node['strides']
-
-            if node.kind() == 'onnx::Conv':
-                padding_x, _, padding_y, _ = node['pads']
+            padding_x, padding_y, _, _ = node['pads']
+            
+            if node.kind() == 'onnx::Conv':    
                 group = node['group']
             else:
-                padding_x, _, padding_y, _ = node['pads']
+                group = 1
 
             inputs = list(node.inputs())
 
@@ -216,7 +184,7 @@ def calculate_flops(model, x, debug=True, graph=None):
                 temp = (output_width * output_height) * out_channels * (kernel_width * kernel_height) * in_channels / group
 
                 if debug:
-                    print (counter, "FLOPS:", node.kind(), out_channels, temp / (1000 ** 2))
+                    print (counter, "FLOPS:", node.kind(), out_channels, temp / (1000 ** 2), (output_width,output_height), (in_x, in_y), (padding_x, padding_y), (stride_x, stride_y), (kernel_width, kernel_height))
                     counter += 1
 
                 ops_count += temp

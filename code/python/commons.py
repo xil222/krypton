@@ -55,8 +55,7 @@ def calc_bbox_coordinates(batch_size, loc_out_tensor, loc_tensor1, loc_tensor2):
     inc_conv_lib.calc_bbox_coordinates(batch_size, loc_out_tensor, loc_tensor1, loc_tensor2)
     return loc_out_tensor
 
-
-def full_inference_e2e(model, file_path, patch_size, stride, batch_size=256, gpu=True, version='v1', image_size=224, x_size=224, y_size=224, n_labels=1000, weights_data=None, loader=None, c=0.0):
+def full_inference_e2e_with_model(full_model, file_path, patch_size, stride, batch_size=256, gpu=True, version='v1', image_size=224, x_size=224, y_size=224, n_labels=1000, weights_data=None, loader=None, c=0.0):
     if loader == None:
         loader = transforms.Compose([transforms.Resize([image_size, image_size]), transforms.ToTensor()])
     orig_image = Image.open(file_path).convert('RGB')
@@ -65,7 +64,6 @@ def full_inference_e2e(model, file_path, patch_size, stride, batch_size=256, gpu
     if gpu:
         orig_image = orig_image.cuda()
     
-    full_model = model(gpu=gpu, n_labels=n_labels, weights_data=weights_data).eval()
     if gpu:
         full_model = full_model.cuda()
     full_model.eval()
@@ -103,12 +101,25 @@ def full_inference_e2e(model, file_path, patch_size, stride, batch_size=256, gpu
 
     x = np.array(logit_values).reshape(output_width, output_width)
     
-    return x, prob
+    return x, prob, logit_index
 
 
-def inc_inference_e2e(model, file_path, patch_size, stride, batch_size=64, beta=1.0, x0=0, y0=0, image_size=224,
+def full_inference_e2e(model_class, file_path, patch_size, stride, batch_size=256, gpu=True, version='v1', image_size=224, x_size=224, y_size=224, n_labels=1000, weights_data=None, loader=None, c=0.0):
+    
+    full_model = model_class(gpu=gpu, n_labels=n_labels, weights_data=weights_data).eval()
+    
+    return full_inference_e2e_with_model(full_model, file_path, patch_size, stride, batch_size=batch_size, gpu=gpu, version=version, image_size=image_size, x_size=x_size, y_size=y_size, n_labels=n_labels, weights_data=weights_data, loader=loader, c=c)
+    
+
+def inc_inference_e2e(model_class, file_path, patch_size, stride, batch_size=64, beta=1.0, x0=0, y0=0, image_size=224,
                       x_size=224, y_size=224, gpu=True, version='v1', n_labels=1000, weights_data=None, loader=None, c=0.0):
+    inc_model = model_class(beta=beta, gpu=gpu, n_labels=n_labels, weights_data=weights_data).eval()
+    
+    return inc_inference_e2e_with_model(inc_model, file_path, patch_size, stride, batch_size=batch_size, beta=beta, x0=x0, y0=y0, image_size=image_size, x_size=x_size, y_size=y_size, gpu=gpu, version=version, n_labels=n_labels, weights_data=weights_data, loader=loader, c=c)
 
+def inc_inference_e2e_with_model(inc_model, file_path, patch_size, stride, batch_size=64, beta=1.0, x0=0, y0=0, image_size=224,
+                      x_size=224, y_size=224, gpu=True, version='v1', n_labels=1000, weights_data=None, loader=None, c=0.0):
+    
     if loader == None:
         loader = transforms.Compose([transforms.Resize([image_size, image_size]), transforms.ToTensor()])
     orig_image = Image.open(file_path).convert('RGB')
@@ -128,7 +139,7 @@ def inc_inference_e2e(model, file_path, patch_size, stride, batch_size=64, beta=
     patch_positions = __generate_positions(x_output_width, y_output_width)
     
     num_batches = int(math.ceil(total_number * 1.0 / batch_size))
-    inc_model = model(beta=beta, gpu=gpu, n_labels=n_labels, weights_data=weights_data).eval()
+    
     
     if gpu:
         inc_model = inc_model.cuda()
@@ -169,14 +180,14 @@ def inc_inference_e2e(model, file_path, patch_size, stride, batch_size=64, beta=
     del inc_model
     gc.collect()
 
-    return logit_values, prob
+    return logit_values, prob, logit_index
 
 
 
 def adaptive_drilldown(model, file_path, patch_size, stride, batch_size=128, image_size=224, beta=1.0, percentile=75, gpu=True, version='v1', n_labels=1000, weights_data=None, loader=None):
     final_out_width = int(math.ceil((image_size*1.0-patch_size)/stride))
     #checking for interested regions
-    temp1, prob = inc_inference_e2e(model, file_path, max(16, patch_size), max(8, patch_size/2),
+    temp1, prob, logit_index = inc_inference_e2e(model, file_path, max(16, patch_size), max(8, patch_size/2),
                                     batch_size=batch_size, beta=beta, image_size=image_size, x_size=image_size,
                               y_size=image_size, gpu=gpu, version=version, n_labels=n_labels, weights_data=weights_data, loader=loader)
     temp1 = cv2.resize(temp1, (final_out_width, final_out_width))
@@ -200,7 +211,7 @@ def adaptive_drilldown(model, file_path, patch_size, stride, batch_size=128, ima
     #optional gaussian filter
     #temp1 = ndimage.gaussian_filter(temp1, sigma=.75)
     
-    return temp1, prob
+    return temp1, prob, logit_index
     
     
 def generate_heatmap(image_file_path, x, show=True, label="", width=224, alpha=1.0, prob=1.0):

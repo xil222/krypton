@@ -522,29 +522,50 @@ class InceptionC(nn.Module):
     def __init__(self, in_channels, c7):
         super(InceptionC, self).__init__()
         
-        self.b1_op = nn.Sequential(nn.Conv2d(in_channels, 192, kernel_size=1, bias=False),
+        self.b1_op = nn.Sequential(nn.Conv2d(in_channels, 192, kernel_size=1),
                                      nn.BatchNorm2d(c7, eps=0.001), nn.ReLU(inplace=True))
+        self.b1_inc_op = nn.Sequential(nn.Conv2d(in_channels, 192, kernel_size=1),
+                                     nn.BatchNorm2d(c7, eps=0.001), nn.ReLU(inplace=True))        
         
-        self.b7_1_op = nn.Sequential(nn.Conv2d(in_channels, c7, kernel_size=1, bias=False),
+        self.b7_1_op = nn.Sequential(nn.Conv2d(in_channels, c7, kernel_size=1),
                                      nn.BatchNorm2d(c7, eps=0.001), nn.ReLU(inplace=True))
-        self.b7_2_op = nn.Sequential(nn.Conv2d(c7, c7, kernel_size=(1, 7), padding=(0, 3), bias=False),
+        self.b7_1_inc_op = nn.Sequential(nn.Conv2d(in_channels, c7, kernel_size=1),
                                      nn.BatchNorm2d(c7, eps=0.001), nn.ReLU(inplace=True))
-        self.b7_3_op = nn.Sequential(nn.Conv2d(c7, 192, kernel_size=(7, 1), padding=(3, 0), bias=False),
+        self.b7_2_op = nn.Sequential(nn.Conv2d(c7, c7, kernel_size=(1, 7), padding=(0, 3),
+                                     nn.BatchNorm2d(c7, eps=0.001), nn.ReLU(inplace=True))
+        self.b7_2_inc_op = nn.Sequential(nn.Conv2d(c7, c7, kernel_size=(1, 7),
+                                     nn.BatchNorm2d(c7, eps=0.001), nn.ReLU(inplace=True))
+        self.b7_3_op = nn.Sequential(nn.Conv2d(c7, 192, kernel_size=(7, 1), padding=(3, 0),
+                                     nn.BatchNorm2d(c7, eps=0.001), nn.ReLU(inplace=True))
+        self.b7_3_inc_op = nn.Sequential(nn.Conv2d(c7, 192, kernel_size=(7, 1),
                                      nn.BatchNorm2d(c7, eps=0.001), nn.ReLU(inplace=True))
 
-        self.b7_db_1_op = nn.Sequential(nn.Conv2d(in_channels, c7, kernel_size=1, bias=False),
+                                     
+        self.b7_db_1_op = nn.Sequential(nn.Conv2d(in_channels, c7, kernel_size=1),
                                      nn.BatchNorm2d(c7, eps=0.001), nn.ReLU(inplace=True))
-        self.b7_db_2_op = nn.Sequential(nn.Conv2d(c7, c7, kernel_size=(7, 1), padding=(3,0), bias=False),
+        self.b7_db_1_inc_op = nn.Sequential(nn.Conv2d(in_channels, c7, kernel_size=1),
                                      nn.BatchNorm2d(c7, eps=0.001), nn.ReLU(inplace=True))
-        self.b7_db_3_op = nn.Sequential(nn.Conv2d(c7, c7, kernel_size=(1, 7), padding=(0,3), bias=False),
+        self.b7_db_2_op = nn.Sequential(nn.Conv2d(c7, c7, kernel_size=(7, 1), padding=(3,0)),
                                      nn.BatchNorm2d(c7, eps=0.001), nn.ReLU(inplace=True))
-        
-        self.b7_db_4_op = nn.Sequential(nn.Conv2d(c7, c7, kernel_size=(7, 1), padding=(3,0), bias=False),
+        self.b7_db_2_inc_op = nn.Sequential(nn.Conv2d(c7, c7, kernel_size=(7, 1)),
                                      nn.BatchNorm2d(c7, eps=0.001), nn.ReLU(inplace=True))
-        self.b7_db_5_op = nn.Sequential(nn.Conv2d(c7, 192, kernel_size=(1, 7), padding=(0,3), bias=False),
+        self.b7_db_3_op = nn.Sequential(nn.Conv2d(c7, c7, kernel_size=(1, 7), padding=(0,3)),
+                                     nn.BatchNorm2d(c7, eps=0.001), nn.ReLU(inplace=True))
+        self.b7_db_3_inc_op = nn.Sequential(nn.Conv2d(c7, c7, kernel_size=(1, 7)),
+                                     nn.BatchNorm2d(c7, eps=0.001), nn.ReLU(inplace=True))
+                
+        self.b7_db_4_op = nn.Sequential(nn.Conv2d(c7, c7, kernel_size=(7, 1), padding=(3,0)),
+                                     nn.BatchNorm2d(c7, eps=0.001), nn.ReLU(inplace=True))
+        self.b7_db_4_inc_op = nn.Sequential(nn.Conv2d(c7, c7, kernel_size=(7, 1)),
+                                     nn.BatchNorm2d(c7, eps=0.001), nn.ReLU(inplace=True))
+        self.b7_db_5_op = nn.Sequential(nn.Conv2d(c7, 192, kernel_size=(1, 7), padding=(0,3)),
+                                     nn.BatchNorm2d(c7, eps=0.001), nn.ReLU(inplace=True))
+        self.b7_db_5_inc_op = nn.Sequential(nn.Conv2d(c7, 192, kernel_size=(1, 7)),
                                      nn.BatchNorm2d(c7, eps=0.001), nn.ReLU(inplace=True))
 
-        self.branch_pool_op = nn.Sequential(nn.Conv2d(in_channels, 192, kernel_size=1, bias=False),
+        self.branch_pool_op = nn.Sequential(nn.Conv2d(in_channels, 192, kernel_size=1),
+                                     nn.BatchNorm2d(192, eps=0.001), nn.ReLU(inplace=True))
+        self.branch_pool_inc_op = nn.Sequential(nn.Conv2d(in_channels, 192, kernel_size=1),
                                      nn.BatchNorm2d(192, eps=0.001), nn.ReLU(inplace=True))
 
     def forward(self, x):
@@ -587,7 +608,7 @@ class InceptionC(nn.Module):
         return torch.cat(outputs, 1)
 
 
-    def forward_inc_v2(self, x, locations, p_height, p_width, beta=1.0):
+    def forward_gpu(self, x, locations, p_height, p_width, beta=1.0):
         # 1x1
         locations1 = locations.clone()
         p_height1, p_width1 = inc_convolution_bn(x, self.b1_op[0].weight.data,

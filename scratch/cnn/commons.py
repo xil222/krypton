@@ -19,7 +19,7 @@ from curvetools import generate_map
 from heatmap import Heatmapper
 from sklearn.metrics import f1_score
 
-sys.path.append('../')
+sys.path.append('../../code/')
 from cuda._ext import inc_conv_lib
 
 

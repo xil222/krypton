@@ -86,7 +86,7 @@ class IncrementalResNet18V1(nn.Module):
         self.cache = {}
 
         
-    def forward(self, image, patch, in_locations, patch_size, beta=1.0):
+    def forward_pytorch(self, image, patch, in_locations, patch_size,_, beta=1.0):
         if self.gpu:
             patch = patch.cuda()
             image = image.cuda()
@@ -399,7 +399,7 @@ class IncrementalResNet18V1(nn.Module):
                 
 if __name__ == '__main__':
     batch_size = 1
-    patch_size = 16
+    patch_size = 120
     input_size = 224
 
     random.seed(0)
@@ -420,10 +420,12 @@ if __name__ == '__main__':
 
     full_model.eval()
     inc_model.eval()
-    x = inc_model(image, image_patch, patch_locations, patch_size)
+    
+    x = inc_model.forward_pytorch(image, image_patch, patch_locations, patch_size, patch_size)
+
     image[:,:,x_loc[0]:x_loc[0]+patch_size,y_loc[0]:y_loc[0]+patch_size] = image_patch
     y = full_model(image)
-    #print(class_names[np.argmax(x.data.cpu().numpy()[0, :])])
+    print(class_names[np.argmax(x.data.cpu().numpy()[0, :])])
 
     temp = y - x
     print(np.max(np.abs(temp.cpu().data.numpy())))
