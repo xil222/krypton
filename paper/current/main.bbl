@@ -102,12 +102,6 @@ Tim Miller.
   sciences.
 \newblock {\em arXiv preprint arXiv:1706.07269}, 2017.
 
-\bibitem{zintgraf2017visualizing}
-Luisa~M Zintgraf et~al.
-\newblock Visualizing deep neural network decisions: Prediction difference
-  analysis.
-\newblock {\em arXiv preprint arXiv:1702.04595}, 2017.
-
 \bibitem{caffemodelzoo}
 Cafee model zoo.
 \newblock \url{https://github.com/BVLC/caffe/wiki/Model-Zoo}.

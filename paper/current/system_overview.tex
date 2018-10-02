@@ -65,14 +65,14 @@ W_M =&~ \lfloor(\texttt{width}(\mathcal{I}_{img}) - \texttt{width}(\mathcal{P}) 
 \label{eqn:mwidth}
 H_M =&~ \lfloor(\texttt{height}(\mathcal{I}_{img}) - \texttt{height}(\mathcal{P}) + 1)/S\rfloor\\
 M \in&~ \mathcal{\rm I\!R}^{H_M \times W_M}\\
-\forall~ x,y \in&~ [0, H_M] \times [0, W_M]:\\
+\forall~ x,y \in&~ [0, H_M) \times [0, W_M):\\
 \label{eqn:patchimpose}
-& \mathcal{I}_{img}^{x,y} \leftarrow ~\mathcal{P} ~ \bm\circ_{x,y} ~ \mathcal{I}_{img}\\
+& \mathcal{I}_{img}^{x,y} \leftarrow ~\mathcal{I}_{img} ~ \bm\circ_{x,y} ~ \mathcal{P} \\
 \label{eqn:outputval}
 & M[x,y] \leftarrow f(\mathcal{I}_{img}^{x,y},C)
 \end{align}
 
-Step (\ref{eqn:mheight}), and (\ref{eqn:mwidth}) calculates the dimensions of the generated heat map $M$ which is dependent on the dimensions of $\mathcal{I}_{img}$, $P$, and $S$.
+Step (\ref{eqn:mheight}), and (\ref{eqn:mwidth}) calculates the dimensions of the generated heat map $M$ which is dependent on the dimensions of $\mathcal{I}_{img}$, $\mathcal{P}$, and $S$.
 Step (\ref{eqn:patchimpose}) superimposes $\mathcal{P}$ on $\mathcal{I}_{img}$ with its top left corner placed on the (x,y) location of $\mathcal{I}_{img}$.
 Step (\ref{eqn:outputval}) calculates the output value at the (x,y) location by performing CNN inference for $\mathcal{I}_{img}^{x,y}$ using $f$ and taking the predicted probability for the label $C$.
 
@@ -84,45 +84,50 @@ We leave support for arbitrary CNNs to future work.
 \subsection{Deep CNN Internals}
 Input and output of individual layers in a Deep CNN except for fully-connected ones are arranged into three dimensional volumes which has a width, height, and depth.
 For example an RGB input image of 224$\times$224 spatial size can be considered as an input volume having a width and height of 224 and a depth of 3 (corresponding to 3 color channels). Every non fully-connected layer will take in an input volume and transform it into another volume.
-A fully-connected layer will transform an input volume into an output vector. For our purpose these transformations can be broadly divided into three categories based on how they operate spatially:
+A fully-connected layer takes in a vector or flattened activation volume as input and transforms it into another vector. For our purpose these transformations can be broadly divided into three categories based on how they operate spatially:
 
 \begin{figure*}[t]
 \includegraphics[width=\textwidth]{images/cnn_simplified}
-\caption{Simplified representation of selected layers of a Deep CNN. For simplicity sake addition of bias is not shown in the Conv. transformation. The values marked in red shows how a small spatial update in the first input would propagate through subsequent transformations. Notation used is explained in Table ~\ref{table:preliminaries_symbols}.}
+\caption{Simplified representation of selected layers of a Deep CNN. For simplicity sake addition of bias is not shown in the Conv. transformation. Notation used is explained in Table ~\ref{table:preliminaries_symbols}.}
 \label{fig:cnn_simplified}
 \end{figure*}
 
 \begin{itemize}
-	\item Transformations that operate on individual (point) spatial locations.
+	\item Transformations that operate at the granularity of individual  spatial locations (see Figure \ref{fig:cnn_simplified} (b)).
 	\begin{itemize}
 	 \item E.g. ReLU, Batch Normalization
 	\end{itemize}
-	\item Transformations that operate on a local spatial context.
+	\item Transformations that operate at the granularity of a local spatial context (see Figure \ref{fig:cnn_simplified} (a) and (c)).
 	\begin{itemize}
 	 \item E.g. Convolution, Pooling
 	\end{itemize}
-	\item Transformation that operate on the global spatial context.
+	\item Transformations that operate at the granularity of a global context.
 	\begin{itemize}
 	 \item E.g. Fully-Connected
 	\end{itemize}
 \end{itemize}
 
-With incremental spatially localized updates in the input, such placing an occlusion patch, both types of transformations that operate on individual spatial locations and transformations that operate on a local spatial contexts provide opportunities for exploiting redundancy. Extending the transformations that operate on individual spatial locations to become redundancy aware is straightforward. However, with transformations that operate on a local spatial context, such as Convolution and Pooling, this extension is non-trivial due to the overlapping nature of the spatial contexts of individual transformations. A simplified representation of how different types of layers would propagate a spatially localized change is shown in Figure \ref{fig:cnn_simplified}. We next formally define the transformations of Convolution and Pooling layers and also the relationship between input and output dimensions.
-These will be later used in Section 4 to introduce our incremental inference approach.
-
+With incremental spatially localized updates in the input, such as placing an occlusion patch, both types of transformations that operate at the granularity of individual spatial locations and local spatial contexts provide opportunities for exploiting redundancy.
+Extending point transformations to become redundancy aware is straightforward. However, with local context transformations, such as Convolution and Pooling, this extension is non-trivial due to the overlapping nature of the spatial contexts. A simplified representation of point transformations and local context transformations is shown in Figure \ref{fig:cnn_simplified}.
+It also shows how different types of transformations would propagate a spatially localized change (marked in red) in the input.
+We next formally define the transformations of Convolution and Pooling layers and also the relationship between input and output dimensions.
 
 \vspace{2mm}
-\noindent \textbf{Transformations that operate on a local spatial context.} The two types of transformations that operate on a local spatial context in a deep CNN are Convolution and Pooling layers.
+\noindent \textbf{Transformations that operate at the granularity of a local spatial context.} The two types of transformations that operate at the granularity of a local spatial context in a deep CNN are Convolution and Pooling.
 % Convolution layers are the most important type of layer in the CNN architecture which also contributes to most of the computational cost.
-Each convolutional layer can have several (say $C_{\mathcal{O}}$) three dimensional filter kernels organized into a four dimensional array $\mathcal{K}_{conv}$ with each having a smaller spatial width $W_\mathcal{K}$ and height $H_\mathcal{K}$ compared to the width $W_{\mathcal{I}}$ and height $H_{\mathcal{I}}$ of the input volume $\mathcal{I}$, but has the same depth $C_{\mathcal{I}}$.
-During inference, each filter kernel is slided along the width and height dimensions of the input and a two dimensional activation map is produced by taking element-wise product between the kernel and the input and adding a bias value $\mathcal{B}[c]$ for some c $\in$ $[0, C_{\mathcal{O}}-1]$ (see Figure \ref{fig:cnn_simplified}).
-These two dimensional activation maps are then stacked together along the depth dimension to produce an output volume $\mathcal{O}$ having the dimensions of ($C_{\mathcal{O}}$,$H_{\mathcal{O}}$,$W_{\mathcal{O}}$). This can be formally defined as follows:
+Each Convolutional layer can have several (say $C_{\mathcal{O}}$) three dimensional filter kernels organized into a four dimensional array $\mathcal{K}_{conv}$ with each having a smaller spatial width $W_\mathcal{K}$ and height $H_\mathcal{K}$ compared to the width $W_{\mathcal{I}}$ and height $H_{\mathcal{I}}$ of the input volume $\mathcal{I}$, but has the same depth $C_{\mathcal{I}}$.
+During inference, each filter kernel is slided along the width and height dimensions of the input and a two dimensional activation map is produced by taking element-wise product between the kernel and the input and adding a bias value $\mathcal{B}[c]$ for some c $\in$ $[0, C_{\mathcal{O}}-1]$.
+These two dimensional activation maps are then stacked together along the depth dimension to produce an output volume $\mathcal{O}$ having the dimensions of ($C_{\mathcal{O}}$,$H_{\mathcal{O}}$,$W_{\mathcal{O}}$).
+A simplified representation of Convolution transformation is shown in Figure \ref{fig:cnn_simplified} (a).
+It can also be formally defined as follows:
 
 \begin{align}
+\begin{split}
 \text{Input Volume}:&~ \mathcal{I} \in \mathcal{\rm I\!R}^{C_{\mathcal{I}} \times H_{\mathcal{I}} \times W_{\mathcal{I}}}\\
 \text{Conv. Filters}:&~ \mathcal{K}_{conv} \in \mathcal{\rm I\!R}^{C_{\mathcal{O}} \times C_{\mathcal{I}} \times H_{\mathcal{K}} \times W_{\mathcal{K}}}\\
 \text{Conv. Bias Vector}:&~ \mathcal{B}_{conv} \in \mathcal{\rm I\!R}^{C_{\mathcal{O}}}\\
 \text{Output Volume}:&~ \mathcal{O} \in \mathcal{\rm I\!R}^{C_{\mathcal{O}} \times H_{\mathcal{O}} \times W_{\mathcal{O}}}
+\end{split}
 \end{align}
 
 \begin{equation}
@@ -132,11 +137,12 @@ These two dimensional activation maps are then stacked together along the depth 
 \end{split}
 \end{equation}
 
-Pooling which reduces the spatial size of an activation volume can also be thought as a Convolution operation with a fixed (i.e. not learned) two dimensional filter kernel $\mathcal{K}_{pool}$.
+Pooling can also be thought as a Convolution operation with a fixed (i.e. not learned) two dimensional filter kernel $\mathcal{K}_{pool}$.
 But unlike Convolution, Pooling operates independently on each depth slice of the input volume.
 % The two main variations of pooling layers are max pooling (takes the maximum value from the local spatial context) and average (takes the average value from the local spatial context) pooling.
 A Pooling layer takes a three dimensional activation volume $\mathcal{O}$ having a depth of $C$, width of $W_{\mathcal{I}}$, and height of $H_{\mathcal{I}}$ as input and produces another three dimensional activation volume $\mathcal{O}$ which has the same depth of $C$, width of $W_{\mathcal{O}}$, and height of $H_{\mathcal{O}}$ as the output.
-% Pooling kernel is generally slided with more than one pixel at a time and hence $W_{\mathcal{O}}$ and $H_{\mathcal{O}}$ are generally smaller than $W_{\mathcal{I}}$ and $H_{\mathcal{I}}$.
+Pooling kernel is generally slided with more than one pixel at a time and hence $W_{\mathcal{O}}$ and $H_{\mathcal{O}}$ are generally smaller than $W_{\mathcal{I}}$ and $H_{\mathcal{I}}$.
+A simplified representation of Pooling transformation is shown in Figure \ref{fig:cnn_simplified} (c).
 % Similar to Convolution, Pooling operation can be formally defined as follows:
 
 % \begin{align}
@@ -153,19 +159,21 @@ A Pooling layer takes a three dimensional activation volume $\mathcal{O}$ having
 
 \vspace{2mm}
 \noindent \textbf{Relationship between Input and Output Spatial Sizes.}
-The output volume's spatial sizes ($W_{\mathcal{O}}$ and $H_{\mathcal{O}}$) are determined by the spatial sizes of the input volume ($W_{\mathcal{I}}$ and $H_{\mathcal{I}}$), spatial sizes of the filter kernel ($W_\mathcal{K}$ and $H_\mathcal{K}$) and two other parameters: \textbf{stride} $S$ and \textbf{padding} $P$.
+The output volume's spatial sizes $W_{\mathcal{O}}$ and $H_{\mathcal{O}}$ are determined by the spatial sizes of the input volume $W_{\mathcal{I}}$ and $H_{\mathcal{I}}$, spatial sizes of the filter kernel $W_\mathcal{K}$ and $H_\mathcal{K}$ and two other parameters: \textbf{stride} $S$ and \textbf{padding} $P$.
 Stride is the amount of pixel values used to slide the filter kernel at a time when producing a two dimensional activation map.
 It is possible to have two different values with one for the width dimension $S_x$ and one for the height dimension $S_y$.
 Generally $S_x \leq W_\mathcal{K}$ and $S_y \leq H_\mathcal{K}$.
+In Figure \ref{fig:cnn_simplified} Conv. transformation uses a stride value of 1 and Pool transformation uses a stride value of 2 for both dimensions.
 Sometimes in order to control the spatial size of the output activation map to be same as the input activation map, one needs to pad the input feature map with zeros around the spatial border.
-Padding ($P$) captures the amount of zeros that needs to be added.
+Padding $P$ captures the amount of zeros that needs to be added.
 Similar to the stride $S$, it is possible to have two separate values for padding with one for the width dimension $P_x$ and one for the height dimension $P_y$.
-With these parameters defined the width and the height of the output activation volume can be defined as follows:
+In Figure \ref{fig:cnn_simplified} Conv. transformation pads the input with one line of zeros from both dimensions.
+With these parameters defined the width (similarly height) of the output activation volume can be defined as follows:
 
 \begin{align}
 \begin{split}
 W_{\mathcal{O}} = (W_{\mathcal{I}} - W_\mathcal{K} + 1 + 2\times P_x)/S_x \\
-H_{\mathcal{O}} = (H_{\mathcal{I}} - H_\mathcal{K} + 1 + 2\times P_y)/S_y
+% H_{\mathcal{O}} = (H_{\mathcal{I}} - H_\mathcal{K} + 1 + 2\times P_y)/S_y
 \end{split}
 \end{align}
 
@@ -174,9 +182,13 @@ H_{\mathcal{O}} = (H_{\mathcal{I}} - H_\mathcal{K} + 1 + 2\times P_y)/S_y
 Deep CNNs are highly compute intensive and out of the different types of layers Conv. layers contributes to $90\%$ (or more) of the computations. One of the widely used ways to estimate the computational cost of a Deep CNN is to estimate the number of fused multiply add (FMA) floating point operations (FLOPs) required by convolution layers for a single forward inference.
 % and ignore the computational cost of other layers (e.g. Pooling, Fully-Connected).
 
-For example, applying a convolution filter having the dimensions of ($C^l_{in}$, $H^l_{\mathcal{K}}$, $W^l_{\mathcal{K}}$) to a single spatial context will require $C^l_{\mathcal{I}} \times H^l_{\mathcal{K}} \times W^l_{\mathcal{K}}$ many FLOPs, each corresponding to a single element-wise multiplication. Thus, the total amount of computations $Q_l$ required by that layer in order to produce an output $\mathcal{O}$ having dimensions $C^l_{\mathcal{O}} \times H^l_{\mathcal{O}} \times W^l_{\mathcal{O}}$, and the total amount of computations $Q$ required to process the entire set of convolution layers $L$ in the CNN can be calculated as per Equation \ref{eqn:full_local} and Equation ~\ref{eqn:full_all}. However, in the case of incremental updates only a smaller spatial patch having a width $W^l_\mathcal{P}$ ($W^l_\mathcal{P}<=W^l_{\mathcal{O}}$) and height $H^l_\mathcal{P}$ ($H^l_\mathcal{P}<=H^l_{\mathcal{O}}$) is needed to be recomputed. The amount of computations required for the incremental computation $Q^l_{inc}$ and total amount of incremental computations $Q_{inc}$ required for the entire set of convolution layers $L$ will be smaller than the above full computation values and can be calculated as per Equation ~\ref{eqn:inc_local} and Equation ~\ref{eqn:inc_all}.
+For example, applying a convolution filter having the dimensions of ($C^l_{in}$, $H^l_{\mathcal{K}}$, $W^l_{\mathcal{K}}$) to a single spatial context will require $C^l_{\mathcal{I}} \times H^l_{\mathcal{K}} \times W^l_{\mathcal{K}}$ many FLOPs, each corresponding to a single element-wise multiplication.
+Thus, the total amount of computations $Q_l$ required by that layer in order to produce an output $\mathcal{O}$ having dimensions $C^l_{\mathcal{O}} \times H^l_{\mathcal{O}} \times W^l_{\mathcal{O}}$, and the total amount of computations $Q$ required to process the entire set of convolution layers $L$ in the CNN can be calculated as per Equation \ref{eqn:full_local} and ~\ref{eqn:full_all}.
+However, in the case of incremental updates only a smaller spatial patch having a width $W^l_\mathcal{P}$ ($W^l_\mathcal{P}<=W^l_{\mathcal{O}}$) and height $H^l_\mathcal{P}$ ($H^l_\mathcal{P}<=H^l_{\mathcal{O}}$) is needed to be recomputed.
+The amount of computations required for the incremental computation $Q^l_{inc}$ and total amount of incremental computations $Q_{inc}$ required for the entire set of convolution layers $L$ will be smaller than the above full computation values and can be calculated as per Equation ~\ref{eqn:inc_local} and ~\ref{eqn:inc_all}.
 
-Based on the above quantities we define a new metric named \textbf{theoretical speedup (R)}, which is the ratio between total full computational cost $Q$ and total incremental computation cost $Q_{inc}$ (see Equation ~\ref{eqn:redundancy_ratio}). This ratio essentially acts as a surrogate for the theoretical upper-bound for computational and runtime savings that can be achieved by applying incremental computations to deep CNNs.
+Based on the above quantities we define a new metric named \textit{theoretical speedup} R, which is the ratio between total full computational cost $Q$ and total incremental computation cost $Q_{inc}$ (see Equation ~\ref{eqn:redundancy_ratio}).
+This ratio essentially acts as a surrogate for the theoretical upper-bound for computational and runtime savings that can be achieved by applying incremental computations to deep CNNs.
 
 \begin{align}
 \label{eqn:full_local}
@@ -194,12 +206,12 @@ R =&~ \frac{Q}{Q_{inc}}
 
 \subsection{Estimating the Quality of Generated Approximate Heat Maps}
 
-When applying approximate inference optimizations, \system~ sacrifices the the accuracy/quality of the generated heat map in favor of faster execution.
-To measure this drop of accuracy we use Structural Similarity (SSIM) Index~\cite{wang2004image}, which is one of the widely used approaches to measure the \textit{human perceived difference} between two similar images.
-When applying SSIM index, we treat the original heat map as the reference image with no distortions and the perceived image similarity of the \system~generated heat map is calculated with reference to it.
+When applying approximate inference optimizations \system~ sacrifices the the accuracy/quality of the generated heat map in favor of faster execution.
+To measure this drop of accuracy we use Structural Similarity (SSIM) Index~\cite{wang2004image} which is one of the widely used approaches to measure the \textit{human perceived difference} between two similar images.
+When applying SSIM index we treat the original heat map as the reference image with no distortions and the perceived image similarity of the \system~generated heat map is calculated with reference to it.
 The generated SSIM index is a value between $-1$ and $1$, where $1$ corresponds to perfect similarity.
 % It is important to note that, even though SSIM index value of 1 corresponds to perfect similarity, other values doesn't necessarily imply same level of perceived quality across different image pairs.
 % However, if the original images are closely similar, such as in chest X-ray images, it can be assumed that this condition will hold.
-Typically SSIM index values above $0.95-0.80$ are used in practical applications such as image compression and video encoding as at the human perception level they produce indistinguishable distortions.
+Typically SSIM index values in the range of $0.90-0.95$ are used in practical applications such as image compression and video encoding as at the human perception level they produce indistinguishable distortions.
 For more details on SSIM Index method, we refer the reader to the original SSIM Index paper~\cite{wang2004image}.
 

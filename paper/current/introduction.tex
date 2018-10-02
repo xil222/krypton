@@ -13,7 +13,7 @@ In order to apply deep CNN based techniques in critical applications such as hea
 
 \begin{figure}[t]
   \includegraphics[width=\columnwidth]{./images/krypton_overview}
-  \caption{(A) Simplified representation depicting how OCT images are used for predicting Diabetic Retinopathy using CNNs. (B) Occluding parts of the OCT image changes the predicted probability for the disease. (C) By systematically moving patch along vertical and horizontal axes an output heat map is generated where each individual value corresponds to the predicted disease probability when the occlusion patch was placed on that position.}
+  \caption{(A) Using CNNs for predicting Diabetic Retinopathy from OCT images. (B) Occluding parts of the OCT image changes the predicted probability for the disease. (C) By systematically moving patch along vertical and horizontal dimensions an occlusion heat map is produced.}
   \label{fig:krypton_overview}
 \end{figure}
 
@@ -45,7 +45,7 @@ We refer this optimization as \textit{projective field thresholding}.
 The third optimization is also a form of \textit{approximate inference} which we refer as \textit{adaptive drill-down}.
 In most occlusion experiment use cases, such as in medical imaging, the object or pathological region of interest is contained in a relatively small region of the image.
 In such situations it is unnecessary to inspect the original image at the same high resolution of striding the occluding patch few pixels at a time, at all image locations.
-In adaptive drill-down approach, first a low resolution heatmap is generated using a larger occluding patch and a larger stride with relatively low computational cost.
+In adaptive drill-down approach, first a low resolution heatmap is generated using a larger stride value with a relatively low computational cost.
 Only the interesting regions will be then inspected further with a smaller stride to produce a higher resolution output.
 
 Unlike the \textit{incremental inference} approach which is exact, \textit{projective field thresholding} and \textit{adaptive drill-down} are approximate approaches. They essentially trade-off accuracy of the generated sensitivity heat map compared to the original, in favor of faster execution.
@@ -53,8 +53,8 @@ These changes in accuracy in the generated heat map will be visible all the way 
 This opens up an interesting trade-off space of quality/accuracy versus runtime. We use Structural Similarity Index (SSIM) to quantify the quality degradation caused by \textit{approximate inference} and provide user configurable system tuning parameters for easily picking an operational point on the speed-quality trade-off space.
 
 Finally, we have implemented \system~ on top of PyTorch deep learning toolkit by extending it by adding custom implementations of incremental and approximate inference operators.
-It currently supports VGG16, ResNet18, and InceptionV3 both on CPU and GPU environments, which are three widely used deep CNN architectures for transfer learning applications.
-We evaluate our system on three real-world datasets, 1) retinal optical coherence tomography dataset (OCT), 2) chest X-Ray, and 3) more generic ImageNet dataset, and show that \system~ can result in up to 10x speedups. While we have implemented \system~ on top of PyTorch toolkit, our work is largely orthogonal to choice of the deep learning toolkit; one could replace PyTorch with TensorFlow, Caffe2, CNTK, MXNet, or implement from scratch using C/CUDA and still benefit from our optimizations.
+It currently supports VGG16, ResNet18, and InceptionV3 both on CPU and GPU environments, which are three widely used deep CNN architectures.
+We evaluate our system on three real-world datasets, 1) retinal optical coherence tomography dataset (OCT), 2) chest X-Ray, and 3) more generic ImageNet dataset, and show that \system~ can result in up to 10X speedups. While we have implemented \system~ on top of PyTorch toolkit, our work is largely orthogonal to choice of the deep learning toolkit; one could replace PyTorch with TensorFlow, Caffe2, CNTK, MXNet, or implement from scratch using C/CUDA and still benefit from our optimizations.
 Overall, this paper makes the following contributions:
 
 \begin{itemize}
