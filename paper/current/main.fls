@@ -347,9 +347,9 @@ INPUT /usr/local/texlive/2016/texmf-dist/fonts/tfm/public/libertine/LinLibertine
 INPUT /usr/local/texlive/2016/texmf-dist/fonts/tfm/public/newtx/nxlbmi.tfm
 INPUT /usr/local/texlive/2016/texmf-dist/fonts/tfm/public/newtx/ntxbsy.tfm
 INPUT /usr/local/texlive/2016/texmf-dist/fonts/tfm/public/newtx/ntxbexx.tfm
-INPUT background.tex
-INPUT background.tex
 INPUT /usr/local/texlive/2016/texmf-dist/fonts/tfm/public/libertine/LinLibertineT-tlf-t1.tfm
+INPUT background.tex
+INPUT background.tex
 INPUT system_overview.tex
 INPUT system_overview.tex
 INPUT /usr/local/texlive/2016/texmf-dist/tex/latex/inconsolata/t1zi4.fd
@@ -369,8 +369,7 @@ INPUT /usr/local/texlive/2016/texmf-dist/fonts/tfm/public/libertine/LinLibertine
 INPUT images/la_operators.pdf
 INPUT images/pf_truncate.pdf
 INPUT images/proj_thresholding.pdf
-INPUT images/adaptive-drill-down.pdf
-INPUT images/r_and_s1.pdf
+INPUT images/adaptive_drill_down.pdf
 INPUT images/system_tuning.pdf
 INPUT experiments.tex
 INPUT experiments.tex

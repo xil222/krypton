@@ -1,28 +1,31 @@
 %!TEX root = <main.tex>
 \section{Introduction}
-Deep convolutional neural networks (CNNs) \cite{alexnet, vggnet, resnet, inception} have revolutionized the computer vision field with even surpassing human level accuracies in some of the image recognition challenges such as ImageNet~\cite{imagenet}.
+Deep Convolution Neural Networks (CNNs) \cite{alexnet, vggnet, resnet, inception} have revolutionized the computer vision field with even surpassing human level accuracy in some of the image recognition challenges such as ImageNet~\cite{imagenet}.
 % Many of these successful pre-trained CNNs from computer vision challenges have been successfully re-purposed to be used in other real-world image recognition tasks using a paradigm called \textit{transfer learning} \cite{transfer-learning-factors}.
 % In transfer learning, instead of training a CNN from scratch, one uses a pre-trained Deep CNN, e.g., ImageNet trained VGG, and fine tune it for the target problem using the target training dataset.
 % This approach avoids the need for a large training datasets, computational power, and time which is otherwise a bottleneck for training a CNN from scratch.
-As a result, there is wide adoption of deep CNN technology in variety of real world image recognition tasks in several domains including health care \cite{kermany2018identifying, islam2017abnormality}, agriculture \cite{mohanty2016using}, security \cite{arbabzadah2016identifying}, and sociology \cite{wang2017deep}.
+As a result, there is wide adoption of deep CNN technology in a variety of real-world image recognition tasks in several domains including healthcare \cite{kermany2018identifying, islam2017abnormality}, agriculture \cite{mohanty2016using}, security \cite{arbabzadah2016identifying}, and sociology \cite{wang2017deep}.
 Remarkably, United States Food and Drug Administration Agency (US FDA) has already approved the use of deep CNN based technologies for identifying diabetic retinopathy, an eye disease found in adults with diabetes \cite{fdaretinopathy}.
 It is expected that this kind of decision support systems will help the human radiologists in fulfilling their workloads efficiently, such as operating as a cross-checker for the manual decisions and also to prioritize potential sever cases for manual inspection, and provide a remedy to the shortage of qualified radiologists globally \cite{radiologistshortage}.
 
-However, despite their many success stories, one of the major criticisms for deep CNNs and deep neural networks in general is the black-box nature of how they make predictions.
+However, despite their many success stories, one of the major criticisms for deep CNNs and deep neural networks, in general, is the black-box nature of how they make predictions.
 In order to apply deep CNN based techniques in critical applications such as health care, the decisions should be explainable so that the practitioners can use their human judgment to decide whether to rely on those predictions or not \cite{jung2017deep}.
 
 \begin{figure}[t]
   \includegraphics[width=\columnwidth]{./images/krypton_overview}
-  \caption{(A) Using CNNs for predicting Diabetic Retinopathy from OCT images. (B) Occluding parts of the OCT image changes the predicted probability for the disease. (C) By systematically moving patch along vertical and horizontal dimensions an occlusion heat map is produced.}
+  \caption{(a) Using CNNs for predicting Diabetic Retinopathy from OCT images. (b) Occluding parts of the OCT image changes the predicted probability for the disease. (c) By changing the position of the occlusion patch a sensitivity heat map is produced.}
   \label{fig:krypton_overview}
 \end{figure}
 
 In order to improve the explainability of deep CNN predictions several approaches have been proposed.
 One of the most widely used approach in image recognition tasks is occlusion experiments \cite{zeiler2014visualizing}.
-In occlusion experiments, as shown in Figure~\ref{fig:krypton_overview} (B), a square patch usually of black or gray color is used to occlude parts of the image and record the change in the predicted label probability.
-By systematically striding this patch horizontally and vertically few pixels pixels at a time over the image a sensitivity heat map for the predicted label can be generated (similar to one shown in Figure~\ref{fig:krypton_overview} (C)).
-Using this heat map, the regions in the image which are highly sensitive (or highly contributing) to the predicted class can be identified (corresponds to red color regions in the sensitivity heat map shown in Figure~\ref{fig:krypton_overview} (C)).
-This localization of highly sensitive regions then enables the practitioners to get an idea of the the prediction process of the deep CNN.
+In occlusion experiments, as shown in Figure~\ref{fig:krypton_overview} (b), a square patch usually of black or gray color is used to occlude parts of the image and record the change in the predicted label probability.
+By changing the position of the occlusion patch, usually by a small fixed number of pixels called stride, a sensitivity heat map for the predicted label can be generated (similar to one shown in Figure~\ref{fig:krypton_overview} (c)).
+If the occlusion experiment is performed in interactive mode, the human operator has the option of picking the occlusion patch positions by marking a region on a visual interface.
+For example, if the scenario shown in Figure \ref{fig:krypton_overview} is performed in interactive mode, a human operator who understands OCT images will start evaluating the image from the central region where she expects the pathological region to be.
+In the non-interactive mode, which is also the most common mode of performing occlusion experiments due to the high runtimes which are not amenable for interactive performance, the heat map values are evaluated for all possible occlusion patch positions.
+Using this heat map, the regions in the image which are highly sensitive (or highly contributing) to the predicted class can be identified (corresponds to red color regions in the sensitivity heat map shown in Figure~\ref{fig:krypton_overview} (c)).
+This localization of highly sensitive regions then enable the practitioners to get an idea of the the prediction process of the deep CNN.
 
 % \textbf{\textit{Example:}} Consider a radiologist who is examining Optical Coherence Tomography (OCT) images of the retina to identify potential diabetic retinopathy patients.
 % The radiologist is recently given access to a deep CNN based clinical decision support system (CDSS) to identify potential images with diabetic retinopathy. 
@@ -31,30 +34,34 @@ This localization of highly sensitive regions then enables the practitioners to 
 % In both situations in addition to predicting the existence of the disease, she would like to have an explanation for the basis on which the CDSS makes the prediction, using the occlusion based explainability approach, to decide whether the pathological regions identified by the CDSS are correct and to ultimately whether to rely on the CDSS decision. Similar examples arise in number of other heal care applications such as chest X-ray examination for identifying pneumonia cases and X-ray based child bone age assessment.
 
 However, occlusion experiments are highly compute intensive and time consuming as each occlusion position has to be treated as a new image and requires a separate CNN inference.
-In this work our goal is to apply database inspired optimizations to the occlusion based explainability workload to reduce both the computational cost and runtime.
+In this work, our goal is to apply database inspired optimizations to the occlusion based explainability workload to reduce both the computational cost and the runtime.
 This will also make occlusion experiments more amenable for interactive diagnosis of CNN predictions.
-Our main motivation is based on the observation that when performing CNN inference corresponding to each individual patch position, there are significant portion of redundant computations which can be avoided.
-To avoid redundant computations we introduce the notion of \textit{incremental inference} of deep CNNs which is inspired by the incremental view maintenance technique used in the context of relational databases.
+Our main motivation is based on the observation that when performing CNN inference corresponding to each individual patch position, there is a significant portion of redundant computations which can be avoided.
+To avoid redundant computations we introduce the notion of \textit{incremental inference} of deep CNN which is inspired by the incremental view maintenance technique studied in the context of relational databases.
 
-Due to the overlapping nature of how a convolution kernel would operate (details to follow in Section \ref{sec:preliminaries}), the size of the modified patch will start growing as it progress through more layers in a CNN and reduce the amount of redundant computations.
-However, at deeper layers the effect over the patch coordinates which are radially further away from the center of the occlusion patch position will be diminishing.
+Due to the overlapping nature of how the Convolution kernel operates (details to follow in Section \ref{sec:preliminaries}), the size of the modified patch will start growing as it progresses through more layers in a CNN and the amount of redundant computations will reduce.
+However, at deeper layers, the effect over the patch coordinates which are radially further away from the center of the occlusion patch position will be diminishing.
 Our second optimization is based on this observation where we apply a form of \textit{approximate inference} which applies a threshold to limit the growth of the updating patch. 
 By applying propagation thresholds, a significant amount of computation redundancy can be retained.
-We refer this optimization as \textit{projective field thresholding}.
+We refer to this optimization as \textit{projective field thresholding}.
 
-The third optimization is also a form of \textit{approximate inference} which we refer as \textit{adaptive drill-down}.
+The third optimization is also a form of \textit{approximate inference} which is applicable only in the context of non-interactive mode.
 In most occlusion experiment use cases, such as in medical imaging, the object or pathological region of interest is contained in a relatively small region of the image.
-In such situations it is unnecessary to inspect the original image at the same high resolution of striding the occluding patch few pixels at a time, at all image locations.
-In adaptive drill-down approach, first a low resolution heatmap is generated using a larger stride value with a relatively low computational cost.
+In such situations, it is unnecessary to inspect the original image at the same high resolution of striding the occluding patch few pixels at a time, at all possible occlusion patch positions.
+In this approach first, a low-resolution heat map is generated using a larger stride value with a relatively low computational cost.
 Only the interesting regions will be then inspected further with a smaller stride to produce a higher resolution output.
+In the interactive mode as the human operator will be actively picking a set of occlusion patch positions for the system to evaluate this optimization will not be applicable.
+We refer to this optimization as \textit{adaptive drill-down}.
+
 
 Unlike the \textit{incremental inference} approach which is exact, \textit{projective field thresholding} and \textit{adaptive drill-down} are approximate approaches. They essentially trade-off accuracy of the generated sensitivity heat map compared to the original, in favor of faster execution.
 These changes in accuracy in the generated heat map will be visible all the way from quality differences which are almost indistinguishable to the human eye to drastic structural differences, depending on the level of approximation.
-This opens up an interesting trade-off space of quality/accuracy versus runtime. We use Structural Similarity Index (SSIM) to quantify the quality degradation caused by \textit{approximate inference} and provide user configurable system tuning parameters for easily picking an operational point on the speed-quality trade-off space.
+This opens up an interesting trade-off space of quality/accuracy versus runtime. \system~ provides user configurable tuning parameters for easily picking an operational point on this quality-runtime trade-off space.
 
-Finally, we have implemented \system~ on top of PyTorch deep learning toolkit by extending it by adding custom implementations of incremental and approximate inference operators.
+Finally, we have implemented \system~ on top of PyTorch deep learning toolkit  by adding custom implementations for incremental and approximate inference operations.
 It currently supports VGG16, ResNet18, and InceptionV3 both on CPU and GPU environments, which are three widely used deep CNN architectures.
-We evaluate our system on three real-world datasets, 1) retinal optical coherence tomography dataset (OCT), 2) chest X-Ray, and 3) more generic ImageNet dataset, and show that \system~ can result in up to 10X speedups. While we have implemented \system~ on top of PyTorch toolkit, our work is largely orthogonal to choice of the deep learning toolkit; one could replace PyTorch with TensorFlow, Caffe2, CNTK, MXNet, or implement from scratch using C/CUDA and still benefit from our optimizations.
+We evaluate our system on three real-world datasets, 1) retinal optical coherence tomography dataset (OCT), 2) chest X-Ray, and 3) more generic ImageNet dataset, and show that \system~ can result in speedups over 10X.
+While we have implemented \system~ on top of PyTorch toolkit, our work is largely orthogonal to the choice of the deep learning toolkit; one could replace PyTorch with TensorFlow, Caffe2, CNTK, MXNet, or implement from scratch using C/CUDA and still benefit from our optimizations.
 Overall, this paper makes the following contributions:
 
 \begin{itemize}

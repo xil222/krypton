@@ -15,7 +15,7 @@ They complement each other in terms of model size, computational cost, amount of
 For \textit{OCT} and \textit{Chest X-Ray} datasets the three CNN models are fine-tuned by retraining the final fully-connected layer with hyper-parameter tuning as per standard practice.
 More details on the fine-tuning process are included in the Appendix.
 Heat map for the predicted probabilities is generated using Python Matplotlib library's \texttt{imshow} method using the \texttt{jet\_r} color scheme.
-For the heatmap maximum threshold value is set to \texttt{min}$(1, 1.25 \times p)$ and minimum threshold value is set to $0.75 \times p$ where $p$ is predicted class probability for the unmodified image.
+For the heat map, the maximum threshold value is set to \texttt{min}$(1, 1.25 \times p)$ and minimum threshold value is set to $0.75 \times p$ where $p$ is predicted class probability for the unmodified image.
 Original images were resized to the size required by the CNNs ($224\times224$ for VGG16 and ResNet18 and $299\times299$ for Inception3) and no additional pre-processing is done.
 For GPU experiments a batch size of 128 and for CPU experiments a batch size 16 is used.
 CPU experiments are executed with a thread parallelism of 8.
@@ -61,11 +61,11 @@ Overall compared to GPU environment \system~ results in higher speedups on the C
 GPUs enable higher parallelism with thousands of processing cores compared to CPUs with several cores.
 Hence computations are much cheaper on GPU.
 Memory operations required by \system~ throttles the overall performance on GPU and hinders it from achieving higher speedups.
-On CPU environment as computational cost dominates the overall runtime the additional overhead introduced by the memory operations does not matter much.
+On CPU environment as computational cost dominates the overall runtime, the additional overhead introduced by the memory operations does not matter much.
 Therefore on CPU \system~ achieves higher speedups which are closer to the theoretical speedup value.
 Overall \system~ offers the best efficiency on these workloads.
-This confirms the benefits of different optimizations performed by \system~ for improving the efficiency of the workload and there by to reduce the computational and runtime costs.
-Brining down the runtimes also make occlusion experiments more amenable for interactive diagnosis of CNN predictions.
+This confirms the benefits of different optimizations performed by \system~ for improving the efficiency of the workload and thereby to reduce the computational and runtime costs.
+Bringing down the runtimes also make occlusion experiments more amenable for interactive diagnosis of CNN predictions.
 
 
 \subsection{Lesion Study}
@@ -120,7 +120,7 @@ We also vary $S_1$ fixing $r_{drill-down}$ to 0.25.
 Occlusion patch size and the $S_2$ are set same as in the previous case.
 Figure \ref{fig:5_2_3_edited} (b) presents the results.
 In both cases we see Empirical-GPU and Empirical-CPU achieve higher speedups with Empirical-CPU being very close to the theoretical speedup.
-On the CPU environment the relative cost of other overheads are much smaller than the CNN computational cost.
+On the CPU environment, the relative cost of other overheads is much smaller than the CNN computational cost.
 Hence on the CPU environment \system~ achieves near theoretical speedups for \textit{adaptive drill-down}.
 Speedups decrease as we increase $r_{drill-down}$ and decrease $S_1$.
 

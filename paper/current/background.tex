@@ -3,9 +3,9 @@
 
 \vspace{2mm}
 \noindent \textbf{Deep CNNs.} Deep CNNs are a type of neural networks specialized for image data.
-They exploit spatial locality of information in image pixels to construct a hierarchy of parametric feature extractors and transformers organized as layers of various types: \textit{convolutions}, which use image
-filters from graphics, except with variable filter weights, to extract features; \textit{pooling}, which subsamples features in a spatial
-locality-aware way; \textit{batch-normalization}, which normalizes the output of the layer; \textit{non-linearity}, which applies a non-linear transformation (e.g., ReLU); \textit{fully connected}, which is the building block of a multi-layer perceptron; and \textit{softmax}, which emits predicted probabilities to each class label.
+They exploit spatial locality of information in image pixels to construct a hierarchy of parametric feature extractors and transformers organized as layers of various types: \textit{Convolution}, which use image
+filters from graphics, except with variable filter weights, to extract features; \textit{Pooling}, which subsamples features in a spatial
+locality-aware way; \textit{Batch-Normalization}, which normalizes the output of the layer; \textit{Non-Linearity}, which applies a non-linear transformation (e.g., ReLU); \textit{Fully Connected}, which is the building block of a multi-layer perceptron; and \textit{Softmax}, which emits predicted probabilities to each class label.
 In most deep CNN architectures, the above layers are stacked together with one\'s output being fed as the input to the other.
 Adding multiple layers element-wise or stacking multiple layers together depth-wise to produce a new layer is also present in some architectures.
 Popular deep CNN model architectures include AlexNet \cite{alexnet}, VGG \cite{vggnet}, Inception~\cite{inception}, ResNet~\cite{resnet}, SqueezeNet~\cite{squeezenet}, and MobileNet~\cite{mobilenets}.
@@ -14,12 +14,12 @@ Popular deep CNN model architectures include AlexNet \cite{alexnet}, VGG \cite{v
 
 \vspace{2mm}
 \noindent \textbf{Deep CNN Explainability} \eat{With image recognition models, natural question is if the model is truly identifying objects in the image or just using surrounding or other objects for making false prediction.}
-Various approaches used to explain CNN predictions can be broadly divided into two categories, gradient based and perturbation based approaches. Gradient based approaches generate a sensitivity heatmap by computing the partial derivatives of model output with respect to every input pixel via back propagation.
-In perturbation based approaches the output of the model is observed by modifying regions on the input image and there by identifying the sensitive regions.
+Various approaches used to explain CNN predictions can be broadly divided into two categories, gradient-based and perturbation based approaches. Gradient-based approaches generate a sensitivity heat map by computing the partial derivatives of model output with respect to every input pixel via backpropagation.
+In perturbation based approaches the output of the model is observed by modifying regions on the input image and thereby identifying the sensitive regions.
 \eat{
-Even though gradient approaches require only a single forward inference and a single backpropagation to generate the sensitivity heatmap, the output may not be very intuitive and hard to understand because the salient pixels tend to spread over a very large area of the input image.
+Even though gradient approaches require only a single forward inference and a single backpropagation to generate the sensitivity heat map, the output may not be very intuitive and hard to understand because the salient pixels tend to spread over a very large area of the input image.
 }
-Despite being time consuming, in most real world use cases such as in medical imaging, practitioners tend to use occlusion experiments \cite{zeiler2014visualizing}, a perturbation approach, as the preferred approach for explanations as they produce high quality fine grained sensitivity heatmaps ~\cite{jung2017deep} using a process which is very intuitive to the human observer ~\cite{miller2017explanation}.
+Despite being time-consuming, in most real world use cases such as in medical imaging, practitioners tend to use occlusion experiments \cite{zeiler2014visualizing}, a perturbation approach, as the preferred approach for explanations as they produce high quality fine grained sensitivity heat maps ~\cite{jung2017deep} using a process which is very intuitive to the human observer ~\cite{miller2017explanation}.
 
 
 \eat{

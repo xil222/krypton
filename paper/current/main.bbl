@@ -112,12 +112,6 @@ Models and examples built with tensorflow.
 \newblock \url{https://github.com/tensorflow/models}.
 \newblock Accessed September 31, 2018.
 
-\bibitem{wang2004image}
-Zhou Wang et~al.
-\newblock Image quality assessment: from error visibility to structural
-  similarity.
-\newblock {\em IEEE transactions on image processing}, 13(4):600--612, 2004.
-
 \bibitem{le2017receptive}
 Hung Le and Ali Borji.
 \newblock What are the receptive, effective receptive, and projective fields of
@@ -135,12 +129,11 @@ Saskia~EJ de~Vries et~al.
 \newblock The projective field of a retinal amacrine cell.
 \newblock {\em Journal of Neuroscience}, 31(23):8595--8604, 2011.
 
-\bibitem{luo2016understanding}
-Wenjie Luo et~al.
-\newblock Understanding the effective receptive field in deep convolutional
-  neural networks.
-\newblock In {\em Advances in neural information processing systems}, pages
-  4898--4906, 2016.
+\bibitem{wang2004image}
+Zhou Wang et~al.
+\newblock Image quality assessment: from error visibility to structural
+  similarity.
+\newblock {\em IEEE transactions on image processing}, 13(4):600--612, 2004.
 
 \bibitem{deng2009imagenet}
 Jia Deng, Wei Dong, et~al.
