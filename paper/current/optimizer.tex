@@ -1,62 +1,25 @@
 %!TEX root = <main.tex>
-\section{Optimizations}\label{sec:optimizer}
+\section{Incremental Inference Optimizations}\label{sec:optimizer}
 
-In this section we explain \textit{exact inference} and \textit{approximate inference} optimization in detail.
-In \system~ these optimizations are applied on top of the currently dominant approach of performing CNN inference on batches of images, with batch size selected to optimize the hardware utilization, where each image corresponds to an occluded instance of the original image.
-The batched inference is important as it reduces per image inference time by amortizing the fixed overheads.
-In our experiments we found that this simple optimization alone can give up to ~1.4X speedups on CPU environments and ~2X speedups on the GPU environment compared to the per image inference approach.
-Finally we explain how \system~ configures its internal system configurations for \textit{approximate inference}.
+In this section, we first explain the mechanics of the \textit{incremental inference} operator for a single layer.
+Next, we explain how the individual \textit{incremental inference} operator can be used to propagate changes across multiple layers in a Deep CNN.
+We also explain the use of \textit{multi-query optimizations} (MQO) along with \textit{incremental inference} to improve the performance of occlusion experiment workload which requires multiple CNN inference requests.
+We conclude the section by presenting the resulting theoretical speedups that can be achieved with incremental inference for popular Deep CNN architectures.
 
-\subsection{Exact: Incremental Inference}\label{sec:inc_computation}
-
-As explained earlier occlusion experiments in its naive form perform many redundant computations.
-In order to avoid these redundancies layers in a CNN have to be change aware and operate in an incremental manner i.e. reuse previous computations as much as possible and compute only the required ones.
-In this section, we focus on transformations that operate at the granularity of a local spatial context (i.e. Convolution and Pooling) as other types either have no redundancies (global context transformations) or are trivial to make incremental aware (point transformations).
-% We also explain incremental implementations of two other linear algebra operators, element-wise addition and depth-wise concatenation.
-% The choice of CPUs vs GPUs for CNN inference also brings up new concerns for the batched implementation of these incremental transformations and we explain two version of implementations, one which is a naive implementation of batched incremental inference approach and the other a GPU optimized version.
+\subsection{Incremental Inference of a Single Layer}\label{sec:inc_computation}
+As explained earlier, occlusion experiments in its naive form perform many redundant computations.
+In order to avoid these redundancies, layers in a CNN have to be change aware and operate in an incremental manner i.e. reuse previous computations as much as possible and compute only the required ones.
+In this section, we focus only on transformations that operate at the granularity of a local spatial context (i.e. Convolution and Pooling) as other types either have no redundancies (global context transformations) or are trivial to make incremental aware (point transformations).
 
 \vspace{2mm}
-\noindent \textbf{Incremental Convolution and Pooling.}
-
-
-\begin{table}[t]
-  \centering
-  \caption{Additional symbols used in the Optimizations Section}
-  \scalebox{0.8}{\begin{tabular}{p{2cm}p{7.5cm}}
-    \toprule
-    \textbf{Symbol} & \textbf{Meaning}\\
-    \midrule \midrule
-    $^lx^\mathcal{I}_\mathcal{P},{}^ly^\mathcal{I}_\mathcal{P}$ & Starting coordinates of the input patch for the $l^{th}$ layer\\
-    \midrule
-    $^lx^\mathcal{R}_\mathcal{P},{}^ly^\mathcal{R}_\mathcal{P}$ & Starting coordinates of the patch that needs to be read in for the $l^{th}$ layer transformation\\
-    \midrule
-    $^lx^\mathcal{O}_\mathcal{P},{}^ly^\mathcal{O}_\mathcal{P}$ & Starting coordinates of the output patch for the $l^{th}$ layer\\
-    \midrule
-    $^lH^\mathcal{I}_\mathcal{P},{}^lW^\mathcal{I}_\mathcal{P}$ & Height and width of the input patch for the $l^{th}$ layer\\
-   	\midrule
-   	$^lH^\mathcal{R}_\mathcal{P},{}^lW^\mathcal{R}_\mathcal{P}$ & Height and width of the patch that needs to be read in for the $l^{th}$ layer transformation\\
-   	\midrule
-   	$^lH^\mathcal{O}_\mathcal{P},{}^lW^\mathcal{O}_\mathcal{P}$ & Height and width of the output patch for the $l^{th}$ layer\\
-    \midrule
-    $\tau$ & Projective field threshold\\
-    \midrule
-    $r_{drill-down}$ & Stage two drill-down fraction used in \textit{adaptive drill-down}\\
-    \bottomrule
-  \end{tabular}}
-\label{table:optimizer_symbols}
-\end{table}
-
-In Section \ref{sec:preliminaries} we explained that both Convolution and Polling transformations can be cast into a form of applying a filter along the spatial dimensions of the input volume.
-However, how each transformation operates along the depth dimension is different.
-For our purpose, we are only interested in finding the spatial propagation of the patches in the input through the consecutive layers and hence both these transformations can be treated similarly.
-The coordinates and the dimensions (i.e. height and width) of the modified patch in the output volume caused by a modified patch in the input volume are determined by the coordinates and the dimensions of the input patch, sizes of the filter kernel $^lH_\mathcal{K}$ and $^lW_\mathcal{K}$, padding values $^lP_x$ and $^lP_y$, and the strides $^lS_x$ and $^lS_y$.
+\noindent \textbf{Calculating the Coordinates and Dimensions of Propagating Patches.} The coordinates and the dimensions (i.e. height and width) of the modified patch in the output volume of $l^{th}$ layer caused by a modified patch in the input volume are determined by the coordinates and the dimensions of the input patch, sizes of the filter kernel $H_{\mathcal{K}:l}$ and $W_{\mathcal{K}:l}$, padding values $P_{x:l}$ and $P_{y:l}$, and the strides $S_{x:l}$ and $S_{y:l}$.
 For example consider the simplified demonstration showing a cross-section of input and output in Figure \ref{fig:dimensions}.
 We use a coordinate system whose origin is placed at the top left corner of the input.
-A patch marked in red is placed on the input starting off at $^lx^\mathcal{I}_\mathcal{P}, {}^ly^\mathcal{I}_\mathcal{P}$ coordinates and has a height of $^lH^\mathcal{I}_\mathcal{P}$ and width of $^lW^\mathcal{I}_\mathcal{P}$.
-The updated patch in the output starts off at $^lx^\mathcal{O}_\mathcal{P}, {}^ly^\mathcal{O}_\mathcal{P}$ and has a height of $^lH^\mathcal{O}_\mathcal{P}$ and width of $^lW^\mathcal{O}_\mathcal{P}$.
-Note that due to the overlapping nature of filter positions, to compute the output patch transformations have to read a slightly larger context than the updated patch.
-This read in context is shown by the blue shaded area in Figure \ref{fig:dimensions}.
-The starting coordinates of this read-in patch are denoted by $^lx^\mathcal{R}_\mathcal{P}, {}^ly^\mathcal{R}_\mathcal{P}$ and the dimensions are denoted by $^lW^\mathcal{R}_\mathcal{P}, {}^lH^\mathcal{R}_\mathcal{P}$.
+A patch marked in red is placed on the input starting off at $x^\mathcal{I}_{\mathcal{P}:l}, y^\mathcal{I}_{\mathcal{P}:l}$ coordinates and has a height of $H^\mathcal{I}_{\mathcal{P}:l}$ and width of $W^\mathcal{I}_{\mathcal{P}:l}$.
+The updated patch in the output starts off at $x^\mathcal{O}_{\mathcal{P}:l}, y^\mathcal{O}_{\mathcal{P}:l}$ and has a height of $H^\mathcal{O}_{\mathcal{P}:l}$ and width of $W^\mathcal{O}_{\mathcal{P}:l}$.
+Note that due to the overlapping nature of filter positions, to compute the output patch, transformations have to read a slightly larger context than the updated patch.
+This read-in context is shown by the blue shaded area in Figure \ref{fig:dimensions}.
+The starting coordinates of this read-in patch are denoted by $x^\mathcal{R}_{\mathcal{P}:l}, y^\mathcal{R}_{\mathcal{P}:l}$ and the dimensions are denoted by $W^\mathcal{R}_{\mathcal{P}:l}, H^\mathcal{R}_{\mathcal{P}:l}$.
 The relationship between the coordinates and dimensions in the horizontal axis (similarly in the vertical axis) can be expressed as follows:
 
 \begin{figure}[t]
@@ -67,13 +30,13 @@ The relationship between the coordinates and dimensions in the horizontal axis (
 
 \begin{align}
 \label{eqn:xcoordinate}
-^lx^\mathcal{O}_\mathcal{P} =&~ max\big(\lceil (^lP_x + {}^lx^\mathcal{I}_\mathcal{P} - {}^lW_\mathcal{K} + 1)/{}^lS_x \rceil, 0\big)\\
+x^\mathcal{O}_{\mathcal{P}:l} =&~ max\big(\lceil (P_{x:l} + x^\mathcal{I}_{\mathcal{P}:l} - W_{\mathcal{K}:l} + 1)/S_{x:l} \rceil, 0\big)\\
 \label{eqn:patchwidth}
-^lW^\mathcal{O}_\mathcal{P} =&~ min\big(\lceil (^lW^\mathcal{I}_\mathcal{P} +~ ^lW_\mathcal{K} - 1)/{}^lS_x \rceil, {}^lW_{\mathcal{O}}\big)\\
+W^\mathcal{O}_{\mathcal{P}:l} =&~ min\big(\lceil (W^\mathcal{I}_{\mathcal{P}:l} + W_{\mathcal{K}:l} - 1)/ S_{x:l} \rceil, W_{\mathcal{O}:l}\big)\\
 \label{eqn:xreadcoordinate}
-^lx^\mathcal{R}_\mathcal{P} =&~ ^lx^\mathcal{O}_\mathcal{P} \times~ ^lS_x - {}^lP_x\\
+x^\mathcal{R}_{\mathcal{P}:l} =&~ x^\mathcal{O}_{\mathcal{P}:l} \times S_{x:l} - P_{x:l}\\
 \label{eqn:readpatchwidth}
-^lW^\mathcal{R}_\mathcal{P} =&~ ^lW_\mathcal{K} + (^lW^\mathcal{O}_\mathcal{P}-1) \times {}^lS_x
+W^\mathcal{R}_{\mathcal{P}:l} =&~ W_{\mathcal{K}:l} + (W^\mathcal{O}_{\mathcal{P}:l}-1) \times S_{x:l}
 \end{align}
 
 % \begin{align}
@@ -104,155 +67,73 @@ The relationship between the coordinates and dimensions in the horizontal axis (
 % H^\mathcal{R}_\mathcal{P} =&~ H_\mathcal{K} + (H^\mathcal{O}_\mathcal{P}-1) \times S_y
 % \end{align}
 
-
 Equation \ref{eqn:xcoordinate} calculates the starting coordinates of the output patch.
-Use of padding effectively shifts the coordinate system and therefore $^lP_x$ is added to correct it.
-Due to the overlapping nature of filter kernels the affected span of the updated patch in the input will be increased by $^lW_\mathcal{K}-1$ amount and hence needs to be subtracted from the input coordinates $^lx^\mathcal{I}_\mathcal{P}$ (a filter of size $^lW_\mathcal{K}$ which is placed starting at $^lx^\mathcal{I}_\mathcal{P} - {}^lW_\mathcal{K} + 1$ will see the new change at $^lx^\mathcal{I}_\mathcal{P}$).
+Use of padding effectively shifts the coordinate system and therefore $P_{x:l}$ is added to correct it.
+Due to the overlapping nature of filter kernels, the affected span of the updated patch in the input will be increased by $W_{\mathcal{K}:l}-1$ amount and hence needs to be subtracted from the input coordinate $x^\mathcal{I}_{\mathcal{P}:l}$ (a filter of size $W_{\mathcal{K}:l}$ which is placed starting at $x^\mathcal{I}_{\mathcal{P}:l} - W_{\mathcal{K}:l} + 1$ will see the new change at $x^\mathcal{I}_{\mathcal{P}:l}$).
 Equation \ref{eqn:patchwidth} calculates the width of the output patches.
 Once the output patch coordinate and width are calculated it is straightforward to calculate the read-in patch coordinate as per Equation \ref{eqn:xreadcoordinate} and the width as per Equation \ref{eqn:readpatchwidth}.
 
 
-\eat{%%Yannis: Too verbose. Writing that narrates the equations is not really useful.
-Dividing the above value by the stride values $S_x$ and taking the \texttt{ceil} gives the starting coordinates of the output patch (essentially calculates the number of strides).
-Towards the left side edge of the input where the affected span of the input cannot be extended by $W_\mathcal{K}-1$ amount this value will be negative.
-Therefore the maximum of zero or the above value should be taken as the final.
-Equation \ref{eqn:patchwidth} calculates the width of the output patches.
-Similar to output coordinate calculation the span of the input patch is increased by $W_\mathcal{K}-1$ amount.
-Dividing the above value by the stride value $S_x$ and taking the \texttt{ceil} gives the width of the output patch.
-Since the output patch cannot grow beyond the size of the output, minimum of the output width and the calculated value should be taken as the final value.
-Once the output patch coordinate and width are calculated it is straight forward to calculate the read-in patch coordinate as per Equation \ref{eqn:xreadcoordinate} and the width as per Equation \ref{eqn:readpatchwidth}.
-}
-
-\begin{algorithm}
-    \caption{Incremental Inference Transformation}\label{euclid}
-    \label{alg:incinference}
-    \begin{flushleft}
-     \hspace*{1mm} \textbf{Input:} \\
-     \hspace*{3mm} $^lT$ : \textit{Original Transformation}\\
-     \hspace*{3mm} $^l\mathcal{I}$ : \textit{Pre-materialized input from original image}\\
-     \hspace*{3mm} $[^l\mathcal{P^I}_1,...,{}^{l}\mathcal{P^I}_n]$ : \textit{Input patches}\\
-     \hspace*{3mm} $[(^lx^\mathcal{I}_{\mathcal{P}_1},{}^ly^\mathcal{I}_{\mathcal{P}_1}),...,({}^lx^\mathcal{I}_{\mathcal{P}_n},{}^ly^\mathcal{I}_{\mathcal{P}_n})]$ : \textit{Input patch coordinates}\\
-     \hspace*{3mm} $^lW^\mathcal{I}_\mathcal{P},{}^lH^\mathcal{I}_\mathcal{P}$ : \textit{Input patch dimensions}
-    \end{flushleft}
-
-	\begin{flushleft}
-     \hspace*{1mm} \textbf{Output:}\\
-     \hspace*{3mm} $[^l\mathcal{P^O}_1,...,{}^{l}\mathcal{P^O}_n]$ : \textit{Output patches}\\
-     \hspace*{3mm} $[(^lx^\mathcal{O}_{\mathcal{P}_1},{}^ly^\mathcal{O}_{\mathcal{P}_1}),...,({}^lx^\mathcal{O}_{\mathcal{P}_n},{}^ly^\mathcal{O}_{\mathcal{P}_n})]$ : \textit{Output patch coordinates}\\
-     \hspace*{3mm} $^lW^\mathcal{O}_\mathcal{P},{}^lH^\mathcal{O}_\mathcal{P}$ : \textit{Output patch dimensions}
-    \end{flushleft}
-
-    \begin{algorithmic}[1]
-    \Procedure{IncrementalInference}{}
-    \State \textit{Calculate} $[(^lx^\mathcal{O}_{\mathcal{P}_1},{}^ly^\mathcal{O}_{\mathcal{P}_1}),...,({}^lx^\mathcal{O}_{\mathcal{P}_n},{}^ly^\mathcal{O}_{\mathcal{P}_n})]$ 
-    \State \textit{Calculate} ($^lW^\mathcal{O}_\mathcal{P},{}^lH^\mathcal{O}_\mathcal{P}$)
-    \State \textit{Calculate} $[({}^lx^\mathcal{R}_{\mathcal{P}_1},{}^ly^\mathcal{R}_{\mathcal{P}_1}),...,({}^lx^\mathcal{R}_{\mathcal{P}_n},{}^ly^\mathcal{R}_{\mathcal{P}_n})]$
-    \State \textit{Calculate} ($^lW^\mathcal{R}_\mathcal{P},{}^lH^\mathcal{R}_\mathcal{P}$)
-    \State \textit{Initialize} $\mathcal{R} \in \mathcal{\rm I\!R}^{\texttt{depth}({}^l\mathcal{I}) \times {}^lH^\mathcal{R}_\mathcal{P} \times {}^lW^\mathcal{R}_\mathcal{P}}$
-
-    \For{\texttt{i in [1,...,n]}}\label{alg:line:memcpy_loop}
-    	\State $T_1 \gets {}^l\mathcal{I}[:,{}^lx^\mathcal{R}_{\mathcal{P}_i}:{}^lx^\mathcal{R}_{\mathcal{P}_i}+{}^lW^\mathcal{R}_\mathcal{P},{}^ly^\mathcal{R}_{\mathcal{P}_i}:{}^ly^\mathcal{R}_{\mathcal{P}_i}+{}^lH^\mathcal{R}_\mathcal{P}]$ 
-    	\State $T_2 \gets T_1 \bm\circ_{({}^{l}x^\mathcal{I}_{\mathcal{P}_i}-{}^{l}x^\mathcal{R}_{\mathcal{P}_i}),({}^ly^\mathcal{I}_{\mathcal{P}_i}-{}^ly^l\mathcal{R}_{\mathcal{P}_i})} {}^l\mathcal{P}_i$
-    	\State $R[i,:,:] \gets T_2$
-    \EndFor
-
-    \State $[{}^l\mathcal{P}^\mathcal{O}_1,...,{}^l\mathcal{P}^\mathcal{O}_n] \gets T(\mathcal{R})$
-    \State \textbf{return} $[{}^l\mathcal{P}^\mathcal{O}_1,...,{}^l\mathcal{P}^\mathcal{O}_n]$,
-    \State \hspace*{5mm} $[({}^lx^\mathcal{O}_{\mathcal{P}_1},{}^ly^\mathcal{O}_{\mathcal{P}_1}),...,({}^lx^\mathcal{O}_{\mathcal{P}_n},{}^ly^\mathcal{O}_{\mathcal{P}_n})],$ (${}^lW^\mathcal{O}_\mathcal{P},{}^lH^\mathcal{O}_\mathcal{P}$) 
-    \EndProcedure
-    \end{algorithmic}
-
-\eat{%Maybe in the Appendix
-    \vspace*{-2mm}
-    \hrulefill
-    
-    \begin{flushleft}
-     \hspace*{4mm} \textbf{Input:}\\
-     \hspace*{8mm} $\mathcal{O}$ : \textit{Pre-materialized output from original image}\\
-     \hspace*{8mm} $[\mathcal{P}^\mathcal{O}_1,...,\mathcal{P}^\mathcal{O}_n]$ : \textit{Output patches}\\
-     \hspace*{8mm} $[(x^\mathcal{O}_{\mathcal{P}_1},y^\mathcal{O}_{\mathcal{P}_1}),...,(x^\mathcal{O}_{\mathcal{P}_n},y^\mathcal{O}_{\mathcal{P}_n})]$ : \textit{Output patch coordinates}\\
-    \end{flushleft}
-
-    \begin{flushleft}
-     \hspace*{4mm} \textbf{Output:}\\
-     \hspace*{8mm} $O\textrm'$ : \textit{Updated output}
-    \end{flushleft}
-	\begin{algorithmic}[1]
-    \Procedure{IncrementalToFullProjection}{}
-    \State \textit{Initialize} $\mathcal{O}\textrm' \in \mathcal{\rm I\!R}^{n \times \texttt{depth}(\mathcal{O}) \times \texttt{height}(\mathcal{O}) \times \texttt{width}(\mathcal{O})}$
-    \For{\texttt{i in [1,...,n]}}
-    	\State $T \gets \texttt{copy}(O)$
-    	\State $\mathcal{O}\textrm'[i,:,:] \gets T \bm\circ_{x^\mathcal{O}_{\mathcal{P}_i},y^\mathcal{O}_{\mathcal{P}_i}} \mathcal{P}^\mathcal{O}_i$
-    \EndFor
-    \State \textbf{return} $\mathcal{O}\textrm'$
-    \EndProcedure
-    \end{algorithmic}
-}
-\end{algorithm}
-
-With all the geometric mappings defined we now explain the complete incremental inference approach for a single layer.
-Algorithm \ref{alg:incinference} presents it formally.
-The \textproc{IncrementalInference} procedure takes in the original transformation $^lT$ of the $l^{th}$ layer, pre-materialized input for the layer corresponding to the original image, a batch of updated patches which are 3D volumes of activation values and their geometric properties as input.
-Notice that for the first layer all the elements in the batch of updated patches will be identical as the same occlusion patch (in RGB format) is used.
-However, at latter layers they will be different as the output of the first layer will be different due to different read-in contexts.
-First \textproc{IncrementalInference} calculates the geometric properties of the output and the read-in patches.
-A temporary input volume $R$ is initialized to hold the input patches with their read-in contexts.
-The \textsc{for} loop iteratively populates $R$ with corresponding patches.
-Finally, ${}^lT$ is applied to $R$ to compute the output patches.
-In a CNN which has multiple such layers chained together, the outputs of the \textproc{IncrementalInference} procedure are fed as input again for the incremental inference of the next layer along with the pre-materialized input from the original image.
-However, at a boundary of local context transformation and a global context transformation, such as in Convolution $\rightarrow$ Fully-Connected or Pool $\rightarrow$ Fully-Connected, full updated output has to be created \eat{as per \textproc{IncrementalToFullProjection} procedure} instead of propagating only the updated patches.
-The high-level steps taken by the end-to-end incremental inference approach for occlusion experiments can be summarized as follows:
-
-\begin{enumerate}
-	\item Take in CNN $f$, image ${}^{img}\mathcal{I}$, predicted class label $L$, occlusion patch $\mathcal{P}$, stride ${}^{\mathcal{P}}S$ for the $\mathcal{P}$, and the set of occluding patch placement positions $G$ as input.
-	\item Pre-materialize output of all the transformations in $f$ by feeding in ${}^{img}\mathcal{I}$.
-	%\item Calculate all possible $\mathcal{P}$ positions on $\mathcal{I}_{img}$.
-	\item Prepare the occluded images (${}^{img}\mathcal{I}^{'}_{x,y}$ s) corresponding to all positions in $G$.
-	\item For batches of ${}^{img}\mathcal{I}^{'}_{x,y}$ as the input invoke the transformations in $f$ in a chained manner and calculate the corresponding values of heat map $M$.
-	\begin{itemize}
-		\item For local context transformation invoke \textproc{IncrementalInference}.
-		\item For local context transformation that feeds in a global context transformation additionally materialize the full updated output.
-		\item For all others invoke the original transformation.
-	\end{itemize}
-	\item Return M as the final output.
-\end{enumerate}
-
-
-\begin{figure}[t]
-\includegraphics[width=\columnwidth]{images/redundancy_ratio}
-\caption{Theoretical speedup for popular CNN architectures with \textit{incremental inference}.}
-\label{fig:redundancy_ratio}
-\end{figure}
+\begin{table}[t]
+  \centering
+  \caption{Additional symbols used in the Section \ref{sec:optimizer} and Section \ref{sec:approx}}
+  \scalebox{0.8}{\begin{tabular}{p{2cm}p{7.5cm}}
+    \toprule
+    \textbf{Symbol} & \textbf{Meaning}\\
+    \midrule \midrule
+    $x^\mathcal{I}_{\mathcal{P}:l}, y^\mathcal{I}_{\mathcal{P}:l}$ & Starting coordinates of the input patch for the $l^{th}$ layer\\
+    \midrule
+    $x^\mathcal{R}_{\mathcal{P}:l}, y^\mathcal{R}_{\mathcal{P}:l}$ & Starting coordinates of the patch that needs to be read in for the $l^{th}$ layer transformation\\
+    \midrule
+    $x^\mathcal{O}_{\mathcal{P}:l}, y^\mathcal{O}_{\mathcal{P}:l}$ & Starting coordinates of the output patch for the $l^{th}$ layer\\
+    \midrule
+    $H^\mathcal{I}_{\mathcal{P}:l}, W^\mathcal{I}_{\mathcal{P}:l}$ & Height and width of the input patch for the $l^{th}$ layer\\
+   	\midrule
+   	$H^\mathcal{R}_{\mathcal{P}:l}, W^\mathcal{R}_{\mathcal{P}:l}$ & Height and width of the patch that needs to be read in for the $l^{th}$ layer transformation\\
+   	\midrule
+   	$H^\mathcal{O}_{\mathcal{P}:l}, W^\mathcal{O}_{\mathcal{P}:l}$ & Height and width of the output patch for the $l^{th}$ layer\\
+    \midrule
+    $T_{:l}$ & Original transformation of the $l^{th}$ layer\\
+    \midrule
+    $\tau$ & Projective field threshold\\
+    \midrule
+    $r_{drill-down}$ & Stage two drill-down fraction used in \textit{adaptive drill-down}\\
+    \bottomrule
+  \end{tabular}}
+\label{table:optimizer_symbols}
+\end{table}
 
 \vspace{2mm}
-\noindent \textbf{Theoretical Speedup with Incremental Inference.}
-We analyze the theoretical speedup that can be achieved with the \textit{incremental inference} approach when a square occlusion patch is placed on the center\footnote{If the occlusion patch is placed towards a corner of the input image the theoretical speedup will be slightly higher.
-But placing the occlusion patch on the center gives us a worst-case estimate.} of the input image.
-Figure \ref{fig:redundancy_ratio} shows the results.
-VGG16 model results in the maximum theoretical speedup and DenseNet121 model has the lowest theoretical speedup.
-Most CNN architectures result in a theoretical speedup between 2-3.
-The theoretical speedup for a CNN with \textit{incremental inference} is determined by the characteristics of its architecture such as the number of layers, the sizes of the filter kernels, and the filter stride values.
-For example, VGG16 which uses small Convolution filter kernels and strides incurs a very high computational cost (15 GFLOPs) for a single full inference.
-However, as the change propagation rate with small filter sizes and strides is small, significant computational savings and runtime speedups can be achieved with incremental inference.
+\noindent \textbf{Incremental Inference Operation.} For the layer $l$, given the original transformation $T_{:l}$, pre-materialized input $\mathcal{I}_{:l}$, updated input patch $\mathcal{P}^\mathcal{O}_{:l}$, and the above calculated coordinates and dimensions of the input, output, and read-in patches, the output patch $\mathcal{P}^\mathcal{O}_{:l}$ can be calculated as follows:
 
-\red{TODO: MQO + IVM}
+\begin{align}
+\label{eqn:readin}
+\mathcal{R} =&~ \mathcal{I}_{:l}[:,x^\mathcal{R}_{\mathcal{P}:l}:x^\mathcal{R}_{\mathcal{P}:l}+W^\mathcal{R}_{\mathcal{P}:l}, y^\mathcal{R}_{\mathcal{P}:l}: y^\mathcal{R}_{\mathcal{P}:l}+ H^\mathcal{R}_{\mathcal{P}:l}]\\
+\label{eqn:superposition}
+\mathcal{R} =&~ \mathcal{R} \bm\circ_{(x^\mathcal{I}_{\mathcal{P}:l}-x^\mathcal{R}_{\mathcal{P}:l}),(y^\mathcal{I}_{\mathcal{P}:l}-y^\mathcal{R}_{\mathcal{P}:l})} \mathcal{P}^{\mathcal{I}}_{:l}\\
+\label{eqn:callt}
+\mathcal{P}^\mathcal{O}_{:l} =&~ T_{:l}(\mathcal{R})
+\end{align}
 
-\vspace{2mm}
-\noindent \textbf{CPU versus GPU implementation concerns.}
-Through our experiments we found that even though a straight-forward implementation of \textit{incremental inference} approach as shown in Algorithm \ref{alg:incinference} produces expected speedups for the CPU environment it performs poorly on the GPU environment.
-The for loop on the line \ref{alg:line:memcpy_loop} of Algorithm \ref{alg:incinference} is essentially preparing the input for $T$ by copying values from one part of the memory to another sequentially.
-This sequential operation becomes a bottleneck for the GPU implementation as it cannot exploit the available parallelism of the GPU efficiently.
-To overcome this we have extended PyTorch by adding a custom kernel written in CUDA language which performs the input preparation more efficiently by parallelly copying the memory regions for all items in the batch and then invoke the CNN transformation.
-\red{TODO: Refer to hardware works, e.g. Li Tseng, Lin, Swanson, Yannis on hardware accelerators}
+Equation \ref{eqn:readin} reads the read-in context $\mathcal{R}$ from the pre-materialized input $\mathcal{I}_{:l}$ and Equation \ref{eqn:superposition} superimposes the input patch $\mathcal{P}^\mathcal{I}_{:l}$ on it.
+Finally, Equation \ref{eqn:callt} calculates the modified output patch $\mathcal{P}^{\mathcal{O}}_{:l}$ by invoking $T$ on $\mathcal{R}$.
+
+
+\subsection{Propagating Patches across Multiple Layers}
 
 \vspace{2mm}
-\noindent \textbf{Element-wise addition and depth-wise concatenation.}
-Element-wise addition and depth-wise concatenation are two widely used linear algebra operators in CNN.
-Element-wise addition operator requires the two input volumes to have exact same dimensions and the depth-wise concatenation requires them to have same height and width dimensions.
-Consider a situation for these operators as shown in Figure \ref{fig:la_operators} where the first input has incremental spatial update starting at ${}^lx^\mathcal{I}_{\mathcal{P}_1},{}^ly^\mathcal{I}_{\mathcal{P}_1}$ coordinates with dimensions of ${}^lH^\mathcal{I}_{\mathcal{P}_1}$ and ${}^lW^\mathcal{I}_{\mathcal{P}_1}$ and for the second input starting at ${}^lx^\mathcal{I}_{\mathcal{P}_2},{}^ly^\mathcal{I}_{\mathcal{P}_2}$ coordinates with dimensions of ${}^lH^\mathcal{I}_{\mathcal{P}_2}$ and ${}^lW^\mathcal{I}_{\mathcal{P}_2}$.
+\noindent \textbf{Propagating Patches through a Sequence of Layers.} In a CNN which is composed of sequence of layers chained together, the updated output patch of $\mathcal{P}^{\mathcal{O}}_{:l}$ of layer $l$ is fed as the input to the layer $l+1$ along with the pre-materialized input $\mathcal{I}_{:l+1}$ from the original image.
+However, at a boundary of local context transformation and a global context transformation, such as in Convolution $\rightarrow$ Fully-Connected or Pool $\rightarrow$ Fully-Connected, full updated output has to be materialized instead of propagating only the updated patches.
+
+\vspace{2mm}
+\noindent \textbf{Extending to DAG like CNNs.} In most CNNs, especially the newer and popular ones, the layers are organized into the more generic directed acyclic graph (DAG) structure instead of a simple sequence.
+In addition to the different CNN layers, theses CNNs contain two linear algebra operators: element-wise addition and depth-wise concatenation which are used to merge two branches in the DAG. 
+Element-wise addition operator requires the two input volumes to have exact same dimensions.
+Depth-wise concatenation requires them to have the same height and width dimensions.
+
+Consider a situation for these operators as shown in Figure \ref{fig:la_operators} where the first input has a incremental spatial update starting at $x^\mathcal{I}_{\mathcal{P}_1:l},y^\mathcal{I}_{\mathcal{P}_1:l}$ coordinates with dimensions of $H^\mathcal{I}_{\mathcal{P}_1:l}$ and $W^\mathcal{I}_{\mathcal{P}_1:l}$ and for the second input starting at $x^\mathcal{I}_{\mathcal{P}_2:l},y^\mathcal{I}_{\mathcal{P}_2:l}$ coordinates with dimensions of $H^\mathcal{I}_{\mathcal{P}_2:l}$ and $W^\mathcal{I}_{\mathcal{P}_2:l}$.
 In this case the coordinates and dimensions of both output and read-in patches will be the same and computing them is essentially finding the bounding box of the two input patches.
 For the horizontal axis (similarly to vertical axis) it can be expressed as follows:
-
 
 \begin{figure}[t]
 \includegraphics[width=\columnwidth]{images/la_operators}
@@ -262,20 +143,156 @@ For the horizontal axis (similarly to vertical axis) it can be expressed as foll
 
 \begin{align}
 \begin{split}
-% \label{eqn:laxcoordinate}
-{}^lx^\mathcal{O}_P =&~ \texttt{min}({}^lx^\mathcal{I}_{\mathcal{P}_1},{}^lx^\mathcal{I}_{\mathcal{P}_2})\\
-% \label{eqn:laycoordinate}
+x^\mathcal{O}_{P:l} =&~ \texttt{min}(x^\mathcal{I}_{\mathcal{P}_1:l}, x^\mathcal{I}_{\mathcal{P}_2:l})\\
 % y^\mathcal{O}_\mathcal{P} = y^\mathcal{R}_\mathcal{P} =&~ \texttt{min}(y^\mathcal{I}_{\mathcal{P}_1},y^\mathcal{I}_{\mathcal{P}_2})\\
 % \label{eqn:lapatchwidth}
-{}^lW^\mathcal{O}_\mathcal{P} =&~ \texttt{max}({}^lx^\mathcal{I}_{\mathcal{P}_1}+{}^lW^\mathcal{I}_{\mathcal{P}_1},{}^lx^\mathcal{I}_{\mathcal{P}_2}+{}^lW^\mathcal{I}_{\mathcal{P}_2}) -\texttt{min}({}^lx^\mathcal{I}_{\mathcal{P}_1},{}^lx^\mathcal{I}_{\mathcal{P}_2})
-% \label{eqn:lapatchheight}
+W^\mathcal{O}_{\mathcal{P}:l} =&~ \texttt{max}(x^\mathcal{I}_{\mathcal{P}_1:l}+W^\mathcal{I}_{\mathcal{P}_1:l},x^\mathcal{I}_{\mathcal{P}_2:l}+W^\mathcal{I}_{\mathcal{P}_2:l}) -\texttt{min}(x^\mathcal{I}_{\mathcal{P}_1:l},x^\mathcal{I}_{\mathcal{P}_2:l})
 % H^\mathcal{O}_\mathcal{P} = H^\mathcal{R}_\mathcal{P} =&~ \texttt{max}(y^\mathcal{I}_{\mathcal{P}_1}+H^\mathcal{I}_{\mathcal{P}_1},y^\mathcal{I}_{\mathcal{P}_2}+H^\mathcal{I}_{\mathcal{P}_2})-\texttt{min}(y^\mathcal{I}_{\mathcal{P}_1},y^\mathcal{I}_{\mathcal{P}_2})
 \end{split}
 \end{align}
 
+\subsection{Multi-Query Inference}
+As explained in Section \ref{sec:problem}, occlusion experiments require performing multiple CNN inferences with each corresponding to a specific occlusion patch position.
+Each of these individual inference request is analogous to a \textit{query} in the RDBMs context.
+Coupled with \textit{incremental inference} optimization, these multiple inference requests provide opportunities to apply \textit{multi-query optimization} style optimization to the occlusion experiment workload.
 
-\subsection{Approximate: Projective Field Thresholding}
+\vspace{2mm}
+\noindent \textbf{Batched Incremental Inference.} In \system~ \textit{incremental inference} optimization is applied on top of the currently dominant approach of performing CNN inference on batches of images, with batch size selected to optimize the hardware utilization.
+Each image in the batch corresponds to an occluded instance of the original image.
+The batched inference is important as it reduces the per image inference time by amortizing the fixed overheads.
+In our experiments we found that this simple optimization alone can give up to ~1.4X speedups on CPU environments and ~2X speedups on the GPU environment compared to the per image inference approach.
+Algorithm \ref{alg:incinference} presents the \textit{batched incremental inference} operator for the $l^{th}$ layer formally.
 
+\begin{algorithm}
+    \caption{Batched Incremental Inference Algorithm}
+    \label{alg:incinference}
+    \begin{flushleft}
+     \hspace*{1mm} \textbf{Input:} \\
+     \hspace*{3mm} $T_{:l}$ : \textit{Original Transformation}\\
+     \hspace*{3mm} $\mathcal{I}_{:l}$ : \textit{Pre-materialized input from original image}\\
+     \hspace*{3mm} $[\mathcal{P^I}_{1:l},...,\mathcal{P^I}_{n:l}]$ : \textit{Input patches}\\
+     \hspace*{3mm} $[(x^\mathcal{I}_{\mathcal{P}_1:l},y^\mathcal{I}_{\mathcal{P}_1:l}),...,(x^\mathcal{I}_{\mathcal{P}_n:l},y^\mathcal{I}_{\mathcal{P}_n:l})]$ : \textit{Input patch coordinates}\\
+     \hspace*{3mm} $W^\mathcal{I}_{\mathcal{P}:l},H^\mathcal{I}_{\mathcal{P}:l}$ : \textit{Input patch dimensions}
+    \end{flushleft}
+
+    \begin{flushleft}
+     \hspace*{1mm} \textbf{Output:}\\
+     \hspace*{3mm} $[\mathcal{P^O}_{1:l},...,\mathcal{P^O}_{n:l}]$ : \textit{Output patches}\\
+     \hspace*{3mm} $[(x^\mathcal{O}_{\mathcal{P}_1:l},y^\mathcal{O}_{\mathcal{P}_1:l}),...,(x^\mathcal{O}_{\mathcal{P}_n:l},y^\mathcal{O}_{\mathcal{P}_n:l})]$ : \textit{Output patch coordinates}\\
+     \hspace*{3mm} $W^\mathcal{O}_{\mathcal{P}:l},H^\mathcal{O}_{\mathcal{P}:l}$ : \textit{Output patch dimensions}
+    \end{flushleft}
+
+    \begin{algorithmic}[1]
+    \Procedure{BatchedIncrementalInference}{}
+    \State \textit{Calculate} $[(x^\mathcal{O}_{\mathcal{P}_1:l},y^\mathcal{O}_{\mathcal{P}_1:l}),...,(x^\mathcal{O}_{\mathcal{P}_n:l},y^\mathcal{O}_{\mathcal{P}_n:l})]$ 
+    \State \textit{Calculate} ($W^\mathcal{O}_{\mathcal{P}:1},H^\mathcal{O}_{\mathcal{P}:l}$)
+    \State \textit{Calculate} $[(x^\mathcal{R}_{\mathcal{P}_1:l},y^\mathcal{R}_{\mathcal{P}_1:l}),...,(x^\mathcal{R}_{\mathcal{P}_n:l},y^\mathcal{R}_{\mathcal{P}_n}:l)]$
+    \State \textit{Calculate} ($W^\mathcal{R}_{\mathcal{P}:l},H^\mathcal{R}_{\mathcal{P}:l}$)
+    \State \textit{Initialize} $\mathcal{R} \in \mathcal{\rm I\!R}^{n \times \texttt{depth}(\mathcal{I}_{:l}) \times H^\mathcal{R}_{\mathcal{P}:l} \times W^\mathcal{R}_{\mathcal{P}:l}}$
+
+    \For{\texttt{i in [1,...,n]}}\label{alg:line:memcpy_loop}
+        \State $T_1 \gets \mathcal{I}_{:l}[:,x^\mathcal{R}_{\mathcal{P}_i:l}:x^\mathcal{R}_{\mathcal{P}_i:l}+W^\mathcal{R}_{\mathcal{P}:l},y^\mathcal{R}_{\mathcal{P}_i:l}:y^\mathcal{R}_{\mathcal{P}_i:l}+H^\mathcal{R}_{\mathcal{P}:l}]$ 
+        \State $T_2 \gets T_1 \bm\circ_{(x^\mathcal{I}_{\mathcal{P}_i:l}-x^\mathcal{R}_{\mathcal{P}_i:l}),(y^\mathcal{I}_{\mathcal{P}_i:l}-y^\mathcal{R}_{\mathcal{P}_i:l})} \mathcal{P}_{i:l}$
+        \State $R[i,:,:] \gets T_2$
+    \EndFor
+
+    \State $[\mathcal{P}^\mathcal{O}_{1:l},...,\mathcal{P}^\mathcal{O}_{n:l}] \gets T(\mathcal{R})$
+    \State \textbf{return} $[\mathcal{P}^\mathcal{O}_{1:l},...,\mathcal{P}^\mathcal{O}_{n:l}]$,
+    \State \hspace*{5mm} $[(x^\mathcal{O}_{\mathcal{P}_1:l},y^\mathcal{O}_{\mathcal{P}_1:l}),...,(x^\mathcal{O}_{\mathcal{P}_n:l},y^\mathcal{O}_{\mathcal{P}_n:l})],$ ($W^\mathcal{O}_{\mathcal{P}:l},H^\mathcal{O}_{\mathcal{P}:l}$) 
+    \EndProcedure
+    \end{algorithmic}
+
+% \eat{%Maybe in the Appendix
+%     \vspace*{-2mm}
+%     \hrulefill
+    
+%     \begin{flushleft}
+%      \hspace*{4mm} \textbf{Input:}\\
+%      \hspace*{8mm} $\mathcal{O}$ : \textit{Pre-materialized output from original image}\\
+%      \hspace*{8mm} $[\mathcal{P}^\mathcal{O}_1,...,\mathcal{P}^\mathcal{O}_n]$ : \textit{Output patches}\\
+%      \hspace*{8mm} $[(x^\mathcal{O}_{\mathcal{P}_1},y^\mathcal{O}_{\mathcal{P}_1}),...,(x^\mathcal{O}_{\mathcal{P}_n},y^\mathcal{O}_{\mathcal{P}_n})]$ : \textit{Output patch coordinates}\\
+%     \end{flushleft}
+
+%     \begin{flushleft}
+%      \hspace*{4mm} \textbf{Output:}\\
+%      \hspace*{8mm} $O\textrm'$ : \textit{Updated output}
+%     \end{flushleft}
+%   \begin{algorithmic}[1]
+%     \Procedure{IncrementalToFullProjection}{}
+%     \State \textit{Initialize} $\mathcal{O}\textrm' \in \mathcal{\rm I\!R}^{n \times \texttt{depth}(\mathcal{O}) \times \texttt{height}(\mathcal{O}) \times \texttt{width}(\mathcal{O})}$
+%     \For{\texttt{i in [1,...,n]}}
+%       \State $T \gets \texttt{copy}(O)$
+%       \State $\mathcal{O}\textrm'[i,:,:] \gets T \bm\circ_{x^\mathcal{O}_{\mathcal{P}_i},y^\mathcal{O}_{\mathcal{P}_i}} \mathcal{P}^\mathcal{O}_i$
+%     \EndFor
+%     \State \textbf{return} $\mathcal{O}\textrm'$
+%     \EndProcedure
+%     \end{algorithmic}
+% }
+\end{algorithm}
+
+
+The \textproc{BatchedIncrementalInference} procedure takes in the original transformation of the layer, pre-materialized input for the layer corresponding to the original image, a batch of updated patches which are 3D volumes of activation values and their geometric properties as input.
+Notice that for the first layer, all the elements in the batch of updated patches will be identical as the same occlusion patch (in RGB format) is used.
+However, at latter layers they will be different as the output of the first layer will be different due to different read-in contexts.
+First, \textproc{BatchedIncrementalInference} calculates the geometric properties of the output and the read-in patches.
+A temporary input volume $R$ is initialized to hold the input patches with their read-in contexts.
+The \textsc{for} loop iteratively populates $R$ with corresponding patches.
+Finally, ${}^lT$ is applied to $R$ to compute the output patches.
+It should be noted that pre-materialized input ${}^l\mathcal{I}$ for the unmodified input image can be reused across multiple batches corresponding the the same image.
+
+\vspace{2mm}
+\noindent \textbf{GPU Optimized Implementation.}
+Through our experiments, we found that even though a straight-forward implementation of \textit{batched incremental inference} approach as shown in Algorithm \ref{alg:incinference} produces expected speedups for the CPU environment it performs poorly on the GPU environment.
+The for loop on the line \ref{alg:line:memcpy_loop} of Algorithm \ref{alg:incinference} is essentially preparing the input for $T_{:l}$ by copying values from one part of the memory to another sequentially.
+However, in the \textit{multi-query} setting this sequential operation becomes a bottleneck for the GPU implementation as it cannot exploit the available parallelism of the GPU efficiently.
+To overcome this we have extended PyTorch by adding a custom kernel written in CUDA language which performs the input preparation more efficiently by parallelly copying the memory regions for all items in the batch and then invoke the CNN transformation $T_{:l}$.
+$T_{:l}$, which is provided as an input to the Algorithm \ref{alg:incinference} is already GPU aware and is optimized to use the GPU efficiently for a batch of inputs.
+% \red{TODO: Refer to hardware works, e.g. Li Tseng, Lin, Swanson, Yannis on hardware accelerators}
+
+
+\subsection{End-to-end Incremental Inference for the Occlusion Experiment}
+
+The high-level steps taken by the end-to-end incremental inference approach for the occlusion experiment can be summarized as follows:
+
+\begin{enumerate}
+	\item Take in CNN $f$, image $\mathcal{I}_{:img}$, predicted class label $L$, occlusion patch $\mathcal{P}$, stride $S_{\mathcal{P}}$ for the $\mathcal{P}$, and the set of occluding patch placement positions $G$ as input.
+	\item Pre-materialize output of all the transformations in $f$ by feeding in $\mathcal{I}_{:img}$.
+	%\item Calculate all possible $\mathcal{P}$ positions on $\mathcal{I}_{img}$.
+	\item Prepare the occluded images ($\mathcal{I}^{'}_{x,y:img}$ s) corresponding to all positions in $G$.
+	\item For batches of $\mathcal{I}^{'}_{x,y:img}$ as the input, invoke the transformations in $f$ in topological order and calculate the corresponding values of heat map $M$.
+	\begin{itemize}
+		\item For local context transformation invoke \textproc{BatchedIncrementalInference}.
+		\item For local context transformation that feeds in a global context transformation additionally materialize the full updated output.
+		\item For all others invoke the original transformation.
+	\end{itemize}
+	\item Return M as the final output.
+\end{enumerate}
+
+
+\subsection{Theoretical Speedup with Incremental Inference}
+
+\begin{figure}[t]
+\includegraphics[width=\columnwidth]{images/redundancy_ratio}
+\caption{Theoretical speedup for popular CNN architectures with \textit{incremental inference}.}
+\label{fig:redundancy_ratio}
+\end{figure}
+
+We analyze the theoretical speedup that can be achieved with the \textit{incremental inference} approach when a square occlusion patch is placed on the center\footnote{If the occlusion patch is placed towards a corner of the input image the theoretical speedup will be slightly higher.
+But placing the occlusion patch on the center gives us a worst-case estimate.} of the input image.
+Figure \ref{fig:redundancy_ratio} shows the results.
+VGG16 model results in the maximum theoretical speedup and DenseNet121 model has the lowest theoretical speedup.
+Most CNN architectures result in a theoretical speedup between 2-3.
+The theoretical speedup for a CNN with \textit{incremental inference} is determined by the characteristics of its architecture such as the number of layers, the sizes of the filter kernels, and the filter stride values.
+For example, VGG16 which uses small Convolution filter kernels and strides incurs a very high computational cost (15 GFLOPs) for a single full inference.
+However, as the change propagation rate with small filter sizes and strides is small, significant computational savings and runtime speedups can be achieved with incremental inference.
+
+
+\section{Approximate Inference Optimizations}\label{sec:approx}
+In this Section we explain \textit{projective field thresholding} and \textit{adaptive drill-down}, which are two \textit{approximate inference} optimizations used in ~\system.
+We also explain how \system~ tunes its internal system configuration parameters for these \textit{approximate inference} optimizations.
+
+
+\subsection{Projective Field Thresholding}
 Projective field \cite{le2017receptive, basiccnnoperations} of a CNN neuron is the local region (including the depth) of the output volume which is connected to it.
 The term is borrowed from the Neuroscience field where it is used to describe the spatiotemporal effects exerted by a retinal cell on all of the outputs of the neuronal circuitry \cite{de2011projective}.
 For our work, the notion of projective field is useful as it determines the change propagation path for incremental changes.
@@ -291,7 +308,7 @@ At every transformation, the size of the projective field will increase linearly
 \label{fig:pf_truncate}
 \end{figure}
 
-Because of the projective field growth, even though there will be many computational redundancies in the early layers towards the latter layers it will decrease or even have no redundancies.
+Because of the projective field growth, even though there will be many computational redundancies in the early layers, towards the latter layers it will decrease or even have no redundancies.
 However, we empirically found that the projective field growth can be restrained up to a certain extent without significantly sacrificing the accuracy.
 For a more intuitive understanding of why this would work consider the simplified 1-D Convolution example shown in Figure \ref{fig:pf_truncate} (a).
 In the example, a single neuron is modified (marked in red) and a filter of size three is applied with a stride of one repeatedly four times.
@@ -301,7 +318,7 @@ It can be seen that this distribution resembles a Gaussian where many of the pat
 The amount of change in the output layer is determined by both the number of unique paths and also the individual weights of the connections.
 It can be shown that the distribution of change in the output layer will converge to a Gaussian distribution provided certain conditions are met for the weight values of the filter kernel (more details in Appendix X).
 \eat{
-For more details we refer the reader to \cite{luo2016understanding}, where a similar theoretical result has been proved for the receptive field\footnote{Receptive field of a CNN neuron is the local region (including the depth) of the input volume which is connected to it.} of a deep CNN.
+For more details we refer the reader to \cite{luo2016understanding}, where a similar theoretical result has been proved for the receptive field\footnote{Receptive field of a CNN neuron is the local region (including the depth) of the input volume which is connected to it.} of a Deep CNN.
 }
 
 As most of the change will be concentrated on the center we introduce the notion of a projective field threshold $\tau ~ (0 < \tau \leq 1)$ which will be used to restrict the growth of the projective field.
@@ -313,30 +330,30 @@ In \system, \textit{projective field thresholding} is implemented on top of \tex
 
 \begin{align}
 \label{eqn:normal_width_calc}
-{}^lW^\mathcal{O}_\mathcal{P} = &~ \texttt{min}\big(\lceil ({}^lW^\mathcal{I}_\mathcal{P} + {}^lW_\mathcal{K} - 1)/{}^lS_x \rceil, {}^lW^\mathcal{O}_\mathcal{P}\big)\\
+W^\mathcal{O}_{\mathcal{P}:l} = &~ \texttt{min}\big(\lceil (W^\mathcal{I}_{\mathcal{P}:l} + W_{\mathcal{K}:l} - 1)/S_{x:l} \rceil, W^\mathcal{O}_{\mathcal{P}:l}\big)\\
 \label{eqn:check_tau}
-\text{If}~ {}^lW_\mathcal{P}^\mathcal{O} & > \texttt{round}(\tau \times {}^lW^\mathcal{O}):\\
+\text{If}~ W_{\mathcal{P}:l}^\mathcal{O} & > \texttt{round}(\tau \times W^\mathcal{O}_{:l}):\\
 \label{eqn:new_width_calc_with_tau}
-& {}^lW^\mathcal{O}_\mathcal{P} = \texttt{round}(\tau \times {}^lW^\mathcal{O})\\
+& W^\mathcal{O}_{\mathcal{P}:l} = \texttt{round}(\tau \times W^\mathcal{O}_{:l})\\
 \label{eqn:new_in_width}
-& {}^lW^\mathcal{I}_{\mathcal{P}_{new}} = {}^lW^\mathcal{O}_{\mathcal{P}} \times {}^lS_x - {}^lW_{\mathcal{K}} + 1\\
+& W^\mathcal{I}_{\mathcal{P}_{new}:l} = W^\mathcal{O}_{\mathcal{P}:l} \times S_{x:l} - W_{\mathcal{K}:l} + 1\\
 \label{eqn:new_x_coord}
-& {}^lx^{\mathcal{I}}_\mathcal{P} \mathrel{+}= ({}^lW^\mathcal{I}_\mathcal{P} - {}^lW^\mathcal{I}_{\mathcal{P}_{new}})/2\\
+& x^{\mathcal{I}}_{\mathcal{P}:l} \mathrel{+}= (W^\mathcal{I}_{\mathcal{P}:l} - W^\mathcal{I}_{\mathcal{P}_{new}:l})/2\\
 \label{eqn:new_input_width}
-& {}^lW^\mathcal{I}_{\mathcal{P}} = {}^lW^\mathcal{I}_{\mathcal{P}_{new}}\\
+& W^\mathcal{I}_{\mathcal{P}:l} = W^\mathcal{I}_{\mathcal{P}_{new}:l}\\
 \label{eqn:new_output_x}
-{}^lx^\mathcal{O}_\mathcal{P} = & \texttt{max}\big(\lceil ({}^lP_x + {}^lx^\mathcal{I}_\mathcal{P} - {}^lW_\mathcal{K} + 1)/{}^lS_x \rceil, 0\big)
+x^\mathcal{O}_{\mathcal{P}:l} = & \texttt{max}\big(\lceil (P_{x:l} + x^\mathcal{I}_{\mathcal{P}:l} - W_{\mathcal{K}:l} + 1)/S_{x:l} \rceil, 0\big)
 \end{align}
 
 Equation \ref{eqn:normal_width_calc} calculates output width assuming no thresholding.
-But if the output width exceeds the threshold defined by $\tau$ output width is set to the threshold value as per Equation \ref{eqn:new_width_calc_with_tau}.
-Equation \ref{eqn:new_in_width} calculates the input width that would produce an output of width $W^\mathcal{O}_\mathcal{P}$ (think of this as making $W^{\mathcal{I}}_{\mathcal{P}}$ the subject of equation \ref{eqn:normal_width_calc}).
+But if the output width exceeds the threshold defined by $\tau$, output width is set to the threshold value as per Equation \ref{eqn:new_width_calc_with_tau}.
+Equation \ref{eqn:new_in_width} calculates the input width that would produce an output of width $W^\mathcal{O}_{\mathcal{P}:l}$ (think of this as making $W^{\mathcal{I}}_{\mathcal{P}:l}$ the subject of equation \ref{eqn:normal_width_calc}).
 If the new input width is smaller than the original input width, the starting x coordinate should be updated as per Equation \ref{eqn:new_x_coord} such that the updated coordinates correspond to a center crop from the original.
 Equation \ref{eqn:new_input_width} set the input width to the newly calculated input width and Equation \ref{eqn:new_output_x} calculates the x coordinate of the output patch from the updated values.
 
 \begin{figure}[t]
 \includegraphics[width=\columnwidth]{images/proj_thresholding}
-\caption{(a) Theoretical speedup ratio with projective field thresholding. (b) Mean Square Error between exact and approximate output of the final Conv. or Pool transformation.}
+\caption{(a) Theoretical speedup ratio with projective field thresholding. (b) Mean Square Error between exact and approximate output of the final Convolution or Pool transformation.}
 \label{fig:proj_thresholding}
 \end{figure}
 
@@ -350,7 +367,7 @@ The results are shown in Figure \ref{fig:proj_thresholding} (b).
 With increasing $\tau$ and increasing patch size we see that the MSE is also increasing.
 
 
-\subsection{Approximate: Adaptive Drill-Down}\label{sec:ada-drill-down}
+\subsection{Adaptive Drill-Down}\label{sec:ada-drill-down}
 \textit{Adaptive drill-down} approach, which is only applicable in the non-interactive mode, is based on the observation that in many occlusion based explainability workloads, such as in medical imaging, the regions of interest will occupy only a small fraction of the entire image.
 In such cases, it is unnecessary to inspect the entire image at a higher resolution with a small stride value for the occlusion patch.
 In \textit{adaptive-drill-down} the final occlusion heat map will be generated using a two-stage process.
@@ -392,11 +409,11 @@ In this section we explain how \system~ sets its internal configuration paramete
 \vspace{2mm}
 \noindent \textbf{Tuning projective field threshold.}
 The inaccuracies incurred when applying \textit{projective field thresholding} can cause quality degradation in the generate approximate heat map all the way from indistinguishable changes major structural changes.
-To measure this quality degradation we use Structural Similarity (SSIM) Index~\cite{wang2004image} which is one of the widely used approaches to measuring the \textit{human perceived difference} between two similar images.
-When applying SSIM index we treat the original heat map as the reference image with no distortions and the perceived image similarity of the approximate heat map is calculated with reference to it.
+To measure this quality degradation we use Structural Similarity (SSIM) Index~\cite{wang2004image}, which is one of the widely used approaches to measure the \textit{human perceived difference} between two similar images.
+When applying SSIM index, we treat the original heat map as the reference image with no distortions and the perceived image similarity of the approximate heat map is calculated with reference to it.
 The generated SSIM index is a value between $-1$ and $1$, where $1$ corresponds to perfect similarity.
 Typically SSIM index values in the range of $0.90-0.95$ are used in practical applications such as image compression and video encoding as at the human perception level they produce indistinguishable distortions.
-For more details on SSIM Index method, we refer the reader to the original SSIM Index paper~\cite{wang2004image}.
+% For more details on SSIM Index method, we refer the reader to the original SSIM Index paper~\cite{wang2004image}.
 
 Tuning \textit{projective field threshold} $\tau$ is done during a special initial tuning phase.
 During this tuning phase \system~ takes in a sample of images (default 30) from the operational workload and evaluates SSIM value of the approximate heat map (compared to the exact heat map) for different $\tau$ values (default values are 1.0, 0.9, 0.8, ..., 0.4).
@@ -417,15 +434,15 @@ As explained in section \ref{sec:ada-drill-down} the speedup obtained by \textit
 % A general trend of increasing SSIM with increasing $r_{drill-down}$ and decreasing $S_1$ can be observed from the plots.
 For configuring \textit{adaptive drill-down} \system~ requires the user to provide $r_{drill-down}$ and a target \texttt{speedup} value.
 $r_{drill-down}$ should be selected based on the user's experience and understanding on the relative size of interesting regions compared to the full image.
-This is a fair assumption and in most cases, such as in medical imaging, users will have a fairly good understanding on the relative size of the interesting regions.
+This is a fair assumption and in most cases such as in medical imaging, users will have a fairly good understanding on the relative size of the interesting regions.
 However, if the user is unable to provide this value \system~ will use a default value of 0.25 as $r_{drill-down}$.
 The \texttt{speedup} value basically captures user's input on how much faster the occlusion experiment should run.
 Higher speedup values will sacrifice the quality of non-interesting (1-$r_{drill-down}$) regions for faster execution.
 The default value for \texttt{speedup} value is three.
 The way how \system~ configures \textit{adaptive drill-down} is different to how it configures \textit{projective field thresholding}.
-The reason for this is unlike in \textit{projective field thresholding} in \textit{adaptive drill-down} users have more intuition on the outcomes of $r_{drill-down}$ and target \texttt{speedup} parameters compared to the SSIM quality value of the final output.
+The reason for this is, unlike in \textit{projective field thresholding} in \textit{adaptive drill-down} users have more intuition on the outcomes of $r_{drill-down}$ and target \texttt{speedup} parameters compared to the SSIM quality value of the final output.
 Given $r_{drill-down}$, target \texttt{speedup} value, and original occlusion patch stride value $S_2$ (also called stage two stride) \system~ then calculates the stage one stride value $S_1$ as per equation \ref{eqn:s1}.
-As $S_1$ cannot be greater than the width $W_{img}$ (similarly height $H_{img}$) of the image it can be seen that possible values for the \texttt{speedup} value are upper-bounded as per equation \ref{eqn:speedup_bound}.
+As $S_1$ cannot be greater than the width $W_{img}$ (similarly height $H_{img}$) of the image and with the mathematical constraint of $(1-r_{drill\-down} \times \texttt{speedup})$ being positive, it can be seen that possible values for the \texttt{speedup} value is upper-bounded as per equation \ref{eqn:speedup_bound}.
 
 \begin{align}
 \label{eqn:s1}

@@ -10,7 +10,7 @@ VIRAL and BACTERIAL categories correspond to two varieties of Pneumonia. NORMAL 
 
 \vspace{2mm}
 \noindent \textbf{Workloads.}
-We use three popular ImageNet-trained deep CNNs: VGG16 \cite{vggnet}, ResNet18 \cite{resnet}, and Inception3 \cite{inception}, obtained from \cite{torchvisionmodels}.
+We use three popular ImageNet-trained Deep CNNs: VGG16 \cite{vggnet}, ResNet18 \cite{resnet}, and Inception3 \cite{inception}, obtained from \cite{torchvisionmodels}.
 They complement each other in terms of model size, computational cost, amount of theoretical redundancy that exist for occlusion experiments, and the level of architectural complexity of the CNN model.
 For \textit{OCT} and \textit{Chest X-Ray} datasets the three CNN models are fine-tuned by retraining the final fully-connected layer with hyper-parameter tuning as per standard practice.
 More details on the fine-tuning process are included in the Appendix.
