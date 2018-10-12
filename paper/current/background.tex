@@ -6,9 +6,9 @@
 They exploit spatial locality of information in image pixels to construct a hierarchy of parametric feature extractors and transformers organized as layers of various types: \textit{Convolution}, which use image
 filters from graphics, except with variable filter weights, to extract features; \textit{Pooling}, which subsamples features in a spatial
 locality-aware way; \textit{Batch-Normalization}, which normalizes the output of the layer; \textit{Non-Linearity}, which applies a non-linear transformation (e.g., ReLU); \textit{Fully Connected}, which is the building block of a multi-layer perceptron; and \textit{Softmax}, which emits predicted probabilities to each class label.
-In most Deep CNN architectures, the above layers are stacked together with one\'s output being fed as the input to the other.
+In most deep CNN architectures, the above layers are stacked together with one\'s output being fed as the input to the other.
 Adding multiple layers element-wise or stacking multiple layers together depth-wise to produce a new layer is also present in some architectures.
-Popular Deep CNN model architectures include AlexNet \cite{alexnet}, VGG \cite{vggnet}, Inception~\cite{inception}, ResNet~\cite{resnet}, SqueezeNet~\cite{squeezenet}, and MobileNet~\cite{mobilenets}.
+Popular deep CNN model architectures include AlexNet \cite{alexnet}, VGG \cite{vggnet}, Inception~\cite{inception}, ResNet~\cite{resnet}, SqueezeNet~\cite{squeezenet}, and MobileNet~\cite{mobilenets}.
 % In this work, the discussion and evaluation is focused on VGG-16 (16 layer version), ResNet-18 (18 layer version) and Inception-V3 (version 3) which are three widely used CNN models in real world transfer learning applications.
 % Nevertheless, our work is orthogonal to the specifics of a particular architecture and the proposed approaches can be easily extended to any architecture.
 
@@ -19,7 +19,7 @@ In perturbation based approaches the output of the model is observed by modifyin
 \eat{
 Even though gradient approaches require only a single forward inference and a single backpropagation to generate the sensitivity heat map, the output may not be very intuitive and hard to understand because the salient pixels tend to spread over a very large area of the input image.
 }
-Despite being time-consuming, in most real world use cases such as in medical imaging, practitioners tend to use occlusion experiments \cite{zeiler2014visualizing}, a perturbation approach, as the preferred approach for explanations as they produce high quality fine grained sensitivity heat maps ~\cite{jung2017deep} using a process which is very intuitive to the human observer ~\cite{miller2017explanation}.
+Despite being time-consuming, in most real world use cases such as in medical imaging, practitioners tend to use occlusion experiments, a perturbation approach, as the preferred approach for explanations as they produce high quality fine grained sensitivity heat maps using a process which is very intuitive to the human observer ~\cite{zeiler2014visualizing,jung2017deep,miller2017explanation}.
 
 
 \eat{

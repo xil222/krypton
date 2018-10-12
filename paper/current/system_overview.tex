@@ -1,7 +1,7 @@
 %!TEX root = <main.tex>
 \section{Preliminaries and Overview}\label{sec:preliminaries}
 In this section, we first formally state the problem and explain our assumptions.
-Then we formalize the internals of critical layers in a Deep CNN for the purpose of proposing our \textit{incremental inference} approach in Section 4.
+Then we formalize the internals of critical layers in a deep CNN for the purpose of proposing our \textit{incremental inference} approach in Section 4.
 \eat{
 Finally we briefly explain the Structural Similarity Index (SSIM) which is used to quantify the quality of the generated sensitivity heat maps.
 }
@@ -10,14 +10,32 @@ Finally we briefly explain the Structural Similarity Index (SSIM) which is used 
 
 \begin{table}[t]
   \centering
-  \caption{Symbols used in the Preliminaries Section}
+  \caption{Symbols used in the Section 3}
   \scalebox{0.8}{\begin{tabular}{p{2cm}p{7.5cm}}
     \toprule
     \textbf{Symbol} & \textbf{Meaning}\\
     \midrule \midrule
-    $\mathcal{I}_{:l} (\mathcal{I}_{:img})$ & Input activation volume of the $l^{th}$ layer (Input Image)\\
+    $f$ & Fine-tuned CNN which takes in an input image and outputs a probability distribution over the class labels\\
     \midrule
-    $\mathcal{O}_{:l}$ & Output activation volume of the $l^{th}$ layer\\
+    $T_{:l}$ & Tensor transformation function used in the $l^{th}$ layer of the CNN $f$\\
+    \midrule
+    $L$ & Class label predicted by $f$ for the original image $\mathcal{I}_{:img}$\\
+    \midrule
+    $\mathcal{P}$ & Occluding patch in RGB format\\
+    \midrule
+    $S_\mathcal{P}$ & Occluding patch striding amount\\
+    \midrule
+    $G$ & Set of occluding patch superimposition positions on $\mathcal{I}_{:img}$ in (x,y) format\\
+    \midrule
+    $M$ & Heat map produced by the occlusion experiment\\
+    \midrule
+    $H_M,W_M$ & Height and width of $M$\\
+    \midrule
+    $\bm\circ_{x,y}$ & Superimposition operator. $A~\circ_{x,y}~B$, superimposes $B$ on top of $A$ starting off at $(x,y)$ position\\
+    \midrule
+    $\mathcal{I}_{:l} (\mathcal{I}_{:img})$ & Input tensor of the $l^{th}$ layer (Input Image)\\
+    \midrule
+    $\mathcal{O}_{:l}$ & Output tensor of the $l^{th}$ layer\\
     \midrule
     $C_{\mathcal{I}:l},H_{\mathcal{I}:l},W_{\mathcal{I}:l}$ & Depth, height, and width of $l^th$ layer Input\\
     \midrule
@@ -34,36 +52,18 @@ Finally we briefly explain the Structural Similarity Index (SSIM) which is used 
     $S_{:l}$$\equiv$$(S_{x:l},S_{y:l})$ & Filter kernel patch striding amount for the $l^{th}$ layer ($S_{x:l}$ and $S_{y:l}$ corresponds to width and height dimensions)\\
     \midrule
     $P_{:l}$$\equiv$$(P_{x:l},P_{y:l})$ & Padding amount for the $l^{th}$ layer ($P_{x:l}$ and $P_{y:l}$ corresponds to padding along width and height dimensions)\\
-    \midrule
     % $Q (Q_{inc})$ & Total FLOPS count with full (incremental) inference\\
     % \midrule
     % $L$ & Set of convolution layers in a CNN\\
     % \midrule
-    $\mathcal{P}$ & Occluding patch in RGB format\\
-    \midrule
-    $S_\mathcal{P}$ & Occluding patch striding amount\\
-    \midrule
-    % $^{img}\mathcal{I}_{x,y}$ & Modified image by superimposing $\mathcal{P}$ on top of $^{img}\mathcal{I}$ such that the top left corner of $\mathcal{P}$ is positioned at $x,y$ location of $^{img}\mathcal{I}$\\
-    % \midrule
-    $M$ & Heat map produced by the occlusion experiment\\
-    \midrule
-    $H_M,W_M$ & Height and width of $M$\\
-    \midrule
-    $f$ & Fine-tuned CNN which takes in an input image and outputs a probability distribution over the class labels\\
-    \midrule
-    $L$ & Class label predicted by $f$ for the original image $\mathcal{I}_{:img}$\\
-    \midrule
-    $G$ & Set of occluding patch superimposition positions on $\mathcal{I}_{:img}$ in (x,y) format\\
-    \midrule
-    $\bm\circ_{x,y}$ & Superimposition operator. $A~\circ_{x,y}~B$, superimposes $B$ on top of $A$ starting off at $(x,y)$ position\\
     \bottomrule
   \end{tabular}}
 \label{table:preliminaries_symbols}
 \end{table}
 
-We are given a CNN $f$, an image $\mathcal{I}_{:img}$ on which the occlusion experiment needs to be run, the predicted class label $L$ for $\mathcal{I}_{:img}$, an occluding patch $\mathcal{P}$ in RGB format, and occluding patch striding amount $S_{:\mathcal{P}}$.
-In the interactive mode \system~ expects the user to also provide a set of interested occluding patch positions $G$.
-The occlusion experiment workload is to generate a 2-D heat map $M$ where each value corresponding to the coordinates in $G$ contains the predicted probability for $L$ by $f$ for the occluded image $\mathcal{I}^{'}_{x,y:img}$ and zero otherwise.
+We are given a CNN $f$ which consists of a sequence or a DAG of tensor transformation functions $T_{:l}$s, an image $\mathcal{I}_{:img}$ on which the occlusion experiment needs to be run, the predicted class label $L$ for $\mathcal{I}_{:img}$, an occluding patch $\mathcal{P}$ in RGB format, and occluding patch striding amount $S_{\mathcal{P}}$.
+We are also given a set of interested occluding patch positions $G$, constructed either automatically or by the human with a visual interface interactively.
+The occlusion experiment workload is to generate a 2-D heat map $M$, where each value correspond to the coordinates in $G$ contains the predicted probability for $L$ by $f$ for the occluded image $\mathcal{I}^{'}_{x,y:img}$ or zero otherwise.
 More precisely, we can state the workload using the following set of logical statements:
 
 \begin{align}
@@ -82,22 +82,22 @@ M \in&~ \mathcal{\rm I\!R}^{H_M \times W_M}\\
 
 Step (\ref{eqn:mheight}), and (\ref{eqn:mwidth}) calculates the dimensions of the generated heat map $M$ which is dependent on the dimensions of $\mathcal{I}_{:img}$, $\mathcal{P}$, and $S_\mathcal{P}$.
 Step (\ref{eqn:patchimpose}) superimposes $\mathcal{P}$ on $\mathcal{I}_{:img}$ with its top left corner placed on the (x,y) location of $\mathcal{I}_{:img}$.
-Step (\ref{eqn:outputval}) calculates the output value at the (x,y) location by performing CNN inference for $\mathcal{I}^{'}_{x,y:img}$ using $f$ and taking the predicted probability for the label $L$.
-Step \ref{eqn:patchimpose} and \ref{eqn:outputval} are run for all occluding patch position values in $G$.
-In the non-interactive mode $G$ is initialized to $G = [0, H_M) \times [0, W_M)$.
+Step (\ref{eqn:outputval}) calculates the output value at the (x,y) location by performing CNN inference for $\mathcal{I}^{'}_{x,y:img}$ using $f$ and picking the predicted probability for the label $L$.
+Step (\ref{eqn:patchimpose}) and (\ref{eqn:outputval}) are run for all occluding patch position values in $G$.
+In the non-interactive mode $G$ is initialized to $G = [0, H_M) \times [0, W_M)$, which corresponds to the set of all possible occlusion patch positions on  $\mathcal{I}_{:img}$.
 In the interactive mode it is possible that human operator would provide multiple $G$s, one after the other, for which the system has to evaluate iteratively.
 
-We assume that $f$ is a CNN from a roster of well-known CNNs (currently, VGG 16 layer version, ResNet 18 layer version, and Inception version 3).
-This is a reasonable start since most recent CNN based image recognition applications use only such well-known CNNs from model zoos \cite{caffemodelzoo, tfmodelzoo}.
-Nevertheless, our work is orthogonal to the specifics of a particular architecture and the proposed approaches can be easily extended to any architecture.
+We assume that $f$ is a CNN from a roster of well-known CNNs (currently, we support VGG 16-layer version, ResNet 18-layer version, and Inception version 3).
+We think this is a reasonable start, since most recent CNN-based image recognition applications use only such well-known CNNs from model zoos \cite{caffemodelzoo, tfmodelzoo}.
+Nevertheless, our work is orthogonal to the specifics of a particular CNN architecture, and our proposed techniques can be easily extended to any CNN architecture.
 We leave support for arbitrary CNNs to future work.
 
 \subsection{Deep CNN Internals}
-Input and output of individual layers in a Deep CNN except for Fully-Connected ones are arranged into three-dimensional volumes which have a width, height, and depth.
-For example an RGB input image of 224$\times$224 spatial sizes can be considered as an input volume having a width and height of 224 and a depth of 3 (corresponding to 3 color channels).
-Every non Fully-Connected layer will take in an input volume and transform it into another volume.
-A Fully-Connected layer takes in a vector or a flattened activation volume as input and transforms it into another vector.
-For our purpose, these transformations can be broadly divided into three categories based on how they operate spatially:
+Input and output of individual layers in a deep CNN, except for Fully-Connected ones, are arranged into 3-D tensors that have a width, height, and depth.
+For example an RGB input image of 224$\times$224 dimensions can be considered as an input tensor having a width and height of 224 and a depth of 3.
+Every non-Fully-Connected layer will take in an input tensor and transform it into another tensor.
+A Fully-Connected layer takes in a 1-D tensor or a flattened 3-D tensor as input and transforms it into another 1-D tensor.
+For our purpose, these transformations can be broadly divided into three categories based on their spatial locality:
 
 \begin{figure*}[t]
 \includegraphics[width=\textwidth]{images/cnn_simplified}
@@ -121,18 +121,19 @@ For our purpose, these transformations can be broadly divided into three categor
 \end{itemize}
 
 \vspace{2mm}
-\noindent \textbf{Transformations that operate at the granularity of a global context.} These transformations operate on a global context or in other words, does not take into account the spatial information.
-Fully-Connected, which is the only global context transformation in a CNN, takes in an input vector and performs a vector-matrix multiplication with a weight matrix and produces an output vector.
-As it performs one bulk transformation there is no opportunity for exploiting redundancies.
-The computational cost of a Full-Connected transformation is proportional to the product of the size of the input and output vectors.
+\noindent \textbf{Transformations that operate at the granularity of a global context.} These transformations operate on a global context and does not take into account the spatial information.
+Fully-Connected, which is the only global transformation layer in a CNN, takes in a 1-D tensor or a flattened 3-D tensor and performs a matrix-vector multiplication with a weight matrix and produces an output 1-D tensor.
+Since it performs one bulk transformation, there is almost no substantial opportunity for exploiting redundancies with incremental computations.
+The computational cost of a Full-Connected transformation is proportional to the product of the size of the input and output 1-D tensors.
 Fully-Connected layers are used as the last or last few layers in a CNN and only accounts for a small fraction of the total computational cost.
+Thus we ignore them henceforth.
 
 \vspace{2mm}
-\noindent \textbf{Transformations that operate at the granularity of individual  spatial locations.} These transformations essentially perform a $map(.)$ function on each individual activation value (see Figure \ref{fig:cnn_simplified} (b)).
-Hence the output will have the same dimensions as input.
+\noindent \textbf{Transformations that operate at the granularity of individual  spatial locations.} These transformations essentially perform a $map(.)$ function on each individual element in the tensor (see Figure \ref{fig:cnn_simplified} (b)).
+Hence, the output will have the same dimensions as input.
 The computational cost incurred by these transformations is proportional to the volume of the input (or output).
-However, with incremental spatially localized updates in the input, such as placing an occlusion patch, only the updated region is needed to be recalculated.
-Extending these transformations to become change aware is straightforward.
+However, with incremental spatially localized updates in the input, such as placing an occlusion patch, only the updated region needs to be recalculated.
+Extending these transformations to become change aware is straightforward since they are element-wise operations.
 The computational cost of the change aware incremental transformation is proportional to the volume of only the modified region.
 
 
@@ -141,10 +142,11 @@ The computational cost of the change aware incremental transformation is proport
 With incremental spatially localized updates in the input, transformations that operate at the granularity of a local spatial context also provide opportunities for exploiting redundancy and can be made change aware.
 However, with local context transformations, such as Convolution and Pooling, this extension is non-trivial due to the overlapping nature of the spatial contexts.
 % Convolution layers are the most important type of layer in the CNN architecture which also contributes to most of the computational cost.
-Each Convolution layer can have $C_{\mathcal{O}:l}$ 3-D filter kernels organized into a 4-D array $\mathcal{K}_{conv:l}$ with each having a smaller spatial width $W_{\mathcal{K}:l}$ and height $H_{\mathcal{K}:l}$ compared to the width $W_{\mathcal{I}:l}$ and height $H_{\mathcal{I}:l}$ of the input volume $\mathcal{I}_{:l}$, but has the same depth $C_{\mathcal{I}:l}$.
-During inference, $c^{th}$ filter kernel is strided along the width and height dimensions of the input and a 2-D activation map $A_{:c}=(a_{y,x:c})\in \mathcal{\rm I\!R}^{H_{\mathcal{O}:l} \times~ W_{\mathcal{O}:l}}$ is produced by taking element-wise product between the kernel and the input and adding a bias value as per Equation \ref{eqn:elementwise_product}.
-The computational cost of each of these individual element-wise product is proportional to the volume of the filter kernel.
-Finally, these 2-D activation maps are stacked together along the depth dimension to produce an output volume $\mathcal{O}_{:l} \in \mathcal{\rm I\!R}^{C_{\mathcal{O}:l} \times H_{\mathcal{O}:l} \times W_{\mathcal{O}:l}}$ as per Equation \ref{eqn:conv_operator}.
+
+Each Convolution layer can have $C_{\mathcal{O}:l}$ 3-D ``filter kernels'' organized into a 4-D array $\mathcal{K}_{conv:l}$, with each having a smaller spatial width $W_{\mathcal{K}:l}$ and height $H_{\mathcal{K}:l}$ compared to the width $W_{\mathcal{I}:l}$ and height $H_{\mathcal{I}:l}$ of the input tensor $\mathcal{I}_{:l}$, but has the same depth $C_{\mathcal{I}:l}$.
+During inference, $c^{th}$ filter kernel is ``strided'' along the width and height dimensions of the input and a 2-D ``activation map'' $A_{:c}=(a_{y,x:c})\in \mathcal{\rm I\!R}^{H_{\mathcal{O}:l} \times~ W_{\mathcal{O}:l}}$ is produced by calculating element-wise products between the kernel and the input and adding a bias value as per Equation (\ref{eqn:elementwise_product}).
+The computational cost of each of these individual element-wise products is proportional to the volume of the filter kernel.
+Finally, these 2-D activation maps are stacked together along the depth dimension to produce an output tensor $\mathcal{O}_{:l} \in \mathcal{\rm I\!R}^{C_{\mathcal{O}:l} \times H_{\mathcal{O}:l} \times W_{\mathcal{O}:l}}$ as per Equation (\ref{eqn:conv_operator}).
 A simplified representation of Convolution transformation is shown in Figure \ref{fig:cnn_simplified} (a).
 
 
@@ -183,10 +185,10 @@ a_{y,x:c} =& \sum_{k=0}^{C_{\mathcal{I}:l} } \sum_{j=0}^{H_{\mathcal{K}:l}-1} \s
 % \end{equation}
 % }
 
-Pooling can also be thought as a Convolution operation with a fixed (i.e. not learned) 2-D filter kernel $\mathcal{K}_{pool:l}$.
-But unlike Convolution, Pooling operates independently on each depth slice of the input volume.
+Pooling can also be thought of as a Convolution operation with a fixed (i.e., not learned) 2-D filter kernel $\mathcal{K}_{pool:l}$.
+But unlike Convolution, Pooling operates independently on each depth slice of the input tensor.
 % The two main variations of pooling layers are max pooling (takes the maximum value from the local spatial context) and average (takes the average value from the local spatial context) pooling.
-A Pooling layer takes a 3-D activation volume $\mathcal{O}_{l}$ having a depth of $C_{\mathcal{I}:l}$, width of $W_{\mathcal{I}:l}$, and height of $H_{\mathcal{I}:l}$ as input and produces another 3-D activation volume $\mathcal{O}_{:l}$ which has the same depth of $C_{\mathcal{O}:l}=C_{\mathcal{I}:l}$, width of $W_{\mathcal{O}:l}$, and height of $H_{\mathcal{O}:l}$ as the output.
+A Pooling layer takes a 3-D activation tensor $\mathcal{O}_{l}$ having a depth of $C_{\mathcal{I}:l}$, width of $W_{\mathcal{I}:l}$, and height of $H_{\mathcal{I}:l}$ as input and produces another 3-D activation tensor $\mathcal{O}_{:l}$ with the same depth of $C_{\mathcal{O}:l}=C_{\mathcal{I}:l}$, width of $W_{\mathcal{O}:l}$, and height of $H_{\mathcal{O}:l}$ as the output.
 Pooling kernel is generally strided with more than one pixel at a time and hence $W_{\mathcal{O}:l}$ and $H_{\mathcal{O}:l}$ are generally smaller than $W_{\mathcal{I}:l}$ and $H_{\mathcal{I}:l}$.
 A simplified representation of Pooling transformation is shown in Figure \ref{fig:cnn_simplified} (c).
 % Similar to Convolution, Pooling operation can be formally defined as follows:
@@ -202,22 +204,22 @@ A simplified representation of Pooling transformation is shown in Figure \ref{fi
 % \end{split}
 % \end{equation}
 
-It can be seen that Convolution and Pooling transformations can be cast into a form of applying a filter along the spatial dimensions of the input volume.
+It can be seen that Convolution and Pooling transformations can be cast into a form of applying a filter along the spatial dimensions of the 3-D input tensor.
 However, how each transformation operates along the depth dimension is different.
-For our purpose, as we are only interested in finding the spatial propagation of the patches in the input through the consecutive layers and hence both these transformations can be treated similarly.
+For our purpose, since we are only interested in finding the spatial propagation of the patches in the input through the consecutive layers, both of these transformations can be treated similarly.
 
 \vspace{2mm}
-\noindent \textbf{Relationship between Input and Output Spatial Sizes.}
-The output volume's spatial sizes $W_{\mathcal{O}:l}$ and $H_{\mathcal{O}:l}$ are determined by the spatial sizes of the input volume $W_{\mathcal{I}:l}$ and $H_{\mathcal{I}:l}$, spatial sizes of the filter kernel $W_{\mathcal{K}:l}$ and $H_{\mathcal{K}:l}$ and two other parameters: \textbf{stride} $S_{:l}$ and \textbf{padding} $P_{:l}$.
-Stride is the amount of pixel values used to stride the filter kernel at a time when producing a 2-D activation map.
-It is possible to have two different values with one for the width dimension $S_{x:l}$ and one for the height dimension $S_{y:l}$.
+\noindent \textbf{Relationship between Input and Output Dimensions.}
+The output tensor's dimensions $W_{\mathcal{O}:l}$ and $H_{\mathcal{O}:l}$ are determined by the dimensions of the input tensor $W_{\mathcal{I}:l}$ and $H_{\mathcal{I}:l}$, dimensions of the filter kernel $W_{\mathcal{K}:l}$ and $H_{\mathcal{K}:l}$ and two other parameters: \textbf{stride} $S_{:l}$ and \textbf{padding} $P_{:l}$.
+Stride is the number of pixel values used to move the filter kernel at a time when producing a 2-D activation map.
+It is possible to have two different values, with one for the width dimension $S_{x:l}$ and one for the height dimension $S_{y:l}$.
 Generally $S_{x:l} \leq W_{\mathcal{K}:l}$ and $S_{y:l} \leq H_{\mathcal{K}:l}$.
 In Figure \ref{fig:cnn_simplified}, Convolution transformation uses a stride value of 1 and Pool transformation uses a stride value of 2 for both dimensions.
-Sometimes in order to control the spatial size of the output activation map to be same as the input activation map, one needs to pad the input feature map with zeros around the spatial border.
-Padding $P_{:l}$ captures the amount of zeros that needs to be added.
-Similar to the stride $S_{:l}$, it is possible to have two separate values for padding with one for the width dimension $P_{x:l}$ and one for the height dimension $P_{y:l}$.
-In Figure \ref{fig:cnn_simplified}, Convolution transformation pads the input with one line of zeros from both dimensions.
-With these parameters defined, the width (similarly height) of the output activation volume can be defined as follows:
+Sometimes, in order to control the dimensions of the output tensor to be same as the input tensor, one needs to pad the input tensor with zeros around the spatial border.
+Padding $P_{:l}$ captures the number of zeros that needs to be added.
+Similar to the stride $S_{:l}$, it is possible to have two separate values for padding, with one for the width dimension $P_{x:l}$ and one for the height dimension $P_{y:l}$.
+In Figure \ref{fig:cnn_simplified}, Convolution transformation pads the input with one line of zeros on both dimensions.
+With these parameters defined, the width (similarly height) of the output tensor can be defined as follows:
 
 \begin{align}
 \begin{split}
@@ -227,33 +229,20 @@ W_{\mathcal{O}:l} = (W_{\mathcal{I}:l} - W_{\mathcal{K}:l} + 1 + 2\times P_{x:l}
 \end{align}
 
 \vspace{2mm}
-\noindent \textbf{Estimating the Computational Cost of Deep CNNs.}
-Deep CNNs are highly compute intensive and out of the different types of layers, Convolution layers contribute to $90\%$ (or more) of the computation.
-Hence we can estimate the computational cost of a Deep CNN by counting the number of fused multiply-add (FMA) floating point operations (FLOPs) required by Convolution layers for a single forward inference.
+\noindent \textbf{Computational Cost of Deep CNNs.}
+Deep CNNs are highly compute-intensive.
+Of all the types of layers, Convolution layers almost always contribute to $90\%$ (or more) of the computation.
+Hence, we can roughly estimate the computational cost of a Deep CNN by counting the number of fused multiply-add (FMA) floating point operations (FLOPs) required by Convolution layers for a single forward pass for inference.
 % and ignore the computational cost of other layers (e.g. Pooling, Fully-Connected).
 
-For example, applying a Convolution filter having the dimensions of ($C_{\mathcal{I}:l}$, $H_{\mathcal{K}:l}$, $W_{\mathcal{K}:l}$) to a single spatial context will require $C_{\mathcal{I}:l} \times H_{\mathcal{K}:l} \times W_{\mathcal{K}:l}$ many FLOPs, each corresponding to a single element-wise multiplication.
-Thus, the total amount of computations $Q_{:l}$ required by that layer in order to produce an output $\mathcal{O}_{:l}$ having dimensions $C_{\mathcal{O}:l} \times H_{\mathcal{O}:l} \times lW_{\mathcal{O}:l}$, and the total amount of computations $Q$ required to process the entire set of convolution layers $L$ in the CNN can be calculated as per Equation \ref{eqn:full_local} and ~\ref{eqn:full_all}.
-However, in the case of incremental updates only a smaller spatial patch having a width $W_{\mathcal{P}:l}$ ($W_{\mathcal{P}:l}<=W_{\mathcal{O}:l}$) and height $H_{\mathcal{P}:l}$ ($H_{\mathcal{P}:l}<=H_{\mathcal{O}:l}$) is needed to be recomputed.
-The amount of computations required for the incremental computation $Q_{inc:l}$ and total amount of incremental computations $Q_{inc}$ required for the entire set of convolution layers $L$ will be smaller than the above full computation values and can be calculated as per Equation ~\ref{eqn:inc_local} and ~\ref{eqn:inc_all}.
-Notice that in both of the above formulations computational cost calculation takes into account the spatial sizes of the output or the output patch.
-The output spatial sizes can be determined using the spatial sizes of the input and other parameters as shown in the previous Section.
-In Section \ref{sec:optimizer} we show that the spatial sizes of the output patch can also be predetermined using the input patch spatial sizes.
-
-Using the above quantities we define a new metric named \textit{theoretical speedup} R, which is the ratio between the total full computational cost $Q$ and total incremental computation cost $Q_{inc}$ (see Equation ~\ref{eqn:redundancy_ratio}).
-This ratio essentially acts as a surrogate for the theoretical upper-bound for computational and runtime savings that can be achieved by applying incremental computations to Deep CNNs.
+For example, applying a Convolution filter having the dimensions of ($C_{\mathcal{I}:l}$, $H_{\mathcal{K}:l}$, $W_{\mathcal{K}:l}$) to compute a single value in the output tensor will require $C_{\mathcal{I}:l} \times H_{\mathcal{K}:l} \times W_{\mathcal{K}:l}$ FLOPs, each corresponding to a single element-wise multiplication.
+Thus, the total amount of computations $Q_{:l}$ required by that layer in order to produce an output tensor $\mathcal{O}_{:l}$ with dimensions $C_{\mathcal{O}:l} \times H_{\mathcal{O}:l} \times lW_{\mathcal{O}:l}$, and the total amount of computations $Q$ required to process the entire set of convolution layers $L$ in the CNN can be calculated as per Equation (\ref{eqn:full_local}) and (\ref{eqn:full_all}).
 
 \begin{align}
 \label{eqn:full_local}
 Q_{:l} =&~ (C_{\mathcal{I}:l} \times H_{\mathcal{K}:l} \times W_{\mathcal{K}:l}) \times (C_{\mathcal{O}:l} \times H_{\mathcal{O}:l} \times W_{\mathcal{O}:l})\\
 \label{eqn:full_all}
-Q =&~ \sum_{l \in L}Q_{:l}\\
-\label{eqn:inc_local}
-Q_{inc:l} =&~ (C_{\mathcal{I}:l} \times H_{\mathcal{K}:l} \times W_{\mathcal{K}:l}) \times (C_{\mathcal{O}:l} \times H_{\mathcal{P}:l} \times W_{\mathcal{P}:l})\\
-\label{eqn:inc_all}
-Q_{inc} =&~ \sum_{l \in L} Q_{inc:l}\\
-\label{eqn:redundancy_ratio}
-R =&~ \frac{Q}{Q_{inc}}
+Q =&~ \sum_{l \in L}Q_{:l}
 \end{align}
 
 

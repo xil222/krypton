@@ -362,11 +362,11 @@ INPUT /usr/local/texlive/2016/texmf-dist/fonts/tfm/public/inconsolata/t1-zi4r-4.
 INPUT images/cnn_simplified.pdf
 INPUT optimizer.tex
 INPUT optimizer.tex
-INPUT images/dimensions.pdf
-INPUT images/la_operators.pdf
 INPUT images/redundancy_ratio.pdf
 INPUT /usr/local/texlive/2016/texmf-dist/fonts/tfm/public/libertine/LinLibertineTBI-tlf-t1.tfm
 INPUT /usr/local/texlive/2016/texmf-dist/fonts/tfm/public/libertine/LinLibertineT-tlf-t1.tfm
+INPUT images/dimensions.pdf
+INPUT images/la_operators.pdf
 INPUT images/pf_truncate.pdf
 INPUT images/proj_thresholding.pdf
 INPUT images/adaptive_drill_down.pdf
