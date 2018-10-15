@@ -59,9 +59,10 @@
 \begin{document}
 \emergencystretch 1em
 
-\title{\textsc{Krypton}: Accelerating Occlusion based Deep CNN\\ Explainability Workloads}
+%\title{\textsc{Krypton}: Accelerating Occlusion based Deep CNN\\ Explainability Workloads}
+\title{Incremental and Approximate Inference for\\Faster Occlusion-based Deep CNN Explanations}
 
-\author{Anonymous Author(s)}
+%\author{Anonymous Author(s)}
 % \affiliation{
   % \institution{University of California, San Diego}
 % }
@@ -69,8 +70,7 @@
 
 
 \begin{abstract}
-Deep Convolution Neural Networks (CNNs) have revolutionized the field of computer vision with even surpassing human level accuracy in some of the image recognition tasks. Thus they are now being deployed in many real-world use cases ranging from healthcare, autonomous vehicles, and e-commerce applications. However, one of the major criticisms pointed against Deep CNNs is the black-box nature of how they make predictions. This is a critical issue when applying CNN based approaches to critical applications such as in healthcare, where the explainability of the predictions is also very important. For interpreting CNN predictions several approaches have been proposed and one of the widely used method in image recognition tasks is occlusion experiments. In occlusion experiments one would mask the regions of the input image using a small gray or black occlusion patch and record the change in the predicted label probability. By changing the position of the occlusion patch, a sensitivity map can be generated from which the regions in the input image which influence the predicted class label most can be identified. However, this method requires performing multiple forward passes of CNN inference for explaining a single prediction and hence is very time consuming.
-We present \system, the first data system to elevate occlusion experiments to a declarative level and enable database inspired automated \textit{incremental} and \textit{approximate} inference optimizations. Experiments with real-world datasets and Deep CNNs show that \system~can enable speedups over 10X in certain cases.
+Deep Convolutional Neural Networks (CNNs) now match human accuracy in many image recognition tasks. This has lead to increasing adoption of deep CNNs in e-commerce, radiology, and other domains. Naturally, ``explaining'' CNN predictions is a key concern for many users. Since the internal working of CNNs are unintuitive for non-technical users, occlusion-based explanations are popular for determining which parts of an input image contribute the most to a given prediction. One occludes a region of the image using a patch and moves this patch across the image to yield a heatmap of changes to the prediction probability. Alas, this approach is computationally expensive due to the large number of re-inference requests produced, which could waste human time and raise resource costs. In this paper, we resolve this issue by casting occlusion-based CNN explanations as a new instance of the incremental view maintenance problem. We create a novel and comprehensive algebraic framework for incremental CNN inference that combines materialized views with multi-query optimization to avoid computational redundancy across re-inference requests. We then introduce two approximate inference optimizations that exploit the semantics of CNNs and the occlusion task to further reduce runtimes. We prototype our ideas in Python to create a tool we call \textsc{Krypton} that can support both CPUs and GPUs. Experiments with real data and CNNs show that \textsc{Krypton} reduces runtimes by up to 5x (14x) to produce exact (approximate) heatmaps without raising resource requirements.
 \end{abstract}
 
 \maketitle
