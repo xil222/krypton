@@ -364,7 +364,7 @@ INPUT images/adaptive_drill_down.pdf
 INPUT images/system_tuning.pdf
 INPUT experiments.tex
 INPUT experiments.tex
-INPUT images/5_1_all_edited.pdf
+INPUT images/5_1_all_edited_b.pdf
 INPUT /usr/local/texlive/2016/texmf-dist/fonts/tfm/public/libertine/LinLibertineTB-tlf-sc-t1.tfm
 INPUT images/5_2_1_edited.pdf
 INPUT images/5_2_2_edited.pdf
