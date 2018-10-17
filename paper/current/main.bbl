@@ -84,24 +84,6 @@ Matthew~D Zeiler and Rob Fergus.
 \newblock In {\em European conference on computer vision}, pages 818--833.
   Springer, 2014.
 
-\bibitem{squeezenet}
-Forrest~N Iandola et~al.
-\newblock Squeezenet: Alexnet-level accuracy with 50x fewer parameters and< 0.5
-  mb model size.
-\newblock {\em arXiv preprint arXiv:1602.07360}, 2016.
-
-\bibitem{mobilenets}
-Andrew~G Howard et~al.
-\newblock Mobilenets: Efficient convolutional neural networks for mobile vision
-  applications.
-\newblock {\em arXiv preprint arXiv:1704.04861}, 2017.
-
-\bibitem{miller2017explanation}
-Tim Miller.
-\newblock Explanation in artificial intelligence: Insights from the social
-  sciences.
-\newblock {\em arXiv preprint arXiv:1706.07269}, 2017.
-
 \bibitem{caffemodelzoo}
 Cafee model zoo.
 \newblock \url{https://github.com/BVLC/caffe/wiki/Model-Zoo}.
@@ -147,9 +129,45 @@ torch vison models.
   \url{https://github.com/pytorch/vision/tree/master/torchvision/models}.
 \newblock Accessed September 31, 2018.
 
+\bibitem{chirkova2012materialized}
+Rada Chirkova, Jun Yang, et~al.
+\newblock Materialized views.
+\newblock {\em Foundations and Trends{\textregistered} in Databases},
+  4(4):295--405, 2012.
+
+\bibitem{gupta1995maintenance}
+Ashish Gupta, Inderpal~Singh Mumick, et~al.
+\newblock Maintenance of materialized views: Problems, techniques, and
+  applications.
+\newblock {\em IEEE Data Eng. Bull.}, 18(2):3--18, 1995.
+
+\bibitem{levy1995answering}
+Alon~Y Levy, Alberto~O Mendelzon, and Yehoshua Sagiv.
+\newblock Answering queries using views.
+\newblock In {\em Proceedings of the fourteenth ACM SIGACT-SIGMOD-SIGART
+  symposium on Principles of database systems}, pages 95--104. ACM, 1995.
+
+\bibitem{nikolic2014linview}
+Milos Nikolic, Mohammed ElSeidy, and Christoph Koch.
+\newblock Linview: incremental view maintenance for complex analytical queries.
+\newblock In {\em Proceedings of the 2014 ACM SIGMOD international conference
+  on Management of data}, pages 253--264. ACM, 2014.
+
+\bibitem{zhao2017incremental}
+Weijie Zhao, Florin Rusu, Bin Dong, Kesheng Wu, and Peter Nugent.
+\newblock Incremental view maintenance over array data.
+\newblock In {\em Proceedings of the 2017 ACM International Conference on
+  Management of Data}, pages 139--154. ACM, 2017.
+
 \bibitem{kingma2014adam}
 Diederik~P Kingma and Jimmy Ba.
 \newblock Adam: A method for stochastic optimization.
 \newblock {\em arXiv preprint arXiv:1412.6980}, 2014.
+
+\bibitem{eger2013restricted}
+Steffen Eger.
+\newblock Restricted weighted integer compositions and extended binomial
+  coefficients.
+\newblock {\em J. Integer Seq}, 16(13.1):3, 2013.
 
 \end{thebibliography}

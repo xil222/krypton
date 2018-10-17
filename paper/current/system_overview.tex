@@ -87,12 +87,16 @@ Step (\ref{eqn:patchimpose}) and (\ref{eqn:outputval}) are run for all occluding
 In the non-interactive mode $G$ is initialized to $G = [0, H_M) \times [0, W_M)$, which corresponds to the set of all possible occlusion patch positions on  $\mathcal{I}_{:img}$.
 In the interactive mode it is possible that human operator would provide multiple $G$s, one after the other, for which the system has to evaluate iteratively.
 
+The focus of this work is on the occlusion based deep CNN explainability approach \cite{zeiler2014visualizing}, which is widely used by practitioners in several domains including healthcare, sociology, security, and agriculture \cite{kermany2018identifying, islam2017abnormality, mohanty2016using, arbabzadah2016identifying, wang2017deep}.
+However, we acknowledge that there are other methods for CNN explainability and a summary of those approaches is included in the Appendix.
 We assume that $f$ is a CNN from a roster of well-known CNNs (currently, we support VGG 16-layer version, ResNet 18-layer version, and Inception version 3).
 We think this is a reasonable start, since most recent CNN-based image recognition applications use only such well-known CNNs from model zoos \cite{caffemodelzoo, tfmodelzoo}.
 Nevertheless, our work is orthogonal to the specifics of a particular CNN architecture, and our proposed techniques can be easily extended to any CNN architecture.
 We leave support for arbitrary CNNs to future work.
 
 \subsection{Deep CNN Internals}
+Deep CNNs are a type of neural networks specialized for image data.
+They are organized into multiple layers of various types including: \textit{Convolution}, which use image filters from graphics, except with variable filter weights, to extract features; \textit{Pooling}, which subsamples features in a spatial locality-aware way; \textit{Batch-Normalization}, which normalizes the output of the layer; \textit{Non-Linearity}, which applies a non-linear transformation (e.g., ReLU); \textit{Fully-Connected} which is an ordered collection of perceptrons.
 Input and output of individual layers in a deep CNN, except for Fully-Connected ones, are arranged into 3-D tensors that have a width, height, and depth.
 For example an RGB input image of 224$\times$224 dimensions can be considered as an input tensor having a width and height of 224 and a depth of 3.
 Every non-Fully-Connected layer will take in an input tensor and transform it into another tensor.

@@ -72,15 +72,14 @@ Bringing down the runtimes also make occlusion experiments more amenable for int
 We now present the results of controlled experiments that are conducted to identify the contribution of various optimizations discussed in Section \ref{sec:optimizer}.
 The speedup values are calculated compared to the runtime taken by the current dominant practice of performing full inference for batches of modified images.
 
-\vspace{2mm}
-\noindent \textbf{Speedups from Incremental Inference.}
 \begin{figure}[t]
 \includegraphics[width=\columnwidth]{images/5_2_1_edited}
 \caption{Theoretical versus empirical speedup for \textit{incremental inference} (Occlusion patch stride $S=4$).}
 \label{fig:5_2_1_edited}
 \end{figure}
 
-We compare theoretical speedup and empirical speedups obtained by \textit{incremental inference} implementations for both CPU and GPU environments.
+\vspace{2mm}
+\noindent \textbf{Speedups from Incremental Inference.} We compare theoretical speedup and empirical speedups obtained by \textit{incremental inference} implementations for both CPU and GPU environments.
 The patch sizes that we have selected cover the range of sizes used in most practical applications.
 Occlusion patch stride is set to 4.
 Figure \ref{fig:5_2_1_edited} shows the results.
@@ -88,22 +87,19 @@ Empirical-GPU Naive results in the worst performance for all three CNN models.
 Empirical-GPU and Empirical-CPU implementations result in higher speedups with Empirical-CPU being closer to the theoretical speedup value.
 As the occlusion patch size increases the speedups decrease.
 
-\vspace{2mm}
-\noindent \textbf{Speedups from Projective Field Thresholding.}
+
 \begin{figure}[t]
 \includegraphics[width=\columnwidth]{images/5_2_2_edited}
 \caption{Theoretical versus empirical speedup for \textit{incremental inference} with \textit{projective field thresholding} (Occlusion patch size = $16 \times 16$, stride $S=4$).}
 \label{fig:5_2_2_edited}
 \end{figure}
 
-We vary \textit{projective field threshold} $\tau$ from 1.0 (no thresholding) to 0.4 and evaluate the speedups.
+\vspace{2mm}
+\noindent \textbf{Speedups from Projective Field Thresholding.} We vary \textit{projective field threshold} $\tau$ from 1.0 (no thresholding) to 0.4 and evaluate the speedups.
 The occlusion patch size used is 16 and the stride is 4.
 The results are shown in Figure \ref{fig:5_2_2_edited}.
 Empirical-CPU and Empirical-GPU both results in higher speedups with Empirical-CPU being closer to the theoretical speedup value.
 When $\tau$ decreases the speedups increase as the amount of computational savings increase.
-
-\vspace{2mm}
-\noindent \textbf{Speedups from Adaptive Drill-Down.}
 
 \begin{figure}[t]
 \includegraphics[width=\columnwidth]{images/5_2_3_edited}
@@ -111,7 +107,8 @@ When $\tau$ decreases the speedups increase as the amount of computational savin
 \label{fig:5_2_3_edited}
 \end{figure}
 
-Finally we evaluate the effect of \textit{adaptive drill-down} on overall \system~ efficiency.
+\vspace{2mm}
+\noindent \textbf{Speedups from Adaptive Drill-Down.} Finally we evaluate the effect of \textit{adaptive drill-down} on overall \system~ efficiency.
 The experiments are run on top of the \textit{incremental inference} approach with no \textit{projective field thresholding} ($\tau$=1.0).
 $r_{drill-down}$ is varied between 0.1 to 0.5 fixing the stage one stride value $S_1$ to 16.
 Occlusion patch size is set to 16 and the stage two stride $S_2$ is set to 4.
@@ -125,8 +122,7 @@ Hence on the CPU environment \system~ achieves near theoretical speedups for \te
 Speedups decrease as we increase $r_{drill-down}$ and decrease $S_1$.
 
 \vspace{2mm}
-\noindent \textbf{Summary of Experimental Results.}
-Overall \system~ increases the efficiency of the occlusion based CNN explainability workload by up to 16X on GPU and 34.5X on CPU.
+\noindent \textbf{Summary of Experimental Results.} Overall \system~ increases the efficiency of the occlusion based CNN explainability workload by up to 16X on GPU and 34.5X on CPU.
 Speedup obtained by \textit{approximate inference} optimization (\system-Approximate) depends on the characteristics of the CNN model such as the effective growth of the projective field and the characteristics of the occlusion use case such as the relative size of the interesting regions on the image.
 Furthermore \system~ results in higher speedups on CPU environment compared to GPU environment.
 Increasing the occlusion patch size and $\tau$ decrease the speedup.

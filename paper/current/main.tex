@@ -52,8 +52,8 @@
 \DeclareMathOperator*{\argmin}{arg\,min}
 
 % \setcopyright{none}
-% \settopmatter{printacmref=false}
-% \renewcommand\footnotetextcopyrightpermission[1]{} % removes footnote with 
+\settopmatter{printacmref=false}
+\renewcommand\footnotetextcopyrightpermission[1]{} % removes footnote with 
 \pagestyle{plain} % removes running headers
 
 \begin{document}
@@ -77,7 +77,7 @@ Deep Convolutional Neural Networks (CNNs) now match human accuracy in many image
 
 \input{introduction}
 
-\input{background}
+% \input{background}
 
 \input{system_overview}
 
@@ -86,6 +86,21 @@ Deep Convolutional Neural Networks (CNNs) now match human accuracy in many image
 \input{experiments}
 
 \section{Other Related Work}
+
+\vspace{2mm}
+\noindent \textbf{Incremental View Maintenance.} Incremental view maintenance \cite{chirkova2012materialized,gupta1995maintenance,levy1995answering} is a well studied concept in the relational data model context.
+It is used in databases to support incremental updates to materialized views by applying differential updates without re-evaluating the complete view definitions.
+The IVM approach presented in this paper falls into the broader category of \textit{``lazy maintenance''} strategy \cite{chirkova2012materialized}.
+While there are many work in this context, most relevant to our work are \cite{nikolic2014linview} and \cite{zhao2017incremental}.
+\cite{nikolic2014linview} extended the IVM concept to support IVM of linear algebra operators as opposed to classical database queries.
+\cite{zhao2017incremental} extended the IVM concept to support multi-dimensional array data model with support for both relational style functions (e.g. filter and join) and also array style functions (e.g. smoothing and cross-matching).
+The spatially localized transformations explained in Section 2.2 can be thought of as a form of \textit{``spatial array join''} explained in \cite{zhao2017incremental}.
+However, the focus of \cite{zhao2017incremental} is on supporting efficient IVM on distributed sparse arrays by reducing the communication and chunk reassignment where as the focus of this paper is on formalizing the exact semantics of the IVM operators for spatially localized transformations in the emerging workload of occlusion based deep CNN predictions.
+We also analyze the theoretical speedups that can be achieved for occlusion experiments using our IVM operator formulations.
+
+\vspace{2mm}
+\noindent \textbf{Multi Query Optimization.}
+
 
 \section{Conclusions And Future Work}
 

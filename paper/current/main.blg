@@ -8,45 +8,45 @@ Repeated entry---line 164 of file main.bib
  :                      ,
 I'm skipping whatever remains of this entry
 Warning--empty journal in wang2017deep
-You've used 26 entries,
+You've used 29 entries,
             1791 wiz_defined-function locations,
-            579 strings with 7533 characters,
-and the built_in function-call counts, 5511 in all, are:
-= -- 534
-> -- 165
-< -- 6
-+ -- 66
-- -- 40
-* -- 247
-:= -- 785
-add.period$ -- 81
-call.type$ -- 26
-change.case$ -- 26
+            603 strings with 8224 characters,
+and the built_in function-call counts, 6874 in all, are:
+= -- 676
+> -- 210
+< -- 9
++ -- 82
+- -- 53
+* -- 351
+:= -- 962
+add.period$ -- 93
+call.type$ -- 29
+change.case$ -- 29
 chr.to.int$ -- 0
-cite$ -- 27
-duplicate$ -- 278
-empty$ -- 597
-format.name$ -- 40
-if$ -- 1310
+cite$ -- 30
+duplicate$ -- 342
+empty$ -- 730
+format.name$ -- 53
+if$ -- 1641
 int.to.chr$ -- 0
-int.to.str$ -- 26
-missing$ -- 20
-newline$ -- 133
-num.names$ -- 20
-pop$ -- 116
+int.to.str$ -- 29
+missing$ -- 23
+newline$ -- 148
+num.names$ -- 23
+pop$ -- 128
 preamble$ -- 1
 purify$ -- 0
 quote$ -- 0
-skip$ -- 173
+skip$ -- 210
 stack$ -- 0
-substring$ -- 351
-swap$ -- 89
-text.length$ -- 6
+substring$ -- 486
+swap$ -- 120
+text.length$ -- 9
 text.prefix$ -- 0
 top$ -- 0
 type$ -- 0
 warning$ -- 1
-while$ -- 49
-width$ -- 28
-write$ -- 270
+while$ -- 66
+width$ -- 31
+write$ -- 309
 (There was 1 error message)
