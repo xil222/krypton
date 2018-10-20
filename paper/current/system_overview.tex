@@ -94,7 +94,7 @@ We think this is a reasonable start, since most recent CNN-based image recogniti
 Nevertheless, our work is orthogonal to the specifics of a particular CNN architecture, and our proposed techniques can be easily extended to any CNN architecture.
 We leave support for arbitrary CNNs to future work.
 
-\subsection{Deep CNN Internals}
+\subsection{Deep CNN Internals}\label{sec:cnn_internals}
 Deep CNNs are a type of neural networks specialized for image data.
 They are organized into multiple layers of various types including: \textit{Convolution}, which use image filters from graphics, except with variable filter weights, to extract features; \textit{Pooling}, which subsamples features in a spatial locality-aware way; \textit{Batch-Normalization}, which normalizes the output of the layer; \textit{Non-Linearity}, which applies a non-linear transformation (e.g., ReLU); \textit{Fully-Connected} which is an ordered collection of perceptrons.
 Input and output of individual layers in a deep CNN, except for Fully-Connected ones, are arranged into 3-D tensors that have a width, height, and depth.

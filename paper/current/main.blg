@@ -8,45 +8,47 @@ Repeated entry---line 164 of file main.bib
  :                      ,
 I'm skipping whatever remains of this entry
 Warning--empty journal in wang2017deep
-You've used 29 entries,
+Warning--empty journal in mozafari2017approximate
+Warning--there's a number but no volume in adjeroh1997multimedia
+You've used 38 entries,
             1791 wiz_defined-function locations,
-            603 strings with 8224 characters,
-and the built_in function-call counts, 6874 in all, are:
-= -- 676
-> -- 210
-< -- 9
-+ -- 82
-- -- 53
-* -- 351
-:= -- 962
-add.period$ -- 93
-call.type$ -- 29
-change.case$ -- 29
+            652 strings with 9707 characters,
+and the built_in function-call counts, 9485 in all, are:
+= -- 930
+> -- 306
+< -- 13
++ -- 118
+- -- 80
+* -- 512
+:= -- 1335
+add.period$ -- 123
+call.type$ -- 38
+change.case$ -- 38
 chr.to.int$ -- 0
-cite$ -- 30
-duplicate$ -- 342
-empty$ -- 730
-format.name$ -- 53
-if$ -- 1641
+cite$ -- 41
+duplicate$ -- 471
+empty$ -- 983
+format.name$ -- 80
+if$ -- 2253
 int.to.chr$ -- 0
-int.to.str$ -- 29
-missing$ -- 23
-newline$ -- 148
-num.names$ -- 23
-pop$ -- 128
+int.to.str$ -- 38
+missing$ -- 32
+newline$ -- 193
+num.names$ -- 32
+pop$ -- 164
 preamble$ -- 1
 purify$ -- 0
 quote$ -- 0
-skip$ -- 210
+skip$ -- 286
 stack$ -- 0
-substring$ -- 486
-swap$ -- 120
-text.length$ -- 9
+substring$ -- 691
+swap$ -- 170
+text.length$ -- 13
 text.prefix$ -- 0
 top$ -- 0
 type$ -- 0
-warning$ -- 1
-while$ -- 66
-width$ -- 31
-write$ -- 309
+warning$ -- 3
+while$ -- 93
+width$ -- 40
+write$ -- 408
 (There was 1 error message)

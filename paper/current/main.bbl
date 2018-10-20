@@ -94,6 +94,12 @@ Models and examples built with tensorflow.
 \newblock \url{https://github.com/tensorflow/models}.
 \newblock Accessed September 31, 2018.
 
+\bibitem{chetlur2014cudnn}
+Sharan Chetlur, Cliff Woolley, Philippe Vandermersch, Jonathan Cohen, John
+  Tran, Bryan Catanzaro, and Evan Shelhamer.
+\newblock cudnn: Efficient primitives for deep learning.
+\newblock {\em arXiv preprint arXiv:1410.0759}, 2014.
+
 \bibitem{le2017receptive}
 Hung Le and Ali Borji.
 \newblock What are the receptive, effective receptive, and projective fields of
@@ -159,15 +165,59 @@ Weijie Zhao, Florin Rusu, Bin Dong, Kesheng Wu, and Peter Nugent.
 \newblock In {\em Proceedings of the 2017 ACM International Conference on
   Management of Data}, pages 139--154. ACM, 2017.
 
-\bibitem{kingma2014adam}
-Diederik~P Kingma and Jimmy Ba.
-\newblock Adam: A method for stochastic optimization.
-\newblock {\em arXiv preprint arXiv:1412.6980}, 2014.
+\bibitem{mozafari2017approximate}
+Barzan Mozafari.
+\newblock Approximate query engines.
+\newblock 2017.
+
+\bibitem{park2018verdictdb}
+Yongjoo Park, Barzan Mozafari, Joseph Sorenson, and Junhao Wang.
+\newblock Verdictdb: universalizing approximate query processing.
+\newblock In {\em Proceedings of the 2018 International Conference on
+  Management of Data}, pages 1461--1476. ACM, 2018.
+
+\bibitem{garofalakis2001approximate}
+Minos~N Garofalakis and Phillip~B Gibbons.
+\newblock Approximate query processing: Taming the terabytes.
+\newblock In {\em VLDB}, pages 343--352, 2001.
+
+\bibitem{sellis1988multiple}
+Timos~K Sellis.
+\newblock Multiple-query optimization.
+\newblock {\em ACM Transactions on Database Systems (TODS)}, 13(1):23--52,
+  1988.
+
+\bibitem{le2012scalable}
+Wangchao Le, Anastasios Kementsietsidis, Songyun Duan, and Feifei Li.
+\newblock Scalable multi-query optimization for sparql.
+\newblock In {\em Data Engineering (ICDE), 2012 IEEE 28th International
+  Conference on}, pages 666--677. IEEE, 2012.
+
+\bibitem{adjeroh1997multimedia}
+Donald~A Adjeroh and Kingsley~C Nwosu.
+\newblock Multimedia database management—requirements and issues.
+\newblock {\em IEEE multimedia}, (3):24--33, 1997.
+
+\bibitem{kalipsiz2000multimedia}
+Oya Kalipsiz.
+\newblock Multimedia databases.
+\newblock In {\em Information Visualization, 2000. Proceedings. IEEE
+  International Conference on}, pages 111--115. IEEE, 2000.
+
+\bibitem{kang2017noscope}
+Daniel Kang, John Emmons, Firas Abuzaid, Peter Bailis, and Matei Zaharia.
+\newblock Noscope: optimizing neural network queries over video at scale.
+\newblock {\em Proceedings of the VLDB Endowment}, 10(11):1586--1597, 2017.
 
 \bibitem{eger2013restricted}
 Steffen Eger.
 \newblock Restricted weighted integer compositions and extended binomial
   coefficients.
 \newblock {\em J. Integer Seq}, 16(13.1):3, 2013.
+
+\bibitem{kingma2014adam}
+Diederik~P Kingma and Jimmy Ba.
+\newblock Adam: A method for stochastic optimization.
+\newblock {\em arXiv preprint arXiv:1412.6980}, 2014.
 
 \end{thebibliography}

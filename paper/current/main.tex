@@ -1,7 +1,20 @@
 %!TEX root = <main.tex>
 \documentclass[10pt, sigconf]{acmart}
-\usepackage[font=small,labelfont=bf]{caption}
 
+% Copyright
+%\setcopyright{none}
+%\setcopyright{acmcopyright}
+%\setcopyright{acmlicensed}
+% \setcopyright{rightsretained}
+%\setcopyright{usgov}
+%\setcopyright{usgovmixed}
+%\setcopyright{cagov}
+%\setcopyright{cagovmixed}
+%\settopmatter{printacmref=false}
+%\renewcommand\footnotetextcopyrightpermission[1]{} % removes footnote with 
+%\pagestyle{plain} % removes running headers
+
+\usepackage[font=small,labelfont=bf]{caption}
 \usepackage{graphicx,xspace,verbatim,comment}
 \usepackage{hyperref,array,color,balance,multirow}
 \usepackage{balance,float,url,amsfonts,alltt}
@@ -51,15 +64,10 @@
 
 \DeclareMathOperator*{\argmin}{arg\,min}
 
-% \setcopyright{none}
-\settopmatter{printacmref=false}
-\renewcommand\footnotetextcopyrightpermission[1]{} % removes footnote with 
-\pagestyle{plain} % removes running headers
 
 \begin{document}
 \emergencystretch 1em
 
-%\title{\textsc{Krypton}: Accelerating Occlusion based Deep CNN\\ Explainability Workloads}
 \title{Incremental and Approximate Inference for\\Faster Occlusion-based Deep CNN Explanations}
 
 %\author{Anonymous Author(s)}
@@ -88,18 +96,28 @@ Deep Convolutional Neural Networks (CNNs) now match human accuracy in many image
 \section{Other Related Work}
 
 \vspace{2mm}
-\noindent \textbf{Incremental View Maintenance.} Incremental view maintenance \cite{chirkova2012materialized,gupta1995maintenance,levy1995answering} is a well studied concept in the relational data model context.
-It is used in databases to support incremental updates to materialized views by applying differential updates without re-evaluating the complete view definitions.
-The IVM approach presented in this paper falls into the broader category of \textit{``lazy maintenance''} strategy \cite{chirkova2012materialized}.
+\noindent \textbf{Query Optimization.} Our work is inspired by the long line of work on incremental view maintenance (IVM) based query processing \cite{chirkova2012materialized,gupta1995maintenance,levy1995answering}.
+The IVM approach presented in this paper falls into the broader category of \textit{``lazy maintenance''} strategy.
 While there are many work in this context, most relevant to our work are \cite{nikolic2014linview} and \cite{zhao2017incremental}.
 \cite{nikolic2014linview} extended the IVM concept to support IVM of linear algebra operators as opposed to classical database queries.
 \cite{zhao2017incremental} extended the IVM concept to support multi-dimensional array data model with support for both relational style functions (e.g. filter and join) and also array style functions (e.g. smoothing and cross-matching).
-The spatially localized transformations explained in Section 2.2 can be thought of as a form of \textit{``spatial array join''} explained in \cite{zhao2017incremental}.
-However, the focus of \cite{zhao2017incremental} is on supporting efficient IVM on distributed sparse arrays by reducing the communication and chunk reassignment where as the focus of this paper is on formalizing the exact semantics of the IVM operators for spatially localized transformations in the emerging workload of occlusion based deep CNN predictions.
-We also analyze the theoretical speedups that can be achieved for occlusion experiments using our IVM operator formulations.
+The spatially localized transformations explained in Section 2.2 can be thought of as a form of \textit{``spatial array join''} introduced in \cite{zhao2017incremental}.
+However, the focus of \cite{zhao2017incremental} is on supporting efficient IVM for distributed sparse arrays by reducing the communication and chunk reassignment where as the focus of this work is on creating a comprehensive algebraic framework for the emerging workload of occlusion based  CNN explanations by applying incremental inference.
+
+Our work also takes inspirations from the AQP \cite{mozafari2017approximate,park2018verdictdb,garofalakis2001approximate} and MQO \cite{sellis1988multiple,le2012scalable} literature.
+The focus of existing AQP approaches is on answering analytical queries with SQL aggregates over relational data.
+In this work, we extend the AQP concepts to support CNN explanation queries over image data.
+We cast the multiple re-inference requests required for the CNN explainability workload as multiple queries and apply MQO strategies.
+To the best of our knowledge, ours is the first to integrate IVM and AQP with MQO to optimize query processing.
+
 
 \vspace{2mm}
-\noindent \textbf{Multi Query Optimization.}
+\noindent \textbf{Multimedia DBMSs.} There is prior work in the database and multimedia literatures on multimedia DBMSs \cite{adjeroh1997multimedia,kalipsiz2000multimedia}.
+However, the focus of these work is on retrieval which includes content-based image retrieval (CBIR) and video retrieval using similarity searches or indices.
+Such systems are orthogonal to our work, since we focus on occlusion based deep CNN explainability.
+NoScope is a system to detect objects in video streams using cascades of CNNs \cite{kang2017noscope}.
+\system~ is orthogonal, since it focuses on CNN explainability, not object recognition.
+One could integrate \system~ with NoScope to explain the CNN predictions.
 
 
 \section{Conclusions And Future Work}

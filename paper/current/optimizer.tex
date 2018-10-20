@@ -1,5 +1,5 @@
 %!TEX root = <main.tex>
-\section{Incremental Inference Optimizations}\label{sec:optimizer}
+\section{Incremental Inference Optimizations}\label{sec:exact}
 
 In this section, we first present the resulting theoretical speedups that can be achieved with incremental inference for popular deep CNN architectures.
 We then explain the mechanics of the \textit{incremental inference} operator for a single layer.
@@ -9,7 +9,7 @@ Finally, we explain how we combine \textit{incremental inference} along with \te
 \subsection{Expected Speedups}
 We now explain why there is a potential for incremental computation and estimate the upper-bounds for the expected speedups.
 In the case of incremental updates only a smaller spatial context having a width $W_{\mathcal{P}:l}$ ($W_{\mathcal{P}:l}<=W_{\mathcal{O}:l}$) and height $H_{\mathcal{P}:l}$ ($H_{\mathcal{P}:l}<=H_{\mathcal{O}:l}$) is needed to be recomputed.
-The amount of computations required for the incremental computation $Q_{inc:l}$ and total amount of incremental computations $Q_{inc}$ required for the entire set of convolution layers $L$ will be smaller than the full computation values explained in Section 3, and can be calculated as per Equation ~(\ref{eqn:inc_local}) and ~(\ref{eqn:inc_all}).
+The amount of computations required for the incremental computation $Q_{inc:l}$ and total amount of incremental computations $Q_{inc}$ required for the entire set of convolution layers $L$ will be smaller than the full computation values explained in Section \ref{sec:cnn_internals}, and can be calculated as per Equation ~(\ref{eqn:inc_local}) and ~(\ref{eqn:inc_all}).
 
 \begin{align}
 \label{eqn:inc_local}
@@ -288,18 +288,15 @@ First, \textproc{BatchedIncrementalInference} calculates the geometric propertie
 A temporary input tensor $U$ is initialized to hold the input patches with their read-in contexts.
 The \texttt{for} loop iteratively populates $U$ with corresponding patches.
 Finally, $T_{:l}$ is applied to $U$ to compute the output patches.
-\eat{
-It should be noted that pre-materialized input $\mathcal{I}_{:l}$ for the unmodified input image can be reused across multiple batches corresponding the the same image.
-}
+
 
 \vspace{2mm}
 \noindent \textbf{GPU Optimized Implementation.}
 Through our experiments, we found that even though a straight-forward implementation of \textit{batched incremental inference} approach as shown in Algorithm \ref{alg:incinference} produces expected speedups for the CPU environment, it performs poorly on the GPU environment.
 The \texttt{for} loop on the line \ref{alg:line:memcpy_loop} of Algorithm \ref{alg:incinference} is essentially preparing the input for $T_{:l}$ by copying values from one part of the memory to another sequentially.
 However, in the \textit{multi-query} setting this sequential operation becomes a bottleneck for the GPU implementation, since it cannot exploit the available parallelism of the GPU efficiently.
-To overcome this we have extended PyTorch by adding a custom kernel written in CUDA language which performs the input preparation more efficiently by parallelly copying the memory regions for all items in the batch and then invoke the CNN transformation function $T_{:l}$.
+To overcome this we have extended PyTorch by adding a custom kernel written in CUDA language which performs the input preparation more efficiently by parallelly copying the memory regions for all items in the batch (effectively a parallel for-loop) and then invoke the CNN transformation function $T_{:l}$, which is already highly optimized to use the GPU efficiently \cite{chetlur2014cudnn}.
 More details on the custom GPU kernel implementation is explained in Appendix.
-The original transformation function $T_{:l}$, which is provided as an input to the Algorithm \ref{alg:incinference} is already optimized to use the GPU efficiently for a batch of inputs when performing inference.
 \red{TODO: Refer to hardware works, e.g. Li Tseng, Lin, Swanson, Yannis on hardware accelerators}
 
 
