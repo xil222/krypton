@@ -1,15 +1,14 @@
 %!TEX root = <main.tex>
 \section{Incremental Inference Optimizations}\label{sec:exact}
+We now explain our incremental inference optimization for OBE. We start with a theoretical characterization of how much speedups can be expected and then dive into our novel algebraic framework to enable incremental CNN inference for OBE and our optimization techniques that combine incremental view maintenance (IVM) with multi-query optimization (MQO).\\
 
-In this section, we first present the resulting theoretical speedups that can be achieved with incremental inference for popular deep CNN architectures.
-We then explain the mechanics of the \textit{incremental inference} operator for a single layer.
-Next, we explain how the individual \textit{incremental inference} operator can be used to propagate changes across multiple layers in a deep CNN.
-Finally, we explain how we combine \textit{incremental inference} along with \textit{multi-query optimizations} (MQO) to improve the performance of occlusion experiment workload which requires multiple CNN inference requests.
+%inspired by incremental view maintenance in relational databases~\cite{ivm}. We start with a theoretical characterization of how much speedup is possible to set the expectation. We then dive into our novel algebraic framework to enable and optimize incremental inference for OBE. To the best of our knowledge, ours is the first work to combine incremental view maintenance with multi-query optimization for repeated CNN inference.
 
 \subsection{Expected Speedups}
-We now explain why there is a potential for incremental computation and estimate the upper-bounds for the expected speedups.
-In the case of incremental updates only a smaller spatial context having a width $W_{\mathcal{P}:l}$ ($W_{\mathcal{P}:l}<=W_{\mathcal{O}:l}$) and height $H_{\mathcal{P}:l}$ ($H_{\mathcal{P}:l}<=H_{\mathcal{O}:l}$) is needed to be recomputed.
-The amount of computations required for the incremental computation $Q_{inc:l}$ and total amount of incremental computations $Q_{inc}$ required for the entire set of convolution layers $L$ will be smaller than the full computation values explained in Section \ref{sec:cnn_internals}, and can be calculated as per Equation ~(\ref{eqn:inc_local}) and ~(\ref{eqn:inc_all}).
+Fundamentally, IVM offers speedups because it recognizes that only a part of the pre-materialized output relation of a query needs to be recomputed when a part of the input is updated. We bring this lens to CNNs, except we deal with \textit{materialized feature tensors} across layers. Since OBE updates only a part of the input, only parts of the feature tensors need to be recomputed. Our algebraic framework determines which parts these are at each layer (Section 3.2) and how to propagate updates across layers (Section 3.3). Thus, given a CNN $f$ and the occluding patch details, our framework can determine using ``static analysis'' over $f$ exactly how many FLOPs can be avoided. This let us derive an upper bound on the possible speedup--we call this the ``theoretical speedup.''
+
+More precisely, let the output tensor dimensions of layer $l$ be $(C_{\mathcal{O}:l} , H_{\mathcal{O}:l} , W_{\mathcal{O}:l})$. An incremental update only recomputes a smaller local spatial context with width $W_{\mathcal{P}:l} \le W_{\mathcal{O}:l}$ and height $H_{\mathcal{P}:l} \le H_{\mathcal{O}:l}$.
+Thus, the amount of computations needed for incremental inference of layer $l$ $Q_{inc:l}$ and the total amount of computations for incremental inference $Q_{inc}$ for all layers $L$ are given by Equations~(\ref{eqn:inc_local}) and ~(\ref{eqn:inc_all}).
 
 \begin{align}
 \label{eqn:inc_local}
@@ -18,38 +17,22 @@ Q_{inc:l} =&~ (C_{\mathcal{I}:l} \times H_{\mathcal{K}:l} \times W_{\mathcal{K}:
 Q_{inc} =&~ \sum_{l \in L} Q_{inc:l}
 \end{align}
 
+The above can be smaller than the computational cost of full inference (Equations~(\ref{eqn:full_local}) and~(\ref{eqn:full_all}) earlier).
+The \textit{theoretical speedup} is now defined as the ratio $\frac{Q}{Q_{inc}}$. This ratio tells us before running any actual inference computations 
+if incremental inference will be beneficial at all and by how much.
+The theoretical speedup depends on several factors: the occluding patch size, its location, the parameters of every layer's transformation function (kernel dimensions, stride, etc.), and so on. Thus, this calculation non-trivial and requires detailed careful analysis, which we perform.
+The location of the patch affects the theoretical speedup because if the patch is placed in the corner, we will have slightly fewer updates needed overall. But a patch at the center leads to the largest amount of updates, which gives us a ``worst-case estimate'' of the theoretical speedup for OBE on a CNN.
 
-Notice that in both full and incremental formulations, computational cost calculation takes into account the dimensions of the output or the output patch.
-The output dimensions can be determined using the dimensions of the input and other parameters as explained in Section 3.2.
-In Section 4.2 we show that the dimensions of the output patch can also be predetermined using the input patch dimensions.
-Using the above quantities we define a new metric named \textit{theoretical speedup} , which is the ratio between the total full computational cost $Q$ and total incremental computation cost $Q_{inc}$ (see Equation ~(\ref{eqn:redundancy_ratio})).
-This ratio essentially acts as a surrogate for the theoretical upper-bound for computational and runtime savings that can be achieved by applying incremental computations to Deep CNNs.
+Using our static analysis framework, we perform a sanity check: plot the theoretical speedups for a few popular deep CNNs for different occluding patch sizes with a stride of 1. Figure~\ref{fig:redundancy_ratio} shows the results. We see that VGG-16 has the highest theoretical speedups, while DenseNet-121 has the lowest. Most CNNs fall in the 2X--3X range. VGG-16 report such high theoretical speedups because of the peculiarities of its architecture: it has small Convolution filter kernels and strides, which means full inference incurs a very high computational cost ($Q = 15$ GFLOPs). Thus, incremental inference has the biggest impact on VGG-16. 
 
-\begin{align}
-\label{eqn:redundancy_ratio}
-\text{theoretical speedup} =&~ \frac{Q}{Q_{inc}}
-\end{align}
-
+Note that such speedups, even those in the 2X-3X range, can be practically significant for the OBE workload for at least two reasons. First, human \textit{users often wait in the loop} for explaining CNN predictions. Thus, such speedups can have a direct impact on their productivity when performing interactive diagnosis and analysis. For instance, full inference with VGG-16 on a GPU takes roughly 1min; with our incremental inference framework, this becomes 10s. If only CPUs are available, this reduction can be even more practically impactful: from 6min to just 1min. Second, even for CNNs with only 2X-3X theoretical speedups, incremental inference is the \textit{foundation for our approximate inference} optimizations (Section 4), and is thus important to understand. For instance, we see up to 8X speedups with with Inception3 with all of our optimizations used, while its theoretical speedup for incremental inference alone is only 2X.
 
 \begin{figure}[t]
 \includegraphics[width=\columnwidth]{images/redundancy_ratio}
-\caption{Theoretical speedup for popular CNN architectures with \textit{incremental inference}.}
+\vspace{-4mm}
+\caption{Theoretical speedups for popular deep CNN architectures with incremental inference.}
 \label{fig:redundancy_ratio}
 \end{figure}
-
-We analyze the theoretical speedup that can be achieved with the \textit{incremental inference} approach when a square occlusion patch is placed on the center\footnote{If the occlusion patch is placed towards a corner of the input image the theoretical speedup will be slightly higher.
-But placing the occlusion patch on the center gives us a worst-case estimate.} of the input image.
-Figure \ref{fig:redundancy_ratio} shows the results.
-VGG16 model results in the maximum theoretical speedup and DenseNet121 model has the lowest theoretical speedup.
-Most CNN architectures result in a theoretical speedup between 2-3.
-The theoretical speedup for a CNN with \textit{incremental inference} is determined by the characteristics of its architecture such as the number of layers, the sizes of the filter kernels, and the filter stride values.
-For example, VGG16 which uses small Convolution filter kernels and strides incurs a very high computational cost (15 GFLOPs) for a single full inference.
-However, as the change propagation rate with small filter sizes and strides is small, significant computational savings and runtime speedups can be achieved with incremental inference.
-These speedups are significant specially in the human in the loop interactive mode.
-For example, with VGG-16 if the original approach would take 1 minute on GPU to execute, it will now take roughly 10 seconds to execute and hence is more amenable for interactive diagnosis of CNN predictions.
-On the CPU environment, this implies if a VGG-16 occlusion experiment would take 6 minutes to execute, it will now take only 1 minute to execute and hence will enable significant computational savings and runtime reductions.
-Even though for most CNNs the theoretical speedup with incremental inference varies between 2-3, incremental inference approach lays the foundation for the other approximate inference optimizations in \system~ which combined together yields higher speedups.
-We next show how to get as close to the above calculated theoretical speedup as possible by combining incremental inference and multi-query optimization.
 
 
 \subsection{Incremental Inference: Of a Single Layer}\label{sec:inc_computation}
