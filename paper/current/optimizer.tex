@@ -1,6 +1,6 @@
 %!TEX root = <main.tex>
 \section{Incremental Inference Optimizations}\label{sec:exact}
-We start with a theoretical characterization of how much speedups one can expect from incremental inference for OBE. We then dive into our novel algebraic framework that enables incremental inference for CNN layers and integrates it with multi-query optimization for OBE.
+We start with a theoretical characterization of how much speedups one can expect from incremental inference for OBE. We then dive into our novel algebraic framework that enables incremental inference for CNN layers and integrates it multi-query optimization for OBE.
 
 %inspired by incremental view maintenance in relational databases~\cite{ivm}. We start with a theoretical characterization of how much speedup is possible to set the expectation. We then dive into our novel algebraic framework to enable and optimize incremental inference for OBE. To the best of our knowledge, ours is the first work to combine incremental view maintenance with multi-query optimization for repeated CNN inference.
 
@@ -354,55 +354,29 @@ We now define a notion of theoretical speedup for this optimization; this is ind
 \end{figure}
 
 \subsection{Automated Parameter Tuning}
-In this section we explain how \system~ sets its internal configuration parameters for \textit{approximate inference} optimizations.
+We now present automated parameter tuning methods for the configuration parameters of our approximate inference optimizations.
 
 \vspace{2mm}
-\noindent \textbf{Tuning projective field threshold.}
-The inaccuracies incurred when applying \textit{projective field thresholding} can cause quality degradation in the generate approximate heat map all the way from indistinguishable changes major structural changes.
-To measure this quality degradation we use Structural Similarity (SSIM) Index~\cite{wang2004image}, which is one of the widely used approaches to measure the \textit{human perceived difference} between two similar images.
-When applying SSIM index, we treat the original heat map as the reference image with no distortions and the perceived image similarity of the approximate heat map is calculated with reference to it.
-The generated SSIM index is a value between $-1$ and $1$, where $1$ corresponds to perfect similarity.
-Typically SSIM index values in the range of $0.90-0.95$ are used in practical applications such as image compression and video encoding as at the human perception level they produce indistinguishable distortions.
-% For more details on SSIM Index method, we refer the reader to the original SSIM Index paper~\cite{wang2004image}.
+\noindent \textbf{Tuning projective field thresholding.}
+As explained in Section 4.1, $\tau$ controls how the visual quality of the heat map degrades. But such degradation exists on a spectrum: virtually imperceptible changes to major structural changes. However, mapping $\tau$ to quality directly is likely to be intuitive for users. Thus, to measure visual quality in more intuitive manner, we adopt a cognitive science-inspired metric called Structural Similarity (SSIM) Index, which is widely used to measure human-perceptible differences between two similar images~\cite{wang2004image}. In our case, the two ``images'' compared are the original and approximate heat maps. SSIM is a number between $-1$ and $1$, with $1$ corresponding to a perfect match. SSIM values in the $0.90-0.95$ range are considered in many practical multimedia applications such as image compression and video encoding as indistinguishable distortions~\cite{wang2004image}.
 
-Tuning \textit{projective field threshold} $\tau$ is done during a special initial tuning phase.
-During this tuning phase \system~ takes in a sample of images (default 30) from the operational workload and evaluates SSIM value of the approximate heat map (compared to the exact heat map) for different $\tau$ values (default values are 1.0, 0.9, 0.8, ..., 0.4).
-These $\tau$ versus SSIM data points are then used to fit a second-degree curve.
-At the operational time, \system~ requires the user to provide the expected level of quality for the heat maps in terms of a SSIM value.
-$\tau$ is then selected from the curve fit to match this target SSIM value.
-Figure \ref{fig:system_tuning} (a) shows the SSIM variation and degree two curve fit for different $\tau$ values and three different CNN models for a tuning set (n=30) from OCT dataset.
-From the plots, it can be seen that the distribution of SSIM versus $\tau$ lies in a lower dimensional manifold and with increasing $\tau$ SSIM also increases.
-Figure \ref{fig:system_tuning} (b) shows the cumulative percentage plots for SSIM deviation for the tune and test sets (n=30) when the system is tuned for a target SSIM of 0.9.
-For a target SSIM of 0.9 system picks $\tau$ values of 0.5, 0.7, and 0.9 for VGG16, ResNet18, and Inception3 models respectively.
-It can be seen that approximately more than $50\%$ of test cases will result in an SSIM value of 0.9 or greater.
-Even in cases where it performs worse than 0.9 SSIM, significant ($95\%-100\%$) portion of them are within +0.1 deviation.
+Our automated tuning process for $\tau$ has an offline ``training'' phase and an online usage phase. The offline phase relies on a set of sample images (default $30$) from the same application domain. We compute SSIM on the approximate and exact heat maps for each sample image for a few different $\tau$ values (default $1.0, 0.9, 0.8, \dots, 0.4$). We then learn a second-degree polynomial curve for SSIM as a function of $\tau$ with these data points. Figure~\ref{fig:system_tuning}(a) illustrates this phase and the obtained SSIM-$\tau$ curves for three different deep CNNs using a sample of $30$ from a real-world radiology dataset of OCT images.
+In the online phase, when OBE is needed for a given image, we expect the user to provide a target SSIM for the quality--runtime trade-off they desire (they can set it to $1$ to obtain the exact heat map). Under the covers, we map the user-given SSIM to a value for $\tau$ using our curve. 
+Figure~\ref{fig:system_tuning}(b) shows the CDFs of differences between the user-given target SSIM ($0.9$) and the actual SSIM yielded when using our auto-tuned $\tau$ on both the training set and a heldout test set (with $30$ images). We see that in $80\%$ of the cases, the actual SSIM with our auto-tuned $\tau$ was \textit{better} than the user-given target; never did the actual SSIM go $0.1$ below the target SSIM. This suggests that our auto-tuning procedure is robust and directly applicable to different CNNs.
 
 \vspace{2mm}
 \noindent \textbf{Tuning adaptive drill-down.}
-As explained in section \ref{sec:ada-drill-down} the speedup obtained by \textit{adaptive drill-down} approach is determined by two factors; stage one stride value $S_1$ and drill-down fraction $r_{drill-down}$.
-% Figure \ref{fig:adaptive_ssim} shows how the SSIM value of approximate heat maps would change when changing $r_{drill-down}$ and $S_1$ with all other configurations kept fixed.
-% A general trend of increasing SSIM with increasing $r_{drill-down}$ and decreasing $S_1$ can be observed from the plots.
-For configuring \textit{adaptive drill-down} \system~ requires the user to provide $r_{drill-down}$ and a target \texttt{speedup} value.
-$r_{drill-down}$ should be selected based on the user's experience and understanding on the relative size of interesting regions compared to the full image.
-This is a fair assumption and in most cases such as in medical imaging, users will have a fairly good understanding on the relative size of the interesting regions.
-However, if the user is unable to provide this value \system~ will use a default value of 0.25 as $r_{drill-down}$.
-The \texttt{speedup} value basically captures user's input on how much faster the occlusion experiment should run.
-Higher speedup values will sacrifice the quality of non-interesting (1-$r_{drill-down}$) regions for faster execution.
-The default value for \texttt{speedup} value is three.
-The way how \system~ configures \textit{adaptive drill-down} is different to how it configures \textit{projective field thresholding}.
-The reason for this is, unlike in \textit{projective field thresholding} in \textit{adaptive drill-down} users have more intuition on the outcomes of $r_{drill-down}$ and target \texttt{speedup} parameters compared to the SSIM quality value of the final output.
-Given $r_{drill-down}$, target \texttt{speedup} value, and original occlusion patch stride value $S_2$ (also called stage two stride) \system~ then calculates the stage one stride value $S_1$ as per equation \ref{eqn:s1}.
-As $S_1$ cannot be greater than the width $W_{img}$ (similarly height $H_{img}$) of the image and with the mathematical constraint of $(1-r_{drill\-down} \times \texttt{speedup})$ being positive, it can be seen that possible values for the \texttt{speedup} value is upper-bounded as per equation \ref{eqn:speedup_bound}.
+As explained in Section~\ref{sec:ada-drill-down}, the speedup offered by adaptive drill-down is controlled by two parameters: stage one stride $S_1$ and drill-down fraction $r_{drill-down}$. We expect the user to provide $r_{drill-down}$ (default $0.25$), since it captures the user's intuition about how large or small the region of interest is likely to be in the images in their specific application domain and dataset. We also expect the user to provide a ``target speedup'' ratio (default $3$) for using this optimization to capture their desired quality-runtime trade-off. Higher the user's target speedup, the more we sacrifice the quality of the ``non-interesting regions'' ($1 - r_{drill-down}$ fraction of the heat map). Our automated tuning process sets $S_1$ using these two user-given settings. Unlike the tuning of $\tau$, setting $S_1$ is more direct, since this optimization relies on the number of re-inference queries, not SSIM. Let $\mathit{target}$ denote the target speedup; the original occlusion patch stride is $S_2$. Equation~\ref{eqn:s1} shows how we calculate $S_2$. Since $S_1$ cannot be larger than $W_{img}$ (or $H_{img}$) and due to the constraint of $(1-r_{drill\-down} \cdot \texttt{speedup})$ being positive, we also have an upper bound on the possible speedups as per Equation~\ref{eqn:speedup_bound}.
 
 \begin{align}
 \label{eqn:s1}
-S_1 = &~ \sqrt{\frac{\texttt{speedup}}{1 - r_{drill-down} \times \texttt{speedup}}} \times S_2
+S_1 = &~ \sqrt{\frac{\texttt{target}}{1 - r_{drill-down} \cdot \texttt{target}}} \cdot S_2
 \end{align}
 
 \begin{align}
 \label{eqn:speedup_bound}
 \begin{split}
-S_1 = \sqrt{\frac{\texttt{speedup}}{1 - r_{drill-down} \times \texttt{speedup}}} \times S_2 < W_{img}\\
+S_1 = \sqrt{\frac{\texttt{target}}{1 - r_{drill-down} \cdot \texttt{target}}} \cdot S_2 < W_{img}\\
 \texttt{speedup} < \texttt{min}\Bigg(\frac{W^2_{img}}{S^2_2+r_{drill-down}\times W^2_{img}}, \frac{1}{r_{drill-down}}\Bigg)
 \end{split}
 \end{align}
@@ -410,7 +384,9 @@ S_1 = \sqrt{\frac{\texttt{speedup}}{1 - r_{drill-down} \times \texttt{speedup}}}
 
 \begin{figure}[t]
 \includegraphics[width=\columnwidth]{images/system_tuning}
-\caption{(a) SSIM variation and degree two curve fit for a sample of OCT dataset. (b) CDF plot for the SSIM deviation for the $\tau$ values picked from the curve fit for a target SSIM of 0.9.}
+\vspace{-8mm}
+\caption{(a) Fitting a second-order curve for SSM against $\tau$ on a sample of the OCT dataset. 
+(b) CDFs of deviation of actual SSIM from the target SSIM ($0.9$) with our auto-tuned $\tau$, which turned out to be $0.5$, $0.7$, and $0.9$ for VGG-16, ResNet-18, and Inception-V3, respectively.}
 \label{fig:system_tuning}
 \end{figure}
 
