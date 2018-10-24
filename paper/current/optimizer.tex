@@ -273,45 +273,25 @@ $M$ is now the output heat map.
 
 
 \section{Approximate Inference Optimizations}\label{sec:approx}
-In this Section, we explain \textit{projective field thresholding} and \textit{adaptive drill-down}, which are two \textit{approximate inference} optimizations used in ~\system.
-We also explain how \system~ tunes its internal system configuration parameters for these \textit{approximate inference} optimizations.
-
+Incremental inference is \textit{exact}, i.e., it yields the same heat map as full inference. But we observe that it does not exploit a capability of human perception: tolerance of some degradation in visual quality. Thus, we build upon our incremental inference optimizations to create two novel heuristic \textit{approximate} inference optimizations that trade off the heat map's quality in a user-tunable manner to accelerate OBE further. We first explain the techniques and then explain how we can help users tune them.
 
 \subsection{Projective Field Thresholding}
-Projective field \cite{le2017receptive, basiccnnoperations} of a CNN neuron is the local region (including the depth) of the output 3-D tensor which is connected to it.
-The term is borrowed from the Neuroscience field where it is used to describe the spatiotemporal effects exerted by a retinal cell on all of the outputs of the neuronal circuitry \cite{de2011projective}.
-For our work, the notion of projective field is useful as it determines the change propagation path for incremental changes.
-The three types of CNN transformations affect the size of the projective field differently.
-Point transformations do not change the projective field size while global context transformations increase it to the maximum.
-Transformations that operate on a local spatial context increase it gradually.
-The amount of increase in a local context transformation is determined by the filter size and stride parameters.
-At every transformation, the size of the projective field will increase linearly by the filter size and multiplicatively by the stride value.
+The \textit{projective field} of a neuron in a CNN is the local slice (including depth) of the output 3-D tensor that is connected to it~\cite{le2017receptive, basiccnnoperations}. It is a term from neuroscience to describe the spatiotemporal effects of a retinal cell on the output of the eye's neuronal circuitry~ \cite{de2011projective}. This notion helps us shed light on the \textit{growth of the size} of the update patches truncate through the layers of a CNN. The three kinds of layers (Section 2.2) affect the projective field size differently. Transformations at the granularity of individual elements do not alter the projective field size. Global context transformations increase it to the whole output. But local spatial context transformations, which are the most crucial, increase it \textit{gradually} in a manner determined by the filter kernel's dimensions and stride: additively in the filter size and multiplicatively in the stride. The growth of the projective field size implies the amount of FLOPs saved by incremental inference decreases as we go to the higher layers of a CNN. Eventually, the output update patch of a layer becomes as large as the whole output. This is illustrated by Figure~\ref{fig:pf_truncate}(a).
 
 \begin{figure}[t]
 \includegraphics[width=\columnwidth]{images/pf_truncate}
-\caption{(a) One dimensional Convolution demonstrating projective field growth (filter size = 2, stride = 1). (b) \textit{Projective field thresholding} with $\tau = 5/7$.}
+\caption{(a) 1-D Convolution showing growth of projective field (filter size = $2$, stride = $1$). (b) Projective field \textit{thresholding} with $\tau = 5/7$.}
 \label{fig:pf_truncate}
 \end{figure}
 
-Because of the projective field growth, even though there will be many computational redundancies in the early layers, towards the latter layers it will decrease or even have no redundancies.
-However, we empirically found that the projective field growth can be restrained up to a certain extent without significantly sacrificing the accuracy.
-For a more intuitive understanding of why this would work consider the simplified 1-D Convolution example shown in Figure \ref{fig:pf_truncate} (a).
-In the example, a single neuron is modified (marked in red) and a filter of size three is applied with a stride of one repeatedly four times.
-Since the filter size is three, each updated neuron will propagate the change to three neurons in the next output layer causing the projective field to grow linearly.
-The histogram at the end of the fourth layer shows the number of unique paths that are available between each output neuron and the originally updated neuron in the first layer.
-It can be seen that this distribution resembles a Gaussian where many of the paths are connected to the central region.
-The amount of change in the output layer is determined by both the number of unique paths and also the individual weights of the connections.
-It can be shown that the distribution of change in the output layer will converge to a Gaussian distribution provided certain conditions are met for the weight values of the filter kernel (more details in Appendix X).
+Our above observation motivates the main idea of this optimization, which we call projective field thresholding: \textit{truncate} the projective field from growing beyond a given \textit{threshold fraction} $\tau$ $(0 < \tau \leq 1)$ of the output size. This means inference in subsequent layers is approximate. Figure~\ref{fig:pf_truncate}(b) illustrates the idea for a filter size 3 and stride 1. One input element is updated (shown in red/dark); the change propagates to 3 elements in the next layer and then 5, but it then gets truncated because we set $\tau = 5/7$. This approximation can alter the accuracy of the output values and this, the heat map's visual quality. Empirically, we find that modest truncation is tolerable and does not affect the heat map's visual quality too significantly. 
+
+To provide intuition on why the above happens, consider histograms on the side of Figures~\ref{fig:pf_truncate}(a,b) that list the number of unique ``paths'' from the updated element to each element in the last layer. It resembles a Gaussian distribution, with the maximum paths concentrated on the middle element. Thus, for most of the output patch updates, truncation will only discard a few values at the ``fringes'' that contribute to an output element. Of course, we not consider the weights on these ``paths,'' which is dependent on the given trained CNN. Since the weights can be arbitrary, a tight formal analysis is unwieldy. But under some assumptions on the weights values (similar to the assumptions in~\cite{luo2016understanding} for understanding the ``receptive field'' in CNNs), we show in the appendix that this distribution does indeed converge to a Gaussian. Thus, while this optimization is a heuristic, we think is grounded in a common behavior seen in real-world CNNs.
 \eat{
 For more details we refer the reader to \cite{luo2016understanding}, where a similar theoretical result has been proved for the receptive field\footnote{Receptive field of a CNN neuron is the local region (including the depth) of the input volume which is connected to it.} of a Deep CNN.
 }
-
-As most of the change will be concentrated on the center we introduce the notion of a projective field threshold $\tau ~ (0 < \tau \leq 1)$ which will be used to restrict the growth of the projective field.
-It determines the maximum size of the projective field as a fraction of the size of the output.
-Figure \ref{fig:pf_truncate} (b) demonstrates the application of projective field thresholding with a $\tau$ value of $5/7$.
-From the histogram generated for the projective field thresholding approach, we can expect that much of the final output change is maintained by this approach.
-
-In \system, \textit{projective field thresholding} is implemented on top of \textit{incremental inference} approach by applying set of additional constraints on input-output coordinate mappings. For the horizontal dimension (similarly for vertical dimension) the new set of calculations can be expressed as follows:
+Overall, since most of the contributions to the output elements are concentrated around the center, such truncation is often affordable. Note that this optimization is only feasible \textit{in conjunction with} our incremental inference framework (Section 3) to reuse the remaining parts of the tensors and save FLOPs.
+We extend the formulas for the output-input coordinate calculations to account for $\tau$. For the width dimension,  the new formulas are as follows (similarly for the height dimension):
 
 \begin{align}
 \label{eqn:normal_width_calc}
@@ -330,36 +310,25 @@ W^\mathcal{O}_{\mathcal{P}:l} = &~ \texttt{min}\big(\lceil (W^\mathcal{I}_{\math
 x^\mathcal{O}_{\mathcal{P}:l} = & \texttt{max}\big(\lceil (P_{x:l} + x^\mathcal{I}_{\mathcal{P}:l} - W_{\mathcal{K}:l} + 1)/S_{x:l} \rceil, 0\big)
 \end{align}
 
-Equation (\ref{eqn:normal_width_calc}) calculates output width assuming no thresholding.
-But if the output width exceeds the threshold defined by $\tau$, output width is set to the threshold value as per Equation (\ref{eqn:new_width_calc_with_tau}).
-Equation \ref{eqn:new_in_width} calculates the input width that would produce an output of width $W^\mathcal{O}_{\mathcal{P}:l}$ (think of this as making $W^{\mathcal{I}}_{\mathcal{P}:l}$ the subject of equation \ref{eqn:normal_width_calc}).
-If the new input width is smaller than the original input width, the starting x coordinate should be updated as per Equation (\ref{eqn:new_x_coord}) such that the updated coordinates correspond to a center crop from the original.
-Equation (\ref{eqn:new_input_width}) set the input width to the newly calculated input width and Equation (\ref{eqn:new_output_x}) calculates the x coordinate of the output patch from the updated values.
+Equation~(\ref{eqn:normal_width_calc}) calculates the width assuming no thresholding. But if the output width exceeds the threshold, it is reduced as per Equation~(\ref{eqn:new_width_calc_with_tau}). Equation~(\ref{eqn:new_in_width}) calculates the input width that would produce an output of width $W^\mathcal{O}_{\mathcal{P}:l}$; we can think of this as making $W^{\mathcal{I}}_{\mathcal{P}:l}$ the subject of Equation~(\ref{eqn:normal_width_calc}). If the new input width is smaller than the original input width, the starting $x$ coordinate should be updated as per Equation~(\ref{eqn:new_x_coord}) s.t.~the new coordinates correspond to a ``center crop'' compared to the original. Equation~(\ref{eqn:new_input_width}) sets the input width to the newly calculated input width. Equation~(\ref{eqn:new_output_x}) calculates the $x$ coordinate of the output update patch.
 
 \begin{figure}[t]
 \includegraphics[width=\columnwidth]{images/proj_thresholding}
-\caption{(a) Theoretical speedup ratio with projective field thresholding. (b) Mean Square Error between exact and approximate output of the final Convolution or Pool transformation.}
+\vspace{-6mm}
+\caption{(a) Theoretical speedups with projective field thresholding. (b) Mean Square Error between exact and approximate output of final Convolution/Pooling layers.}
 \label{fig:proj_thresholding}
 \end{figure}
 
 \vspace{2mm}
-\noindent \textbf{Theoretical Speedup with Projective Field Thresholding.}
-We analyze the theoretical speedup that can be achieved with \textit{projective field thresholding} approach when a square occlusion patch is placed on the center of the input image.
-Figure \ref{fig:proj_thresholding} (a) presents the results.
-It can be seen that with increasing $\tau$ attainable theoretical speedup also increases.
-We also analyze the mean square error (MSE) between the exact and approximate output tensors produced by the final Convolution or Pool transformation with a black occlusion patch placed on the center of the input image.
-The results are shown in Figure \ref{fig:proj_thresholding} (b).
-With increasing $\tau$ and increasing patch size we see that the MSE is also increasing.
+\noindent \textbf{Theoretical Speedups.}
+We modify our ``static analysis'' framework to determine the theoretical speedup of incremental inference (Section 3) to also include this optimization using the above formulas. Consider a square occlusion patch placed on the center of the input image. Figure~\ref{fig:proj_thresholding}(a) plots the new theoretical speedups for varying patch sizes for 3 popular CNNs for different $\tau$ values.
+As expected, as $\tau$ goes down from $1$, the theoretical speedup goes up for all CNNs. Since lowering $\tau$ approximates the heat map values, we also plot the mean square error (MSE) of the elements of the exact and approximate output tensors produced by the final Convolution or Pooling layers on a random real-world sample image. Figure~\ref{fig:proj_thresholding}(b) shows the results. As expected, as $\tau$ drops, MSE increases. But interestingly, the trends differ across the CNNs due to their different architectural properties. MSE is especially low for VGG-16, since its projective field growth is rather slow relative to the other CNNs. We acknowledge that using MSE as a visual quality metric and tuning $\tau$ are both unintuitive for humans. We mitigate these issues in Section 4.3 by using a more intuitive quality metric and by presenting an automated tuning method for $\tau$.
 
 
 \subsection{Adaptive Drill-Down}\label{sec:ada-drill-down}
-\textit{Adaptive drill-down} approach, which is only applicable in the non-interactive mode, is based on the observation that in many occlusion based explainability workloads, such as in medical imaging, the regions of interest will occupy only a small fraction of the entire image.
-In such cases, it is unnecessary to inspect the entire image at a higher resolution with a small stride value for the occlusion patch.
-In \textit{adaptive-drill-down} the final occlusion heat map will be generated using a two-stage process.
-At the first stage, a low-resolution heat map will be generated by using a larger stride which we call stage one stride $S_1$.
-From the heat map generated at stage one, a predefined drill-down fraction $r_{drill-down}$ of regions with highest probability drop for the predicted class is identified.
-At stage two a high-resolution occlusion map is generated using the original user provided stride value, also called stage two stride $S_2$, only for the selected region.
-A schematic representation of \textit{adaptive drill-down} is shown in Figure \ref{fig:adaptive_drill_down} (a).
+This optimization is also a heuristic, but it is based on our observation about a peculiar semantics of the OBE task. It modifies the way $G$ (the set of occlusion path locations) is specified and handled, especially in the non-interactive specification mode. We explain our intuition with an example. Consider a radiologist explaining a CNN prediction for diabetic retinopathy on a tissue image. The region of interest typically occupies only a tiny fraction of the image. Thus, it is an overkill to perform regular OBE for \textit{every} patch location: most of the (incremental) inference computations are effectively ``wasted'' on uninteresting regions. In such cases, we modify the OBE workflow to produce an approximate heat map using a two-stage process, illustrated by Figure \ref{fig:adaptive_drill_down}(a).
+
+In stage one, we produce a \textit{lower resolution} heat map by using a larger stride--we call it \textit{stage one stride} $S_1$. Using this heat map, we identify the regions of the input that see the largest drops in predicted probability of the label $L$. Given a predefined parameter \textit{drill-down fraction}, denoted $r_{drill-down}$, we select a proportional number of regions based on the probability drops. In stage two, we perform OBE only for these regions with original stride value (we also call this \textit{stage two stride}, $S_2$) for the occlusion patch to yield a portion of the heat map at the original higher resolution. Since this process ``drills down'' adaptively based on the lower resolution heat map, we call it adaptive drill-down. Note that this optimization also builds upon the incremental inference optimizations of Section 3, but it is \textit{orthogonal} to projective field thresholding and can be used in addition.
 
 % \begin{figure}[t]
 % \includegraphics[width=\columnwidth]{images/adaptive-drill-down}
@@ -367,28 +336,24 @@ A schematic representation of \textit{adaptive drill-down} is shown in Figure \r
 % \label{fig:adaptive-drill-down}
 % \end{figure}
 
-The amount of speedup that can be obtained from \textit{adaptive drill-down} is determined by both $r_{drill-down}$ and $S_1$.
-If the $r_{drill-down}$ is low, only a small region will have to be examined at a higher resolution and thus it will be faster.
-However, this smaller region may not be sufficient to cover all the interesting regions on the image and hence can result in losing important information.
-Larger $S_1$ also reduces the overall runtime as it reduces the time taken for stage one.
-But it has the risk of misidentifying interesting regions especially when the granularity of those regions are smaller than the occlusion patch size.
-The speedup obtained by \textit{adaptive drill-down} approach is equal to the ratio between the number of individual occlusion patch positions generated for the normal and \textit{adaptive drill-down} approaches.
-Number of individual occlusion patch positions generated with a stride value of $S$ is proportional to $1/S^2$ (total number of patch positions is equal to $\frac{H_{\mathcal{I}_{img}}}{S} \times \frac{W_{\mathcal{I}_{img}}}{S}$).
-Hence the speedup can  be expressed as per Equation \ref{eqn:adaptive-drill-down-eqn}.
-Figure \ref{fig:adaptive_drill_down} (b) conceptually shows how the speedup would vary with $S_1$ when $r_{drill-down}$ is fixed and vice versa.
+\vspace{2mm}
+\noindent \textbf{Theoretical Speedups.}
+We now define a notion of theoretical speedup for this optimization; this is independent of the theoretical speedup of incremental inference. We first explain the effects of $r_{drill-down}$ and $S_1$. Setting these parameters is an application-specific balancing act. If $r_{drill-down}$ is low, only a small region will need re-inference at the original resolution, which will save a lot of FLOPs. But this may miss some some regions of interest and thus, compromise important explanation details. Similarly, a large $S_1$ also saves a lot of FLOPs by reducing the number of re-inference queries in stage one. But it runs the risk of misidentifying interesting regions, especially when the size of those regions are smaller than the occlusion patch size. We now define the theoretical speedup of adaptive drill-down as the ratio of the number of re-inference queries for regular OBE without this optimization to that with this optimization. We only need the counts, since the occlusion patch dimensions are unaltered, i.e., the cost of a re-inference query is the same with or without this optimization. Given a stride $S$, the number of re-inference queries is $\frac{H_{\mathcal{I}_{img}}}{S} \cdot \frac{W_{\mathcal{I}_{img}}}{S}$. Thus, the theoretical speedup is given by the following equation. Figure~\ref{fig:adaptive_drill_down}(b) illustrates how this ratio varies with $S_1$ and $r_{drill-down}$.
 
+\vspace{-2mm}
 \begin{align}
 \label{eqn:adaptive-drill-down-eqn}
-\texttt{speedup} = \frac{S^2_1}{S^2_2+r_{drill-down} \times S^2_1}
+\texttt{speedup} = \frac{S^2_1}{S^2_2+r_{drill-down} \cdot S^2_1}
 \end{align}
 
 \begin{figure}[t]
 \includegraphics[width=\columnwidth]{images/adaptive_drill_down}
-\caption{(a) Schematic representation of \textit{adaptive drill-down}. (b) Conceptual diagram showing the effect of $S_1$ and $r_{drill-down}$ on speedup. }
+\vspace{-8mm}
+\caption{(a) Schematic illustration of the adaptive drill-down idea. (b) Conceptual depiction of the effects of $S_1$ and $r_{drill-down}$ on the theoretical speedup.. }
 \label{fig:adaptive_drill_down}
 \end{figure}
 
-\subsection{System Tuning}
+\subsection{Automated Parameter Tuning}
 In this section we explain how \system~ sets its internal configuration parameters for \textit{approximate inference} optimizations.
 
 \vspace{2mm}
