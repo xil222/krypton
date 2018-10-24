@@ -64,7 +64,7 @@ Hence computations are much cheaper on GPU.
 Memory operations required by \system~ throttles the overall performance on GPU and hinders it from achieving higher speedups.
 On CPU environment as computational cost dominates the overall runtime, the additional overhead introduced by the memory operations does not matter much.
 Therefore on CPU, \system~ achieves higher speedups which are closer to the theoretical speedup value.
-For the interactive mode with no batching, \system~ yields similar results for the CPU environment.
+For the interactive mode with batched inference, \system~ yields similar results for the CPU environment.
 However, on the GPU environment with a smaller number of occlusion positions selected (i.e., small $|G|$) the speedup will be low.
 This is due to the high initialization overhead associated with GPU based CNN inference.
 As $|G|$ increases \system~ starts yielding higher speedups as it amortizes for the initialization overheads.

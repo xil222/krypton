@@ -144,12 +144,10 @@
 \bibstyle{unsrt}
 \bibdata{main}
 \bibcite{alexnet}{{1}{}{{}}{{}}}
-\bibcite{vggnet}{{2}{}{{}}{{}}}
 \@writefile{lof}{\contentsline {figure}{\numberline {13}{\ignorespaces Theoretical versus empirical speedup for \textit  {adaptive drill-down} (Occlusion patch size = $16 \times 16$, stage two stride $S_2=4$, projective field threshold $\tau =1.0$. For (a) $S_1$=16 and for (b) $r_{drill\_down}$=0.25).\relax }}{15}{figure.caption.17}}
 \newlabel{fig:5_2_3_edited}{{13}{15}{Theoretical versus empirical speedup for \textit {adaptive drill-down} (Occlusion patch size = $16 \times 16$, stage two stride $S_2=4$, projective field threshold $\tau =1.0$. For (a) $S_1$=16 and for (b) $r_{drill\_down}$=0.25).\relax }{figure.caption.17}{}}
 \@writefile{toc}{\contentsline {section}{\numberline {6}Other Related Work}{15}{section.6}}
-\@writefile{toc}{\contentsline {section}{\numberline {7}Conclusions And Future Work}{15}{section.7}}
-\@writefile{toc}{\contentsline {section}{References}{15}{section*.19}}
+\bibcite{vggnet}{{2}{}{{}}{{}}}
 \bibcite{resnet}{{3}{}{{}}{{}}}
 \bibcite{inception}{{4}{}{{}}{{}}}
 \bibcite{imagenet}{{5}{}{{}}{{}}}
@@ -189,31 +187,33 @@
 \bibcite{kang2017noscope}{{39}{}{{}}{{}}}
 \bibcite{eger2013restricted}{{40}{}{{}}{{}}}
 \bibcite{kingma2014adam}{{41}{}{{}}{{}}}
-\@writefile{toc}{\contentsline {section}{\numberline {A}Interactive Mode Execution}{16}{appendix.A}}
-\@writefile{toc}{\contentsline {section}{\numberline {B}GPU Optimized Kernel Implementation}{16}{appendix.B}}
-\@writefile{lof}{\contentsline {figure}{\numberline {14}{\ignorespaces $|G|$\relax }}{17}{figure.caption.20}}
-\newlabel{fig:interactive_experiment}{{14}{17}{$|G|$\relax }{figure.caption.20}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {7}Conclusions And Future Work}{16}{section.7}}
+\@writefile{toc}{\contentsline {section}{References}{16}{section*.19}}
+\@writefile{lof}{\contentsline {figure}{\numberline {14}{\ignorespaces Interactive mode execution of incremental inference with $G$s of different sizes\relax }}{17}{figure.caption.20}}
+\newlabel{fig:interactive_experiment}{{14}{17}{Interactive mode execution of incremental inference with $G$s of different sizes\relax }{figure.caption.20}{}}
 \@writefile{lof}{\contentsline {figure}{\numberline {15}{\ignorespaces Custom GPU Kernel integration architecture\relax }}{17}{figure.caption.21}}
 \newlabel{fig:custom_kernel_integration}{{15}{17}{Custom GPU Kernel integration architecture\relax }{figure.caption.21}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {A}Interactive Mode Execution}{17}{appendix.A}}
+\@writefile{toc}{\contentsline {section}{\numberline {B}GPU Optimized Kernel Implementation}{17}{appendix.B}}
 \@writefile{lof}{\contentsline {figure}{\numberline {16}{\ignorespaces One dimensional representation showing special situations under which actual output size will be smaller than the value calculated by Equation \ref  {eqn:xcoordinate}. (a) and (b) shows a situation with filter stride being equal to the filter size. (c) and (d) shows a situation with input patch being placed at the edge of the input.\relax }}{17}{figure.caption.22}}
 \newlabel{fig:less_one_example}{{16}{17}{One dimensional representation showing special situations under which actual output size will be smaller than the value calculated by Equation \ref {eqn:xcoordinate}. (a) and (b) shows a situation with filter stride being equal to the filter size. (c) and (d) shows a situation with input patch being placed at the edge of the input.\relax }{figure.caption.22}{}}
 \@writefile{toc}{\contentsline {section}{\numberline {C}Special Situations with Incremental Inference}{17}{appendix.C}}
-\newlabel{eqn:width_subtract}{{32}{17}{Special Situations with Incremental Inference}{equation.C.32}{}}
-\@writefile{toc}{\contentsline {section}{\numberline {D}Effective Projective Field Size (One dimensional scenario)}{17}{appendix.D}}
 \citation{eger2013restricted}
 \citation{kingma2014adam}
+\newlabel{eqn:width_subtract}{{32}{18}{Special Situations with Incremental Inference}{equation.C.32}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {D}Effective Projective Field Size (One dimensional scenario)}{18}{appendix.D}}
+\@writefile{toc}{\contentsline {section}{\numberline {E}Fine-tuning CNNs}{18}{appendix.E}}
+\@writefile{lot}{\contentsline {table}{\numberline {3}{\ignorespaces Train-validation-test split size for each dataset.\relax }}{18}{table.caption.23}}
+\newlabel{tbl:dataset_sizes}{{3}{18}{Train-validation-test split size for each dataset.\relax }{table.caption.23}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {F}Visual Examples}{18}{appendix.F}}
 \newlabel{tocindent-1}{0pt}
 \newlabel{tocindent0}{0pt}
 \newlabel{tocindent1}{7.01pt}
 \newlabel{tocindent2}{11.49998pt}
 \newlabel{tocindent3}{0pt}
 \providecommand\NAT@force@numbers{}\NAT@force@numbers
-\@writefile{toc}{\contentsline {section}{\numberline {E}Fine-tuning CNNs}{18}{appendix.E}}
-\@writefile{lot}{\contentsline {table}{\numberline {3}{\ignorespaces Train-validation-test split size for each dataset.\relax }}{18}{table.caption.23}}
-\newlabel{tbl:dataset_sizes}{{3}{18}{Train-validation-test split size for each dataset.\relax }{table.caption.23}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {4}{\ignorespaces Train and test accuracies after fine-tuning.\relax }}{18}{table.caption.24}}
-\newlabel{tbl:finetune_accuracies}{{4}{18}{Train and test accuracies after fine-tuning.\relax }{table.caption.24}{}}
-\@writefile{toc}{\contentsline {section}{\numberline {F}Visual Examples}{18}{appendix.F}}
-\@writefile{lof}{\contentsline {figure}{\numberline {17}{\ignorespaces Occlusion heat maps for sample images (CNN model = VGG16, occlusion patch size = 16, patch color = black, occlusion patch stride $(S\nonbreakingspace or\nonbreakingspace S_2)$ = 4. For \textit  {OCT} $r_{drill\_down}=0.1$ and target \texttt  {speedup}=5. For \textit  {Chest X-Ray} $r_{drill\_down}=0.4$ and target \texttt  {speedup}=2. For \textit  {ImageNet} $r_{drill\_down}=0.25$ and target \texttt  {speedup}=3).\relax }}{19}{figure.caption.25}}
-\newlabel{fig:visual_examples}{{17}{19}{Occlusion heat maps for sample images (CNN model = VGG16, occlusion patch size = 16, patch color = black, occlusion patch stride $(S~or~S_2)$ = 4. For \textit {OCT} $r_{drill\_down}=0.1$ and target \texttt {speedup}=5. For \textit {Chest X-Ray} $r_{drill\_down}=0.4$ and target \texttt {speedup}=2. For \textit {ImageNet} $r_{drill\_down}=0.25$ and target \texttt {speedup}=3).\relax }{figure.caption.25}{}}
-\newlabel{TotPages}{{19}{19}{}{page.19}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {4}{\ignorespaces Train and test accuracies after fine-tuning.\relax }}{19}{table.caption.24}}
+\newlabel{tbl:finetune_accuracies}{{4}{19}{Train and test accuracies after fine-tuning.\relax }{table.caption.24}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {17}{\ignorespaces Occlusion heat maps for sample images (CNN model = VGG16, occlusion patch size = 16, patch color = black, occlusion patch stride $(S\nonbreakingspace or\nonbreakingspace S_2)$ = 4. For \textit  {OCT} $r_{drill\_down}=0.1$ and target \texttt  {speedup}=5. For \textit  {Chest X-Ray} $r_{drill\_down}=0.4$ and target \texttt  {speedup}=2. For \textit  {ImageNet} $r_{drill\_down}=0.25$ and target \texttt  {speedup}=3).\relax }}{20}{figure.caption.25}}
+\newlabel{fig:visual_examples}{{17}{20}{Occlusion heat maps for sample images (CNN model = VGG16, occlusion patch size = 16, patch color = black, occlusion patch stride $(S~or~S_2)$ = 4. For \textit {OCT} $r_{drill\_down}=0.1$ and target \texttt {speedup}=5. For \textit {Chest X-Ray} $r_{drill\_down}=0.4$ and target \texttt {speedup}=2. For \textit {ImageNet} $r_{drill\_down}=0.25$ and target \texttt {speedup}=3).\relax }{figure.caption.25}{}}
+\newlabel{TotPages}{{20}{20}{}{page.20}{}}

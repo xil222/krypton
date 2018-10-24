@@ -5,10 +5,14 @@
 
 \begin{figure}[t]
 \includegraphics[width=\columnwidth]{images/interactive_experiment.pdf}
-\caption{$|G|$}
+\caption{Interactive mode execution of incremental inference with $G$s of different sizes}
 \label{fig:interactive_experiment}
 \end{figure}
 
+We evaluate interactive-mode incremental inference execution (no approximate inference optimizations) with $G$s of different sizes.
+Similar to non-interactive mode experiments presented in Section 5, all experiments are run in batched mode with a batch size of 16 for CPU based experiments and a batch size 128 for GPU based experiments.
+If the size of $G$ (formally $|G|$) or the remainder of $G$ is smaller than the batch size, that value is used as the batch size (e.g. $|G| = 16$ results in a batch size of 16).
+Figure \ref{fig:interactive_experiment} presents the final results.
 
 \section{GPU Optimized Kernel Implementation}
 
