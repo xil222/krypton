@@ -1,0 +1,243 @@
+\begin{thebibliography}{10}
+
+\bibitem{alexnet}
+Alex Krizhevsky et~al.
+\newblock Imagenet classification with deep convolutional neural networks.
+\newblock In {\em Advances in neural information processing systems}, pages
+  1097--1105, 2012.
+
+\bibitem{vggnet}
+Karen Simonyan and Andrew Zisserman.
+\newblock Very deep convolutional networks for large-scale image recognition.
+\newblock {\em arXiv preprint arXiv:1409.1556}, 2014.
+
+\bibitem{resnet}
+Kaiming He et~al.
+\newblock Deep residual learning for image recognition.
+\newblock In {\em Proceedings of the IEEE conference on computer vision and
+  pattern recognition}, pages 770--778, 2016.
+
+\bibitem{inception}
+Christian Szegedy et~al.
+\newblock Rethinking the inception architecture for computer vision.
+\newblock In {\em Proceedings of the IEEE Conference on Computer Vision and
+  Pattern Recognition}, pages 2818--2826, 2016.
+
+\bibitem{imagenet}
+Olga Russakovsky et~al.
+\newblock Imagenet large scale visual recognition challenge.
+\newblock {\em International Journal of Computer Vision}, 115(3):211--252,
+  2015.
+
+\bibitem{kermany2018identifying}
+Daniel~S Kermany et~al.
+\newblock Identifying medical diagnoses and treatable diseases by image-based
+  deep learning.
+\newblock {\em Cell}, 172(5):1122--1131, 2018.
+
+\bibitem{islam2017abnormality}
+Mohammad~Tariqul Islam et~al.
+\newblock Abnormality detection and localization in chest x-rays using deep
+  convolutional neural networks.
+\newblock {\em arXiv preprint arXiv:1705.09850}, 2017.
+
+\bibitem{mohanty2016using}
+Sharada~P Mohanty et~al.
+\newblock Using deep learning for image-based plant disease detection.
+\newblock {\em Frontiers in plant science}, 7:1419, 2016.
+
+\bibitem{arbabzadah2016identifying}
+Farhad Arbabzadah et~al.
+\newblock Identifying individual facial expressions by deconstructing a neural
+  network.
+\newblock In {\em German Conference on Pattern Recognition}, pages 344--354.
+  Springer, 2016.
+
+\bibitem{wang2017deep}
+Yilun Wang and Michal Kosinski.
+\newblock Deep neural networks are more accurate than humans at detecting
+  sexual orientation from facial images.
+\newblock 2017.
+
+\bibitem{fdaretinopathy}
+Ai device for detecting diabetic retinopathy earns swift fda approval.
+\newblock
+  \url{https://www.aao.org/headline/first-ai-screen-diabetic-retinopathy-approved-by-f}.
+\newblock Accessed September 31, 2018.
+
+\bibitem{radiologistshortage}
+Radiologists are often in short supply and overworked – deep learning to the
+  rescue.
+\newblock
+  \url{https://government.diginomica.com/2017/12/20/radiologists-often-short-supply-overworked-deep-learning-rescue}.
+\newblock Accessed September 31, 2018.
+
+\bibitem{jung2017deep}
+Kyu-Hwan Jung et~al.
+\newblock Deep learning for medical image analysis: Applications to computed
+  tomography and magnetic resonance imaging.
+\newblock {\em Hanyang Medical Reviews}, 37(2):61--70, 2017.
+
+\bibitem{zeiler2014visualizing}
+Matthew~D Zeiler and Rob Fergus.
+\newblock Visualizing and understanding convolutional networks.
+\newblock In {\em European conference on computer vision}, pages 818--833.
+  Springer, 2014.
+
+\bibitem{ketkar2017introduction}
+Nikhil Ketkar.
+\newblock Introduction to pytorch.
+\newblock In {\em Deep Learning with Python}, pages 195--208. Springer, 2017.
+
+\bibitem{zintgraf2017visualizing}
+Luisa~M Zintgraf et~al.
+\newblock Visualizing deep neural network decisions: Prediction difference
+  analysis.
+\newblock {\em arXiv preprint arXiv:1702.04595}, 2017.
+
+\bibitem{chirkova2012materialized}
+Rada Chirkova, Jun Yang, et~al.
+\newblock Materialized views.
+\newblock {\em Foundations and Trends{\textregistered} in Databases},
+  4(4):295--405, 2012.
+
+\bibitem{gupta1995maintenance}
+Ashish Gupta, Inderpal~Singh Mumick, et~al.
+\newblock Maintenance of materialized views: Problems, techniques, and
+  applications.
+\newblock {\em IEEE Data Eng. Bull.}, 18(2):3--18, 1995.
+
+\bibitem{levy1995answering}
+Alon~Y Levy, Alberto~O Mendelzon, and Yehoshua Sagiv.
+\newblock Answering queries using views.
+\newblock In {\em Proceedings of the fourteenth ACM SIGACT-SIGMOD-SIGART
+  symposium on Principles of database systems}, pages 95--104. ACM, 1995.
+
+\bibitem{caffemodelzoo}
+Cafee model zoo.
+\newblock \url{https://github.com/BVLC/caffe/wiki/Model-Zoo}.
+\newblock Accessed September 31, 2018.
+
+\bibitem{tfmodelzoo}
+Models and examples built with tensorflow.
+\newblock \url{https://github.com/tensorflow/models}.
+\newblock Accessed September 31, 2018.
+
+\bibitem{chetlur2014cudnn}
+Sharan Chetlur, Cliff Woolley, Philippe Vandermersch, Jonathan Cohen, John
+  Tran, Bryan Catanzaro, and Evan Shelhamer.
+\newblock cudnn: Efficient primitives for deep learning.
+\newblock {\em arXiv preprint arXiv:1410.0759}, 2014.
+
+\bibitem{le2017receptive}
+Hung Le and Ali Borji.
+\newblock What are the receptive, effective receptive, and projective fields of
+  neurons in convolutional neural networks?
+\newblock {\em arXiv preprint arXiv:1705.07049}, 2017.
+
+\bibitem{basiccnnoperations}
+Basic operations in a convolutional neural network - cse@iit delhi.
+\newblock
+  \url{http://www.cse.iitd.ernet.in/~rijurekha/lectures/lecture-2.pptx}.
+\newblock Accessed September 31, 2018.
+
+\bibitem{de2011projective}
+Saskia~EJ de~Vries et~al.
+\newblock The projective field of a retinal amacrine cell.
+\newblock {\em Journal of Neuroscience}, 31(23):8595--8604, 2011.
+
+\bibitem{luo2016understanding}
+Wenjie Luo et~al.
+\newblock Understanding the effective receptive field in deep convolutional
+  neural networks.
+\newblock In {\em Advances in neural information processing systems}, pages
+  4898--4906, 2016.
+
+\bibitem{wang2004image}
+Zhou Wang et~al.
+\newblock Image quality assessment: from error visibility to structural
+  similarity.
+\newblock {\em IEEE transactions on image processing}, 13(4):600--612, 2004.
+
+\bibitem{deng2009imagenet}
+Jia Deng, Wei Dong, et~al.
+\newblock Imagenet: A large-scale hierarchical image database.
+\newblock In {\em Computer Vision and Pattern Recognition, 2009. CVPR 2009.
+  IEEE Conference on}, pages 248--255. Ieee, 2009.
+
+\bibitem{torchvisionmodels}
+torch vison models.
+\newblock
+  \url{https://github.com/pytorch/vision/tree/master/torchvision/models}.
+\newblock Accessed September 31, 2018.
+
+\bibitem{nikolic2014linview}
+Milos Nikolic, Mohammed ElSeidy, and Christoph Koch.
+\newblock Linview: incremental view maintenance for complex analytical queries.
+\newblock In {\em Proceedings of the 2014 ACM SIGMOD international conference
+  on Management of data}, pages 253--264. ACM, 2014.
+
+\bibitem{zhao2017incremental}
+Weijie Zhao, Florin Rusu, Bin Dong, Kesheng Wu, and Peter Nugent.
+\newblock Incremental view maintenance over array data.
+\newblock In {\em Proceedings of the 2017 ACM International Conference on
+  Management of Data}, pages 139--154. ACM, 2017.
+
+\bibitem{sellis1988multiple}
+Timos~K Sellis.
+\newblock Multiple-query optimization.
+\newblock {\em ACM Transactions on Database Systems (TODS)}, 13(1):23--52,
+  1988.
+
+\bibitem{le2012scalable}
+Wangchao Le, Anastasios Kementsietsidis, Songyun Duan, and Feifei Li.
+\newblock Scalable multi-query optimization for sparql.
+\newblock In {\em Data Engineering (ICDE), 2012 IEEE 28th International
+  Conference on}, pages 666--677. IEEE, 2012.
+
+\bibitem{park2018verdictdb}
+Yongjoo Park, Barzan Mozafari, Joseph Sorenson, and Junhao Wang.
+\newblock Verdictdb: universalizing approximate query processing.
+\newblock In {\em Proceedings of the 2018 International Conference on
+  Management of Data}, pages 1461--1476. ACM, 2018.
+
+\bibitem{garofalakis2001approximate}
+Minos~N Garofalakis and Phillip~B Gibbons.
+\newblock Approximate query processing: Taming the terabytes.
+\newblock In {\em VLDB}, pages 343--352, 2001.
+
+\bibitem{adjeroh1997multimedia}
+Donald~A Adjeroh and Kingsley~C Nwosu.
+\newblock Multimedia database management—requirements and issues.
+\newblock {\em IEEE multimedia}, (3):24--33, 1997.
+
+\bibitem{kalipsiz2000multimedia}
+Oya Kalipsiz.
+\newblock Multimedia databases.
+\newblock In {\em Information Visualization, 2000. Proceedings. IEEE
+  International Conference on}, pages 111--115. IEEE, 2000.
+
+\bibitem{cavigelli2017cbinfer}
+Lukas Cavigelli, Philippe Degen, and Luca Benini.
+\newblock Cbinfer: Change-based inference for convolutional neural networks on
+  video data.
+\newblock In {\em Proceedings of the 11th International Conference on
+  Distributed Smart Cameras}, pages 1--8. ACM, 2017.
+
+\bibitem{kang2017noscope}
+Daniel Kang, John Emmons, Firas Abuzaid, Peter Bailis, and Matei Zaharia.
+\newblock Noscope: optimizing neural network queries over video at scale.
+\newblock {\em Proceedings of the VLDB Endowment}, 10(11):1586--1597, 2017.
+
+\bibitem{eger2013restricted}
+Steffen Eger.
+\newblock Restricted weighted integer compositions and extended binomial
+  coefficients.
+\newblock {\em J. Integer Seq}, 16(13.1):3, 2013.
+
+\bibitem{kingma2014adam}
+Diederik~P Kingma and Jimmy Ba.
+\newblock Adam: A method for stochastic optimization.
+\newblock {\em arXiv preprint arXiv:1412.6980}, 2014.
+
+\end{thebibliography}

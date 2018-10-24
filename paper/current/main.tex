@@ -78,7 +78,7 @@
 
 
 \begin{abstract}
-Deep Convolutional Neural Networks (CNNs) now match human accuracy in many image recognition tasks. This has lead to increasing adoption of deep CNNs in e-commerce, radiology, and other domains. Naturally, ``explaining'' CNN predictions is a key concern for many users. Since the internal working of CNNs are unintuitive for non-technical users, occlusion-based explanations are popular for determining which parts of an input image contribute the most to a given prediction. One occludes a region of the image using a patch and moves this patch across the image to yield a heatmap of changes to the prediction probability. Alas, this approach is computationally expensive due to the large number of re-inference requests produced, which could waste human time and raise resource costs. In this paper, we resolve this issue by casting occlusion-based CNN explanations as a new instance of the incremental view maintenance problem. We create a novel and comprehensive algebraic framework for incremental CNN inference that combines materialized views with multi-query optimization to avoid computational redundancy across re-inference requests. We then introduce two approximate inference optimizations that exploit the semantics of CNNs and the occlusion task to further reduce runtimes. We prototype our ideas in Python to create a tool we call \textsc{Krypton} that can support both CPUs and GPUs. Experiments with real data and CNNs show that \textsc{Krypton} reduces runtimes by up to 5x (14x) to produce exact (approximate) heatmaps without raising resource requirements.
+Deep Convolutional Neural Networks (CNNs) now match human accuracy in many image recognition tasks. This has lead to increasing adoption of deep CNNs in e-commerce, radiology, and other domains. Naturally, ``explaining'' CNN predictions is a key concern for many users. Since the internal working of CNNs are unintuitive for non-technical users, occlusion-based explanations are popular for determining which parts of an input image contribute the most to a given prediction. One occludes a region of the image using a patch and moves this patch across the image to yield a heat map of changes to the prediction probability. Alas, this approach is computationally expensive due to the large number of re-inference requests produced, which could waste human time and raise resource costs. In this paper, we resolve this issue by casting occlusion-based CNN explanations as a new instance of the incremental view maintenance problem. We create a novel and comprehensive algebraic framework for incremental CNN inference that combines materialized views with multi-query optimization to avoid computational redundancy across re-inference requests. We then introduce two approximate inference optimizations that exploit the semantics of CNNs and the occlusion task to further reduce runtimes. We prototype our ideas in Python to create a tool we call \textsc{Krypton} that can support both CPUs and GPUs. Experiments with real data and CNNs show that \textsc{Krypton} reduces runtimes by up to 5x (14x) to produce exact (approximate) heat maps without raising resource requirements.
 \end{abstract}
 
 \maketitle
@@ -102,22 +102,24 @@ While there are many work in this context, most relevant to our work are \cite{n
 \cite{nikolic2014linview} extended the IVM concept to support IVM of linear algebra operators as opposed to classical database queries.
 \cite{zhao2017incremental} extended the IVM concept to support multi-dimensional array data model with support for both relational style functions (e.g. filter and join) and also array style functions (e.g. smoothing and cross-matching).
 The spatially localized transformations explained in Section 2.2 can be thought of as a form of \textit{``spatial array join''} introduced in \cite{zhao2017incremental}.
-However, the focus of \cite{zhao2017incremental} is on supporting efficient IVM for distributed sparse arrays by reducing the communication and chunk reassignment where as the focus of this work is on creating a comprehensive algebraic framework for the emerging workload of occlusion based  CNN explanations by applying incremental inference.
+However, the focus of \cite{zhao2017incremental} is on supporting efficient IVM for distributed sparse arrays by reducing the communication and chunk reassignment where as the focus of this work is on creating a comprehensive algebraic framework for the OBE workload by applying incremental inference optimization.
+We also takes into account the characteristics of human perception and semantics of CNN models to introduce approximate inference optimizations for OBE workload.
 
-Our work also takes inspirations from the AQP \cite{mozafari2017approximate,park2018verdictdb,garofalakis2001approximate} and MQO \cite{sellis1988multiple,le2012scalable} literature.
-The focus of existing AQP approaches is on answering analytical queries with SQL aggregates over relational data.
-In this work, we extend the AQP concepts to support CNN explanation queries over image data.
-We cast the multiple re-inference requests required for the CNN explainability workload as multiple queries and apply MQO strategies.
-To the best of our knowledge, ours is the first to integrate IVM and AQP with MQO to optimize query processing.
+Our work also takes inspirations from the multi-query optimization (MQO) \cite{sellis1988multiple,le2012scalable} and approximate query processing (AQP) \cite{park2018verdictdb,garofalakis2001approximate} literature.
+We cast the multiple re-inference requests required for the OBE workload as multiple queries and apply MQO strategies.
+To the best of our knowledge, ours is the first to integrate IVM-style techniques with an MQO-style technique for optimizing CNN inference.
+The focus of existing AQP approaches is on answering analytical queries over relational data efficiently by trading-off the statistical error.
+In this work, we extend the AQP concepts to support CNN explanation queries over image data which trade-offs perceived quality of the heat maps for efficiency.
 
 
 \vspace{2mm}
 \noindent \textbf{Multimedia DBMSs.} There is prior work in the database and multimedia literatures on multimedia DBMSs \cite{adjeroh1997multimedia,kalipsiz2000multimedia}.
 However, the focus of these work is on retrieval which includes content-based image retrieval (CBIR) and video retrieval using similarity searches or indices.
-Such systems are orthogonal to our work, since we focus on occlusion based deep CNN explainability.
+Such systems are orthogonal to our work, since we focus on OBE for deep CNNs.
+CBinfer is a system for change based approximate evaluation of CNNs for real-time object recognition in video~\cite{cavigelli2017cbinfer}.
 NoScope is a system to detect objects in video streams using cascades of CNNs \cite{kang2017noscope}.
-\system~ is orthogonal, since it focuses on CNN explainability, not object recognition.
-One could integrate \system~ with NoScope to explain the CNN predictions.
+\system~ is orthogonal to them, since it focuses on OBE, not object recognition.
+One could integrate \system~ with CBinfer and NoScope to explain the CNN predictions.
 
 
 \section{Conclusions And Future Work}

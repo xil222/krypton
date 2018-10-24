@@ -1,0 +1,60 @@
+This is BibTeX, Version 0.99d (TeX Live 2016)
+Capacity: max_strings=35307, hash_size=35307, hash_prime=30011
+The top-level auxiliary file: main.aux
+The style file: unsrt.bst
+Database file #1: main.bib
+Repeated entry---line 164 of file main.bib
+ : @article{jung2017deep
+ :                      ,
+I'm skipping whatever remains of this entry
+Repeated entry---line 394 of file main.bib
+ : @article{zintgraf2017visualizing
+ :                                 ,
+I'm skipping whatever remains of this entry
+Warning--I didn't find a database entry for "dlbook"
+Warning--I didn't find a database entry for "cnnprofile"
+Warning--I didn't find a database entry for "sellis"
+Warning--empty journal in wang2017deep
+Warning--there's a number but no volume in adjeroh1997multimedia
+You've used 41 entries,
+            1791 wiz_defined-function locations,
+            670 strings with 10278 characters,
+and the built_in function-call counts, 10562 in all, are:
+= -- 1044
+> -- 333
+< -- 16
++ -- 128
+- -- 87
+* -- 564
+:= -- 1472
+add.period$ -- 134
+call.type$ -- 41
+change.case$ -- 41
+chr.to.int$ -- 0
+cite$ -- 43
+duplicate$ -- 533
+empty$ -- 1094
+format.name$ -- 87
+if$ -- 2526
+int.to.chr$ -- 0
+int.to.str$ -- 41
+missing$ -- 35
+newline$ -- 208
+num.names$ -- 35
+pop$ -- 180
+preamble$ -- 1
+purify$ -- 0
+quote$ -- 0
+skip$ -- 329
+stack$ -- 0
+substring$ -- 779
+swap$ -- 201
+text.length$ -- 16
+text.prefix$ -- 0
+top$ -- 0
+type$ -- 0
+warning$ -- 2
+while$ -- 105
+width$ -- 43
+write$ -- 444
+(There were 2 error messages)
