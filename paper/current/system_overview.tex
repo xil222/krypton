@@ -1,5 +1,5 @@
 %!TEX root = <main.tex>
-
+\vspace{-1mm}
 \section{Setup and Preliminaries}\label{sec:preliminaries}
 We now state our problem formally and explain our assumptions.
 We then formalize the dataflow of the layers of a CNN, since these are required for understanding our techniques in Sections 3 and 4.
@@ -62,13 +62,13 @@ Finally we briefly explain the Structural Similarity Index (SSIM) which is used 
   \end{tabular}}
     \caption{Notation used in this paper.}
 \label{table:preliminaries_symbols}
-\vspace{-6mm}
+\vspace{-8mm}
 \end{table}
 
 We are given a CNN $f$ that has a sequence (or DAG) of \textit{layers} $l$, each of which has a \textit{tensor transformation function} $T_{:l}$. We are also given the image $\mathcal{I}_{:img}$ for which the occlusion-based explanation (OBE) is desired, the class label $L$ predicted by $f$ on $\mathcal{I}_{:img}$, an occlusion patch $\mathcal{P}$ in RGB format, and occlusion patch \textit{stride} $S_{\mathcal{P}}$. We are also given a set of patch positions $G$ constructed either automatically or manually with a visual interface interactively. The OBE workload is as follows: produce a 2-D heat map $M$, wherein each value corresponds to a position in $G$ and has the prediction probability of $L$ by $f$ on the occluded image $\mathcal{I}^{'}_{x,y:img}$ (i.e., superimpose occlusion patch on image) or zero otherwise.
 More precisely, we can describe the OBE workload with the following logical statements:
 
-\vspace{-2mm}
+\vspace{-7mm}
 \begin{align}
 \label{eqn:mheight}
 W_M =&~ \lfloor(\texttt{width}(\mathcal{I}_{:img}) - \texttt{width}(\mathcal{P}) + 1)/S_\mathcal{P}\rfloor\\
@@ -80,6 +80,7 @@ M \in&~ \mathcal{\rm I\!R}^{H_M \times W_M}\\
 & \mathcal{I}^{'}_{x,y:img} \leftarrow \mathcal{I}_{:img} ~ \bm\circ_{(x,y)} ~ \mathcal{P} \\
 \label{eqn:outputval}
 & M[x,y] \leftarrow f(\mathcal{I}^{'}_{x,y:img})[L]
+\vspace{-5mm}
 \end{align}
 
 Steps~(\ref{eqn:mheight}) and~(\ref{eqn:mwidth}) calculate the dimensions of the heat map $M$.
@@ -94,12 +95,12 @@ The focus of this work is on the occlusion based deep CNN explainability approac
 We assume the CNN is used for classification (or regression), since only such applications typically use OBE. One could create CNNs that predict an image ``segmentation'' instead, but labeling image segments for training such CNNs is tedious and expensive. Thus, most recent applications of CNNs in healthcare, sociology, and other domains rely on classification CNNs and use OBE~\cite{kermany2018identifying, islam2017abnormality, mohanty2016using, arbabzadah2016identifying, wang2017deep}. Other approaches to explain CNN predictions have been studied, but since they are orthogonal to our focus, we summarize them in the appendix due to space constraints.
 We assume $f$ is from a roster of well-known deep CNNs; we currently support VGG16, ResNet18, and InceptionV3. We think this is a reasonable start, since most recent OBE applications use only such well-known CNNs from model zoos~\cite{caffemodelzoo, tfmodelzoo}. But we note that our techniques are generic enough to apply to any CNN; we leave support for arbitrary CNNs to future work.
 
-
 \begin{figure*}[t]
+\vspace{-4mm}
 \includegraphics[width=\textwidth]{images/cnn_simplified}
-\vspace{-6mm}
 \caption{Simplified illustration of the key layers of a typical CNN. The highlighted cells (dark/red background) show how a small local spatial context in the first input propagates through subsequent layers. (a) Convolution layer (for simplicity sake, bias addition is not shown). (b) ReLU Non-linearity layer. (c) Pooling layer (max pooling). Notation is explained in Table~\ref{table:preliminaries_symbols}.}
 \label{fig:cnn_simplified}
+\vspace{-4mm}
 \end{figure*}
 
 \subsection{Dataflow of CNN Layers}\label{sec:cnn_internals}
@@ -127,7 +128,7 @@ A layer $l$ has $C_{\mathcal{O}:l}$ 3-D filter kernels arranged as a 4-D array $
 % as per Equation (\ref{eqn:conv_operator}). 
 Figure~\ref{fig:cnn_simplified} (a) presents a simplified illustration of a Convolution layer.
 
-
+\vspace{-4mm}
 \begin{align}
 \label{eqn:elementwise_product}
 \begin{split}
@@ -135,6 +136,7 @@ a_{y,x:c} =& \sum_{k=0}^{C_{\mathcal{I}:l} } \sum_{j=0}^{H_{\mathcal{K}:l}-1} \s
 & \quad \times \mathcal{I}_{:l}[k,y-\floor{\frac{H_{\mathcal{K}:l} }{2}}+j,x-\floor{\frac{W_{\mathcal{K}:l} }{2}}+i] \\
 & \quad + \mathcal{B}_{conv:l}[c]
 \end{split}
+\vspace{-8mm}
 \end{align}
 
 \eat{
