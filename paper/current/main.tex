@@ -96,33 +96,18 @@ Deep Convolutional Neural Networks (CNNs) now match human accuracy in many image
 \section{Other Related Work}
 
 \vspace{2mm}
-\noindent \textbf{Query Optimization.} Our work is inspired by the long line of work on incremental view maintenance (IVM) based query processing \cite{chirkova2012materialized,gupta1995maintenance,levy1995answering}.
-The IVM approach presented in this paper falls into the broader category of \textit{``lazy maintenance''} strategy.
-While there are many work in this context, most relevant to our work are \cite{nikolic2014linview} and \cite{zhao2017incremental}.
-\cite{nikolic2014linview} extended the IVM concept to support IVM of linear algebra operators as opposed to classical database queries.
-\cite{zhao2017incremental} extended the IVM concept to support multi-dimensional array data model with support for both relational style functions (e.g. filter and join) and also array style functions (e.g. smoothing and cross-matching).
-The spatially localized transformations explained in Section 2.2 can be thought of as a form of \textit{``spatial array join''} introduced in \cite{zhao2017incremental}.
-However, the focus of \cite{zhao2017incremental} is on supporting efficient IVM for distributed sparse arrays by reducing the communication and chunk reassignment where as the focus of this work is on creating a comprehensive algebraic framework for the OBE workload by applying incremental inference optimization.
-We also takes into account the characteristics of human perception and semantics of CNN models to introduce approximate inference optimizations for OBE workload.
+\noindent \textbf{Query Optimization.} 
+Our work is inspired by the long line of work on incremental view maintenance (IVM) in databases~\cite{chirkova2012materialized, gupta1995maintenance, levy1995answering}, but this is the first work to use the IVM lens for the occlusion-based CNN explanation workload. Our novel algebraic IVM framework for CNN inference is closely tied to the dataflow of CNN layers, which transform tensors in non-trivial ways. Closely related to our work is the IVM framework for linear algebra in~\cite{nikolic2014linview}. They focus on bulk matrix operators and incremental addition of rows to the data matrix. We do not deal with bulk matrix operators or additions of rows, but more fine-grained CNN inference computations and in-place updates to image pixels due to occlusions. Also closely related is the IVM framework for distributed multi-dimensional array database queries in~\cite{zhao2017incremental}. An interesting connection is that CNN layers with local spatial context (Section 2.2) can be viewed as a variant of spatial array join-aggregate queries. But our framework enables end-to-end incremental inference for entire CNNs, not just one-off spatial queries involving data materialization and loading. Our focus is also on popular deep learning environments, not array databases. Finally, we also go beyond algebraic IVM ideas to further exploit CNN-specific semantics and human perception properties in our problem setting.
 
-Our work also takes inspirations from the multi-query optimization (MQO) \cite{sellis1988multiple,le2012scalable} and approximate query processing (AQP) \cite{park2018verdictdb,garofalakis2001approximate} literature.
-We cast the multiple re-inference requests required for the OBE workload as multiple queries and apply MQO strategies.
-To the best of our knowledge, ours is the first to integrate IVM-style techniques with an MQO-style technique for optimizing CNN inference.
-The focus of existing AQP approaches is on answering analytical queries over relational data efficiently by trading-off the statistical error.
-In this work, we extend the AQP concepts to support CNN explanation queries over image data which trade-offs perceived quality of the heat maps for efficiency.
-
+Our work is also inspired by the multi-query optimization (MQO) literature~\cite{sellis1988multiple,le2012scalable}. But we focus on CNN inference, not relational queries. To the best of our knowledge, ours is the first work to present an MQO-style optimization combined with IVM for optimizing CNN inference for occlusion-based explanations.
+Our approximate inference optimizations are inspired by approximate query processing (AQP) techniques~\cite{park2018verdictdb,garofalakis2001approximate}. But unlike statistical approximations of aggregations over relations, our techniques are novel CNN-specific and human perception-oriented heuristic approximations tailored to reducing the computational cost of CNN inference for the OBE workload.
 
 \vspace{2mm}
-\noindent \textbf{Multimedia DBMSs.} There is prior work in the database and multimedia literatures on multimedia DBMSs \cite{adjeroh1997multimedia,kalipsiz2000multimedia}.
-However, the focus of these work is on retrieval which includes content-based image retrieval (CBIR) and video retrieval using similarity searches or indices.
-Such systems are orthogonal to our work, since we focus on OBE for deep CNNs.
-CBinfer is a system for change based approximate evaluation of CNNs for real-time object recognition in video~\cite{cavigelli2017cbinfer}.
-NoScope is a system to detect objects in video streams using cascades of CNNs \cite{kang2017noscope}.
-\system~ is orthogonal to them, since it focuses on OBE, not object recognition.
-One could integrate \system~ with CBinfer and NoScope to explain the CNN predictions.
-
+\noindent \textbf{Multimedia DBMSs.} 
+There is much work in the database and multimedia literatures on multimedia DBMSs~\cite{adjeroh1997multimedia,kalipsiz2000multimedia}. The main focus of such work is on retrieval, including content-based image retrieval (CBIR) and video retrieval using similarity search or indexes. Our work is orthogonal to this body of work since we focus on accelerating CNN explanations, not multimedia retrieval queries. CBinfer is a video analytics tool for change-based approximate CNN inference that can accelerate real-time object recognition in video~\cite{cavigelli2017cbinfer}. Our work also deals with incremental and approximate CNN inference, but our ideas exploit the specific properties of the OBE workload, not general object recognition in video. NoScope is a system to accelerate object detection in video streams using model cascades~\cite{kang2017noscope}. Our focus is on accelerating the OBE workload, not object recognition or video. Overall, both these tools are orthogonal to our focus.
 
 \section{Conclusions And Future Work}
+
 
 \bibliographystyle{unsrt}
 \bibliography{main}
