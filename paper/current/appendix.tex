@@ -35,14 +35,14 @@ The high-level architecture of the Custom Kernel integration is shown in Figure~
 \begin{figure}[t]
 \includegraphics[width=\columnwidth]{images/less_one_example}
 \vspace{-6mm}
-\caption{1-D illustration of special cases for which actual output size will be smaller than the value given by Equation~(\ref{eqn:xcoordinate}). (a) and (b) show cases with filter stride equal to filter size. (c) and (d) show with input update patch being placed at the edge of the input.}
+\caption{1-D illustration of special cases for which actual output size will be smaller than the value given by Equation~(\ref{eqn:xcoordinate}). (a) and (b) show cases where the filter stride is equal to the filter size. (c) and (d) show situations where the position of the modified patch affecting the size of the output patch.}
 \vspace{-4mm}
 \label{fig:less_one_example}
 \end{figure}
 
-There are special cases under which the actual output update patch size can be smaller than the values given by Section~\ref{sec:inc_computation}. Consider the simplified 1-D case shown in Figure~\ref{fig:less_one_example}(a), wherein the stride\footnote{Note that stride is typically less than or equal to filter size.} (3) is the same as filter size (3). In this cases, the size of the output update patch is 1 less than the value given by Equation~(\ref{eqn:patchwidth}). But this is not the case in Figure~\ref{fig:less_one_example}(b), which has the same input update patch size but placed at a different location.
+There are special cases under which the output patch size can be smaller than the values calculated in Section~\ref{sec:inc_computation}. Consider the simplified 1-D case shown in Figure~\ref{fig:less_one_example} (a), where the filter stride\footnote{Note that stride is typically less than or equal to filter size.} (3) is the same as the filter size (3). In this case, the size of the output update patch is one less than the value calculated by Equation~(\ref{eqn:patchwidth}). But this is not the case for the situation shown Figure~\ref{fig:less_one_example} (b), which has the same input patch size but placed at a different location.
 % This issue arises only when the stride value is same as the filter size.
-Another case arises when the input update patch is placed at the edge of the input, as shown in Figure~\ref{fig:less_one_example}(c). In this case, it is impossible for the filter to move freely through all positions, since it hits the input boundary, compared against having the input update patch on the middle of the input, as shown in Figure \ref{fig:less_one_example}(c). In \system, we do not treat theses cases separately but rather use the values given by Equation~(\ref{eqn:patchwidth}) for the width dimension (similarly height dimension), since they act as upper bounds. In case of a smaller output update patch, \system~ just reads off and updates slightly bigger patches to preserve uniformity. This also requires updating the start coordinates of the patches, as shown in Equation~(\ref{eqn:width_subtract}). This sort of uniform treatment is required for performing batched inference operations, which gives significant speedups out of the box compared to per-image inference.
+Another case arises when the modified patch is placed at the edge of the input, as shown in Figure~\ref{fig:less_one_example} (c). In this case, it is impossible for the filter to move freely through all positions, since it hits the input boundary. However, it is not the case for the modified patch shown in Figure \ref{fig:less_one_example} (d). In \system, we do not treat these cases separately but rather use the values calculated by Equation~(\ref{eqn:patchwidth}) for the width dimension (similarly for the height dimension), since they act as an upper bound. In the case of a smaller output patch, \system~ reads and updates a slightly bigger patch to preserve uniformity. This also requires updating the starting coordinates of the patch, as shown in Equation~(\ref{eqn:width_subtract}). This sort of uniform treatment is required for performing batched inference operations, which gives significant speedups compared to per-image inference.
 
 \vspace{-4mm}
 \begin{align}
@@ -56,12 +56,9 @@ x^\mathcal{R}_\mathcal{P} ~ = W_{\mathcal{I}} - W^\mathcal{R}_\mathcal{P}
 \end{align}
 
 
-
-
-
 \section{Effective Projective Field Size (1-D Scenario)}
 
-We formalize the effective projective field growth for the one dimensional scenario with $n$ convolution layers (assuming certain conditions).
+We formalize the effective projective field growth for the one dimensional scenario with $n$ convolution layers (assuming certain conditions). This proof is motivated by a similar proof in \cite{luo2016understanding} which characterizes the effective growth rate of the receptive field in a CNN.
 
 The input is $u(t)$ where
 \begin{align}
@@ -77,8 +74,8 @@ Each layer has the \textbf{same kernel} $v(t)$ of size $k$. The kernel signal ca
 \begin{align}
 	v(t) = \sum_{m=0}^{k-1} w(m)\delta(t-m)
 \end{align}
-where $w(m)$ is the weight for the $m$th pixel in the kernel.
-Without loosing generality, we can assume the weights are normalized, i.e. $\sum_{m}w(w)=1$. The output signal of the $n$th layer $o(t)$ is simply $o = u * v * ... * v$, convolving $u$ with $n$ such $v$\'s.
+where $w(m)$ is the weight for the $m^{th}$ pixel in the kernel.
+Without loosing generality, we can assume the weights are normalized, i.e. $\sum_{m}w(w)=1$. The output signal of the $n^{th}$ layer $o(t)$ is simply $o = u * v * ... * v$, convolving $u$ with $n$ such $v$s.
 To compute the convolution, we can use the Discrete Time Fourier Transform to convert the signals into the Fourier domain, and obtain
 \begin{align}
 \begin{split}
@@ -124,10 +121,9 @@ As the rate of decay is related to the variance of the Gaussian and assuming the
 On the other hand stacking more convolution layers would grow the theoretical projective field linearly. But the effective projective field size is shrinking at a rate of $O(1/\sqrt{n})$.
 
 
-
 \section{Fine-tuning CNNs}
 
-For \textit{OCT} and \textit{Chest X-Ray}, the 3 ImageNet-trained CNNs are fine-tuned by retraining the final layer.
+For \textit{OCT} and \textit{Chest X-Ray}, the 3 ImageNet-trained CNNs are fine-tuned by retraining the final Fully-Connected layer.
 We use a train-validation-test split of 60-20-20 and the exact numbers for each dataset are shown in Table \ref{tbl:dataset_sizes}.
 Cross-entropy loss with L2 regularization is used as the loss function and  Adam \cite{kingma2014adam} is used as the optimizer.
 We tune learning rate $\eta \in [10^{-2}, 10^{-4}, 10^{-6}]$ and regularization parameter $\lambda \in [10^{-2}, 10^{-4}, 10^{-6}]$ using the validation set and train for 25 epochs.
@@ -167,20 +163,18 @@ Chest X-Ray & 3,463 & 1,237 & 1,156 \\ \hline
 \section{Deep CNN Explainability}
 % With image recognition models, natural question is if the model is truly identifying objects in the image or just using surrounding or other objects for making false prediction.
 Various approaches used to explain CNN predictions can be broadly divided into two categories, gradient-based and perturbation based approaches. Gradient-based approaches generate a sensitivity heat map by computing the partial derivatives of model output with respect to every input pixel via backpropagation.
-In perturbation based approaches the output of the model is observed by modifying regions on the input image and thereby identifying the sensitive regions.
+In perturbation based approaches the output of the model is observed by modifying regions on the input image and thereby identify the sensitive regions.
 % Even though gradient approaches require only a single forward inference and a single backpropagation to generate the sensitivity heat map, the output may not be very intuitive and hard to understand because the salient pixels tend to spread over a very large area of the input image.
-Despite being time-consuming, in most real world use cases such as in medical imaging, practitioners tend to use occlusion experiments, a perturbation approach, as the preferred approach for explanations as they produce high quality fine grained sensitivity heat maps using a process which is very intuitive to the human observer ~\cite{zeiler2014visualizing,jung2017deep,miller2017explanation}.
-
-
+Despite being time-consuming, in most real world use cases such as in medical imaging, practitioners tend to use occlusion experiments, a perturbation based approach, as the preferred approach for explanations as they produce high quality fine grained sensitivity heat maps using a process which is very intuitive to the human observer ~\cite{zeiler2014visualizing,jung2017deep,miller2017explanation}.
 
 
 \section{Visual Examples}
 
-Figure \ref{fig:visual_examples} presents occlusion heat maps for a sample image from each dataset with (a) \textit{incremental inference} and (b) \textit{incremental inference} with \textit{adaptive drill-down} for different \textit{projective field threshold} values. The predicted class label for \textit{OCT}, \textit{Chest X-Ray}, and \textit{ImageNet} are DME, VIRAL, and OBOE respectively.
+Figure \ref{fig:visual_examples} presents occlusion heat maps for a sample image from each dataset with (a) \textit{incremental inference} for different \textit{projective field threshold} values and (b) \textit{incremental inference} with \textit{adaptive drill-down} for different \textit{projective field threshold} values. The predicted class label for \textit{OCT}, \textit{Chest X-Ray}, and \textit{ImageNet} are DME, VIRAL, and OBOE respectively.
 
 \begin{figure*}[t]
 \includegraphics[width=\textwidth]{visualsjpeg}
 %\includegraphics[width=\textwidth]{images/visual_examples}
-\caption{Occlusion heat maps for sample images (CNN model = VGG16, occlusion patch size = 16, patch color = black, occlusion patch stride $(S~or~S_2)$ = 4. For \textit{OCT} $r_{drill\_down}=0.1$ and target \texttt{speedup}=5. For \textit{Chest X-Ray} $r_{drill\_down}=0.4$ and target \texttt{speedup}=2. For \textit{ImageNet} $r_{drill\_down}=0.25$ and target \texttt{speedup}=3).}
+\caption{Occlusion heat maps for sample images (CNN model = VGG16, occlusion patch size = 16, patch color = black, occlusion patch stride $(S~or~S_2)$ = 4. For \textit{OCT} $r_{drill\_down}=0.1$ and $\mathit{target}=5$. For \textit{Chest X-Ray} $r_{drill\_down}=0.4$ and $\mathit{target}=2$. For \textit{ImageNet} $r_{drill\_down}=0.25$ and $\mathit{target}=3$).}
 \label{fig:visual_examples}
 \end{figure*}
