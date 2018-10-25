@@ -1,4 +1,5 @@
 %!TEX root = <main.tex>
+
 \section{Setup and Preliminaries}\label{sec:preliminaries}
 We now state our problem formally and explain our assumptions.
 We then formalize the dataflow of the layers of a CNN, since these are required for understanding our techniques in Sections 3 and 4.
@@ -7,11 +8,11 @@ Table~\ref{table:preliminaries_symbols} lists our notation.
 Finally we briefly explain the Structural Similarity Index (SSIM) which is used to quantify the quality of the generated sensitivity heat maps.
 }
 
+\vspace{-2mm}
 \subsection{Problem Statement and Assumptions}\label{sec:problem}
 
 \begin{table}[t]
   \centering
-  \caption{Notation used in this paper.}
   \scalebox{0.8}{\begin{tabular}{p{2cm}p{7.5cm}}
     \toprule
     \textbf{Symbol} & \textbf{Meaning}\\
@@ -59,12 +60,13 @@ Finally we briefly explain the Structural Similarity Index (SSIM) which is used 
     % \midrule
     \bottomrule
   \end{tabular}}
+    \caption{Notation used in this paper.}
 \label{table:preliminaries_symbols}
+\vspace{-6mm}
 \end{table}
 
-We are given a CNN $f$ that consists of a sequence (or DAG) of \textit{layers} $l$, each of which has a \textit{tensor transformation function} $T_{:l}$. We are also given the image $\mathcal{I}_{:img}$ for which the occlusion-based explanation is desired, the predicted class label $L$ on $\mathcal{I}_{:img}$ by $f$, an occlusion patch $\mathcal{P}$ in RGB format, and occlusion patch \textit{stride} $S_{\mathcal{P}}$. We are also given a set of occlusion patch positions $G$ constructed either automatically or manually with a visual interface interactively.
-The occlusion-based explanation (OBE) workload is as follows: produce a 2-D heat map $M$, wherein each value corresponding to a position in $G$ has the prediction probability of $L$ by $f$ on the occluded image $\mathcal{I}^{'}_{x,y:img}$ (i.e., superimpose the occlusion patch on the image) or zero otherwise.
-More precisely, we can explain the OBE workload with the following logical statements:
+We are given a CNN $f$ that has a sequence (or DAG) of \textit{layers} $l$, each of which has a \textit{tensor transformation function} $T_{:l}$. We are also given the image $\mathcal{I}_{:img}$ for which the occlusion-based explanation (OBE) is desired, the class label $L$ predicted by $f$ on $\mathcal{I}_{:img}$, an occlusion patch $\mathcal{P}$ in RGB format, and occlusion patch \textit{stride} $S_{\mathcal{P}}$. We are also given a set of patch positions $G$ constructed either automatically or manually with a visual interface interactively. The OBE workload is as follows: produce a 2-D heat map $M$, wherein each value corresponds to a position in $G$ and has the prediction probability of $L$ by $f$ on the occluded image $\mathcal{I}^{'}_{x,y:img}$ (i.e., superimpose occlusion patch on image) or zero otherwise.
+More precisely, we can describe the OBE workload with the following logical statements:
 
 \vspace{-2mm}
 \begin{align}
@@ -89,25 +91,19 @@ In the \textit{non-interactive} mode, $G$ is initialized to $G = [0, H_M) \times
 \eat{%TODO: This part should go up to the introduction
 The focus of this work is on the occlusion based deep CNN explainability approach \cite{zeiler2014visualizing}, which is widely used by practitioners in several domains including healthcare, sociology, security, and agriculture \cite{kermany2018identifying, islam2017abnormality, mohanty2016using, arbabzadah2016identifying, wang2017deep}.
 }
-We assume the CNN predicts a discrete set of labels, since only such applications typically use OBE. One could create CNNs that directly predict an image segmentation instead, but labeling image segments for training such CNNs is highly tedious and expensive. Thus, most recent applications of CNNs in healthcare, sociology, security, and other domains rely on discrete labels and use OBE~\cite{kermany2018identifying, islam2017abnormality, mohanty2016using, arbabzadah2016identifying, wang2017deep}. There are other approaches to explain CNN predictions in the literature; since they are orthogonal to our focus, we summarize them in the appendix due to space constraints.
-We assume that $f$ is from a roster of well-known deep CNNs; we currently support VGG-16, ResNet-18, and Inception V3. We think this is a reasonable start, since most recent applications in our target domains use only such well-known CNNs from model zoos~\cite{caffemodelzoo, tfmodelzoo}. Nevertheless, our techniques are generic enough to apply to any CNN; we leave support for arbitrary CNNs to future work.
+We assume the CNN is used for classification (or regression), since only such applications typically use OBE. One could create CNNs that predict an image ``segmentation'' instead, but labeling image segments for training such CNNs is tedious and expensive. Thus, most recent applications of CNNs in healthcare, sociology, and other domains rely on classification CNNs and use OBE~\cite{kermany2018identifying, islam2017abnormality, mohanty2016using, arbabzadah2016identifying, wang2017deep}. Other approaches to explain CNN predictions have been studied, but since they are orthogonal to our focus, we summarize them in the appendix due to space constraints.
+We assume $f$ is from a roster of well-known deep CNNs; we currently support VGG16, ResNet18, and InceptionV3. We think this is a reasonable start, since most recent OBE applications use only such well-known CNNs from model zoos~\cite{caffemodelzoo, tfmodelzoo}. But we note that our techniques are generic enough to apply to any CNN; we leave support for arbitrary CNNs to future work.
 
-\subsection{Dataflow of Deep CNN Layers}\label{sec:cnn_internals}
-CNNs are a form of artificial neural networks specialized for image data. They are organized as \textit{layers} of various types, each of which transforms a tensor (a multidimensional array, typically 3-D) into another tensor: \textit{Convolution} uses image filters from graphics to extract features, except with variable filter weights (learned during training); \textit{Pooling} subsamples features in a spatially-aware manner; \textit{Batch-Normalization} normalizes the output of that layer; \textit{Non-Linearity} applies an element-wise non-linear transformation (e.g., ReLU); \textit{Fully-Connected} is an ordered collection of perceptrons~\cite{dlbook}. The output tensor of a layer can have a different width, height, and/or depth than the input tensor. The input image can be viewed as a tensor, e.g., a 224$\times$224 RGB image is a 3-D tensor with width and height 224 and depth 3. A Fully-Connected layer converts a 1-D tensor (or a ``flattened'' 3-D tensor) to another 1-D tensor. For simplicity of exposition, we now group CNN layers into three main categories based on the \textit{spatial locality} of how they transform a tensor:
 
 \begin{figure*}[t]
 \includegraphics[width=\textwidth]{images/cnn_simplified}
+\vspace{-6mm}
 \caption{Simplified illustration of the key layers of a typical CNN. The highlighted cells (dark/red background) show how a small local spatial context in the first input propagates through subsequent layers. (a) Convolution layer (for simplicity sake, bias addition is not shown). (b) ReLU Non-linearity layer. (c) Pooling layer (max pooling). Notation is explained in Table~\ref{table:preliminaries_symbols}.}
 \label{fig:cnn_simplified}
 \end{figure*}
 
-\begin{itemize}
-    \item Transformations at the granularity of a \textit{global context}, e.g., Fully-Connected
-    
-	\item Transformations at the granularity of \textit{individual elements}, e.g., ReLU, Batch Normalization
-
-	\item Transformations at the granularity of a \textit{local spatial context}, e.g. Convolution, Pooling
-\end{itemize}
+\subsection{Dataflow of CNN Layers}\label{sec:cnn_internals}
+CNNs are organized as \textit{layers} of various types, each of which transforms a tensor (multidimensional array, typically 3-D) into another tensor: \textit{Convolution} uses image filters from graphics to extract features, but with parametric filter weights (learned during training); \textit{Pooling} subsamples features in a spatial-aware manner; \textit{Batch-Normalization} normalizes the output tensor; \textit{Non-Linearity} applies an element-wise non-linear function (e.g., ReLU); \textit{Fully-Connected} is an ordered collection of perceptrons~\cite{dlbook}. The output tensor of a layer can have a different width, height, and/or depth than the input. An image can be viewed as a tensor, e.g., a 224$\times$224 RGB image is a 3-D tensor with width and height 224 and depth 3. A Fully-Connected layer converts a 1-D tensor (or a ``flattened'' 3-D tensor) to another 1-D tensor. For simplicity of exposition, we group CNN layers into 3 main categories based on the \textit{spatial locality} of how they transform a tensor: (1) Transformations with a \textit{global context}, e.g., Fully-Connected; (2) Transformations at the granularity of \textit{individual elements}, e.g., ReLU or Batch Normalization; and (3) Transformations at the granularity of a \textit{local spatial context}, e.g. Convolution or Pooling.
 
 \vspace{2mm}
 \noindent \textbf{Transformations at the granularity of a global context.} 
@@ -127,7 +123,9 @@ Such layers essentially perform weighted aggregations of slices of the input ten
 
 \vspace{2mm}
 \noindent \textbf{Dataflow of Convolution Layers.}
-A layer $l$ has $C_{\mathcal{O}:l}$ 3-D filter kernels arranged as a 4-D array $\mathcal{K}_{conv:l}$, with each having a smaller spatial width $W_{\mathcal{K}:l}$ and height $H_{\mathcal{K}:l}$ than the width $W_{\mathcal{I}:l}$ and height $H_{\mathcal{I}:l}$ of the input tensor $\mathcal{I}_{:l}$ but the same depth $C_{\mathcal{I}:l}$. During inference, $c^{th}$ filter kernel is ``strided'' along the width and height dimensions of the input to produce a 2-D ``activation map'' $A_{:c}=(a_{y,x:c})\in \mathcal{\rm I\!R}^{H_{\mathcal{O}:l} \times~ W_{\mathcal{O}:l}}$ by computing element-wise products between the kernel and the local spatial context and adding a bias value as per Equation (\ref{eqn:elementwise_product}). The computational cost of each of these several small matrix products is proportional to the volume of the filter kernel. All the 2-D activation maps are then stacked along the depth dimension to produce the output tensor $\mathcal{O}_{:l} \in \mathcal{\rm I\!R}^{C_{\mathcal{O}:l} \times H_{\mathcal{O}:l} \times W_{\mathcal{O}:l}}$ as per Equation (\ref{eqn:conv_operator}). Figure~\ref{fig:cnn_simplified}(a) presents a simplified illustration of a Convolution layer.
+A layer $l$ has $C_{\mathcal{O}:l}$ 3-D filter kernels arranged as a 4-D array $\mathcal{K}_{conv:l}$, with each having a smaller spatial width $W_{\mathcal{K}:l}$ and height $H_{\mathcal{K}:l}$ than the width $W_{\mathcal{I}:l}$ and height $H_{\mathcal{I}:l}$ of the input tensor $\mathcal{I}_{:l}$ but the same depth $C_{\mathcal{I}:l}$. During inference, $c^{th}$ filter kernel is ``strided'' along the width and height dimensions of the input to produce a 2-D ``activation map'' $A_{:c}=(a_{y,x:c})\in \mathcal{\rm I\!R}^{H_{\mathcal{O}:l} \times~ W_{\mathcal{O}:l}}$ by computing element-wise products between the kernel and the local spatial context and adding a bias value as per Equation (\ref{eqn:elementwise_product}). The computational cost of each of these several small matrix products is proportional to the volume of the filter kernel. All the 2-D activation maps are then stacked along the depth dimension to produce the output tensor $\mathcal{O}_{:l} \in \mathcal{\rm I\!R}^{C_{\mathcal{O}:l} \times H_{\mathcal{O}:l} \times W_{\mathcal{O}:l}}$.
+% as per Equation (\ref{eqn:conv_operator}). 
+Figure~\ref{fig:cnn_simplified}(a) presents a simplified illustration of a Convolution layer.
 
 
 \begin{align}
@@ -139,13 +137,14 @@ a_{y,x:c} =& \sum_{k=0}^{C_{\mathcal{I}:l} } \sum_{j=0}^{H_{\mathcal{K}:l}-1} \s
 \end{split}
 \end{align}
 
+\eat{
 \begin{align}
 \label{eqn:conv_operator}
 \begin{split}
 \mathcal{O}_{:l} = [A_{:0}, A_{:1}, ... , A_{(C_{\mathcal{O}:l}-1)}]
 \end{split}
 \end{align}
-
+}
 
 % \eat{
 % \begin{align}
