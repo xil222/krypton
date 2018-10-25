@@ -173,7 +173,12 @@ Chest X-Ray & 3,463 & 1,237 & 1,156 \\ \hline
 \end{table}
 
 
-
+\section{Deep CNN Explainability}
+% With image recognition models, natural question is if the model is truly identifying objects in the image or just using surrounding or other objects for making false prediction.
+Various approaches used to explain CNN predictions can be broadly divided into two categories, gradient-based and perturbation based approaches. Gradient-based approaches generate a sensitivity heat map by computing the partial derivatives of model output with respect to every input pixel via backpropagation.
+In perturbation based approaches the output of the model is observed by modifying regions on the input image and thereby identifying the sensitive regions.
+% Even though gradient approaches require only a single forward inference and a single backpropagation to generate the sensitivity heat map, the output may not be very intuitive and hard to understand because the salient pixels tend to spread over a very large area of the input image.
+Despite being time-consuming, in most real world use cases such as in medical imaging, practitioners tend to use occlusion experiments, a perturbation approach, as the preferred approach for explanations as they produce high quality fine grained sensitivity heat maps using a process which is very intuitive to the human observer ~\cite{zeiler2014visualizing,jung2017deep,miller2017explanation}.
 
 
 
