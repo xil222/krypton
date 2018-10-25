@@ -366,19 +366,16 @@ Figure~\ref{fig:system_tuning}(b) shows the CDFs of differences between the user
 
 \vspace{2mm}
 \noindent \textbf{Tuning adaptive drill-down.}
-As explained in Section~\ref{sec:ada-drill-down}, the speedup offered by adaptive drill-down is controlled by two parameters: stage one stride $S_1$ and drill-down fraction $r_{drill-down}$. We expect the user to provide $r_{drill-down}$ (default $0.25$), since it captures the user's intuition about how large or small the region of interest is likely to be in the images in their specific application domain and dataset. We also expect the user to provide a ``target speedup'' ratio (default $3$) for using this optimization to capture their desired quality-runtime trade-off. Higher the user's target speedup, the more we sacrifice the quality of the ``non-interesting regions'' ($1 - r_{drill-down}$ fraction of the heat map). Our automated tuning process sets $S_1$ using these two user-given settings. Unlike the tuning of $\tau$, setting $S_1$ is more direct, since this optimization relies on the number of re-inference queries, not SSIM. Let $\mathit{target}$ denote the target speedup; the original occlusion patch stride is $S_2$. Equation~\ref{eqn:s1} shows how we calculate $S_2$. Since $S_1$ cannot be larger than $W_{img}$ (or $H_{img}$) and due to the constraint of $(1-r_{drill\-down} \cdot \texttt{speedup})$ being positive, we also have an upper bound on the possible speedups as per Equation~\ref{eqn:speedup_bound}.
+As explained in Section~\ref{sec:ada-drill-down}, the speedup offered by adaptive drill-down is controlled by two parameters: stage one stride $S_1$ and drill-down fraction $r_{drill-down}$. We expect the user to provide $r_{drill-down}$ (default $0.25$), since it captures the user's intuition about how large or small the region of interest is likely to be in the images in their specific application domain and dataset. We also expect the user to provide a ``target speedup'' ratio (default $3$) for using this optimization to capture their desired quality-runtime trade-off. Higher the user's target speedup, the more we sacrifice the quality of the ``non-interesting regions'' ($1 - r_{drill-down}$ fraction of the heat map). Our automated tuning process sets $S_1$ using these two user-given settings. Unlike the tuning of $\tau$, setting $S_1$ is more direct, since this optimization relies on the number of re-inference queries, not SSIM. Let $\mathit{target}$ denote the target speedup; the original occlusion patch stride is $S_2$. Equation~\ref{eqn:s1} shows how we calculate $S_2$. Since $S_1$ cannot be larger than the image width $W_{img}$ (similarly $H_{img}$) and due to the constraint of $(1-r_{drill\-down} \cdot \texttt{speedup})$ being positive, we also have an upper bound on the possible speedups as per Equation~\ref{eqn:speedup_bound}.
 
 \begin{align}
 \label{eqn:s1}
-S_1 = &~ \sqrt{\frac{\texttt{target}}{1 - r_{drill-down} \cdot \texttt{target}}} \cdot S_2
+S_1 = &~ \sqrt{\frac{\mathit{target}}{1 - r_{drill-down} \cdot \mathit{target}}} \cdot S_2
 \end{align}
 
 \begin{align}
 \label{eqn:speedup_bound}
-\begin{split}
-S_1 = \sqrt{\frac{\texttt{target}}{1 - r_{drill-down} \cdot \texttt{target}}} \cdot S_2 < W_{img}\\
-\texttt{speedup} < \texttt{min}\Bigg(\frac{W^2_{img}}{S^2_2+r_{drill-down}\times W^2_{img}}, \frac{1}{r_{drill-down}}\Bigg)
-\end{split}
+\mathit{speedup} < \texttt{min}\Bigg(\frac{W^2_{img}}{S^2_2+r_{drill-down} \cdot W^2_{img}}, \frac{1}{r_{drill-down}}\Bigg)
 \end{align}
 
 
