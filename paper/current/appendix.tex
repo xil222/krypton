@@ -15,11 +15,11 @@ Similar to non-interactive mode experiments presented in Section 5, all experime
 If the size of $G$ (formally $|G|$) or the remainder of $G$ is smaller than the batch size, that value is used as the batch size (e.g. $|G| = 16$ results in a batch size of 16).
 Figure \ref{fig:interactive_experiment} presents the final results.
 
-\section{GPU-Optimized Kernel Implementation}
+\section{GPU-Optimized Kernel}
 
 \begin{figure}[t]
 \includegraphics[width=\columnwidth]{images/gpu_kernel_impl.pdf}
-\vspace{-8mm}
+\vspace{-6mm}
 \caption{Custom GPU Kernel integration architecture}
 \label{fig:custom_kernel_integration}
 \end{figure}
@@ -35,7 +35,7 @@ The high-level architecture of the Custom Kernel integration is shown in Figure~
 \begin{figure}[t]
 \includegraphics[width=\columnwidth]{images/less_one_example}
 \vspace{-6mm}
-\caption{1-D illustration of special cases for which actual output size will be smaller than the value given by Equation~(\ref{eqn:xcoordinate}). (a) and (b) show cases where the filter stride is equal to the filter size. (c) and (d) show situations where the position of the modified patch affecting the size of the output patch.}
+\caption{Illustration of special cases for which actual output size will be smaller than the value given by Equation~(\ref{eqn:xcoordinate}). (a) and (b) show cases where the filter stride is equal to the filter size. (c) and (d) show situations where the position of the modified patch affecting the size of the output patch.}
 \vspace{-4mm}
 \label{fig:less_one_example}
 \end{figure}
@@ -56,7 +56,7 @@ x^\mathcal{R}_\mathcal{P} ~ = W_{\mathcal{I}} - W^\mathcal{R}_\mathcal{P}
 \end{align}
 
 
-\section{Effective Projective Field Size (1-D Scenario)}
+\section{Effective Projective Field Size}
 
 We formalize the effective projective field growth for the one dimensional scenario with $n$ convolution layers (assuming certain conditions). This proof is motivated by a similar proof in \cite{luo2016understanding} which characterizes the effective growth rate of the receptive field in a CNN.
 
@@ -159,6 +159,12 @@ Chest X-Ray & 3,463 & 1,237 & 1,156 \\ \hline
 \label{tbl:finetune_accuracies}
 \end{table}
 
+\begin{figure*}[t]
+\includegraphics[width=\textwidth]{visualsjpeg}
+%\includegraphics[width=\textwidth]{images/visual_examples}
+\caption{Occlusion heat maps for sample images (CNN model = VGG16, occlusion patch size = 16, patch color = black, occlusion patch stride $(S~or~S_2)$ = 4. For \textit{OCT} $r_{drill\_down}=0.1$ and $\mathit{target}=5$. For \textit{Chest X-Ray} $r_{drill\_down}=0.4$ and $\mathit{target}=2$. For \textit{ImageNet} $r_{drill\_down}=0.25$ and $\mathit{target}=3$).}
+\label{fig:visual_examples}
+\end{figure*}
 
 \section{Deep CNN Explainability}
 % With image recognition models, natural question is if the model is truly identifying objects in the image or just using surrounding or other objects for making false prediction.
@@ -167,14 +173,6 @@ In perturbation based approaches the output of the model is observed by modifyin
 % Even though gradient approaches require only a single forward inference and a single backpropagation to generate the sensitivity heat map, the output may not be very intuitive and hard to understand because the salient pixels tend to spread over a very large area of the input image.
 Despite being time-consuming, in most real world use cases such as in medical imaging, practitioners tend to use occlusion experiments, a perturbation based approach, as the preferred approach for explanations as they produce high quality fine grained sensitivity heat maps using a process which is very intuitive to the human observer ~\cite{zeiler2014visualizing,jung2017deep,miller2017explanation}.
 
-
 \section{Visual Examples}
 
 Figure \ref{fig:visual_examples} presents occlusion heat maps for a sample image from each dataset with (a) \textit{incremental inference} for different \textit{projective field threshold} values and (b) \textit{incremental inference} with \textit{adaptive drill-down} for different \textit{projective field threshold} values. The predicted class label for \textit{OCT}, \textit{Chest X-Ray}, and \textit{ImageNet} are DME, VIRAL, and OBOE respectively.
-
-\begin{figure*}[t]
-\includegraphics[width=\textwidth]{visualsjpeg}
-%\includegraphics[width=\textwidth]{images/visual_examples}
-\caption{Occlusion heat maps for sample images (CNN model = VGG16, occlusion patch size = 16, patch color = black, occlusion patch stride $(S~or~S_2)$ = 4. For \textit{OCT} $r_{drill\_down}=0.1$ and $\mathit{target}=5$. For \textit{Chest X-Ray} $r_{drill\_down}=0.4$ and $\mathit{target}=2$. For \textit{ImageNet} $r_{drill\_down}=0.25$ and $\mathit{target}=3$).}
-\label{fig:visual_examples}
-\end{figure*}
