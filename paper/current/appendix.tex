@@ -70,7 +70,7 @@ The input is $u(t)$ where
 \end{align}
 and $t = 0, 1, -1, 2, -2, ...$ indexes the input pixels.
 
-Each layer has the \textbf{same kernel} $v(t)$ of size $k$. The kernel signal can be formally defined as
+Each layer has the same kernel $v(t)$ of size $k$. The kernel signal can be formally defined as
 \begin{align}
 	v(t) = \sum_{m=0}^{k-1} w(m)\delta(t-m)
 \end{align}
@@ -97,7 +97,7 @@ With inverse Fourier transform
 
 The space domain signal $o(t)$ is given by the coefficients of $e^{-j\omega t}$.
 These coefficients turn out to be well studied in the combinatorics literature \cite{eger2013restricted}.
-It can be shown that if $\mathbf{\sum_{m}w(m) = 1}$  and $\mathbf{w(m) \geq 0 ~\forall~ m}$ , then
+It can be shown that if $\sum_{m}w(m) = 1$  and $w(m) \geq 0 ~\forall~ m$ , then
 \begin{align}
 \begin{split}
 	o(t) =&~ p(S_n=t)\\ 
