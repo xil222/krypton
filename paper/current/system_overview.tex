@@ -109,7 +109,7 @@ CNNs are organized as \textit{layers} of various types, each of which transforms
 \vspace{2mm}
 \noindent \textbf{Transformations at the granularity of a global context.} 
 Such layers convert the input tensor holistically into an output tensor without any spatial context, typically with a full matrix-vector multiplication.
-Fully-Connected is the only layer of this type. Since every element of the output will likely be affected by the entire input, such layers do not offer a major opportunity for faster incremental computations. Thankfully, Fully-Connected layers typically arise only as the last layer in deep CNNs (and never in some recent deep CNNs), and they typically account for a negligible fraction of the total computational cost. Thus, we do not focus on such layers for our optimizations.
+Fully-Connected is the only layer of this type. Since every element of the output will likely be affected by the entire input, such layers do not offer a major opportunity for faster incremental computations. Thankfully, Fully-Connected layers typically arise only as the last layer(s) in deep CNNs (and never in some recent deep CNNs), and they typically account for a negligible fraction of the total computational cost. Thus, we do not focus on such layers for our optimizations.
 %The computational cost of a Full-Connected transformation is proportional to the product of the size of the input and output 1-D tensors.
 
 \vspace{2mm}
