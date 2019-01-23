@@ -1,0 +1,81 @@
+\documentclass[preprint]{vldb}
+
+\usepackage{booktabs} % For formal tables
+\usepackage{amsmath}
+\usepackage{graphicx,xspace,verbatim,comment}
+\usepackage{hyperref,array,color,balance,multirow}
+\usepackage{balance,float,url,amsfonts,alltt}
+\usepackage{mathtools,rotating,amsmath,amssymb}
+\usepackage{color,ifpdf,fancyvrb,array}
+% \usepackage{algorithm,algpseudocode}
+\usepackage{etoolbox,listings,subcaption}
+\usepackage{bigstrut,morefloats}
+%\usepackage[linesnumbered,boxruled]{algorithm2e}
+\usepackage[boxruled]{algorithm2e}
+\usepackage{pbox}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{authblk}
+
+\DeclarePairedDelimiter{\ceil}{\lceil}{\rceil}
+\DeclarePairedDelimiter{\floor}{\lfloor}{\rfloor}
+
+\newcommand{\eat}[1]{}
+\newcommand{\red}{\textcolor{red}}
+
+\pagenumbering{arabic}
+
+\title{Revision Response Letter}
+
+\author{}
+
+\makeatletter
+\def\@copyrightspace{\relax}
+\makeatother
+
+\begin{document}
+
+\maketitle
+
+We thank the reviewers for their feedback and suggestions. We have made the utmost effort to carefully incorporate all of the feedback. 
+We think the paper has improved substantially as a result of these changes. All changes made to the paper have been highlighted with blue font color.
+In this letter, we discuss the changes made and respond to the specific revision items listed in the reviews and metareview. 
+
+As an overall summary, we made three major changes to the paper: (1) Added a lot more background material on machine learning and the prior work to make the 
+paper more readable and self-contained, (2) Dropped two assumptions (all features are categorical; class label is binary) and redid all the experiments with the 
+real-world datasets using k-fold cross-validation, and (3) Added a hypothesis testing experiment regarding the significance of the error increases caused by avoiding joins.
+
+\section{Review 1}
+
+\vspace{2mm}
+\noindent \textbf{D1:} \textit{Introduce the various machine learning terms in the paper: VC dimension, IID assumption, ``cold start'' issue, linear vs high-capacity classifier, and holdout testing.}
+
+\vspace{2mm}
+\noindent \textbf{Response:} We have expanded Section 2 and added definitions of these and other relevant machine learning (ML) terms and concepts in a new 
+\textbf{Section 2.2} titled ``Background: ML Terms and Concepts.''\\
+
+\noindent \textbf{D2:} \textit{Improve notation: did not introduce $R$; tuple-ratio metric is confusing; $n_R$ is not defined properly; did not introduce $FK$; explain $FK$ vs $FK_i$.}
+
+\vspace{2mm}
+\noindent \textbf{Response:} We apologize for these issues and thank the reviewer for pointing them out. We have fixed these notation issues in the new 
+\textbf{Section 2.1} titled ``Notation.'' In particular, we have clarified that $\textbf{R}$ (without a subscript) is the simplified notation for the dimension 
+table in a two-table join, i.e., when $q=1$; $\mathit{FK}$ and $n_R$ are defined similarly. The tuple ratio for the $i^{\mathit{th}}$ dimension table is defined 
+as $n_S / n_{R_i}$, which becomes $n_S / n_R$ for $q=1$.\\
+
+\noindent \textbf{D3:} \textit{It is not clear, why simplifying multi-class classification to binary classification does not affect your discussion. Please add a sentence on that.}
+
+\vspace{2mm}
+\noindent \textbf{Response:}
+For this paper's purposes, we had binarized the targets only to help simplify our experimental setup. Our focus is orthogonal to the assumption of whether the class label is 
+binary or multi-class or whether features in $X$ are categorical or numeric. Following the reviewer feedback, we have now dropped these two assumptions and updated the new 
+\textbf{Section 2.4} titled ``Assumptions and Scope'' accordingly. We now use the original versions of the seven datasets from the prior work, i.e., without binarizing 
+the targets and without discretizing numeric features. We use RMSE for errors for the (ordinal) multi-class targets, in line with the prior work. We also use $10$-fold 
+nested cross-validation instead of holdout validation. All the corresponding results in \textbf{Section 3} have been updated. We have also released these new versions of 
+the datasets (without binarizing the targets  and without binning numeric features), as well as the corresponding experimental code on our \textbf{project webpage}.\\
+
+\noindent \textbf{D4:} \textit{Please add more details of the ``cold start" issue.}
+
+\vspace{2mm}
+\noindent \textbf{Response:} We have added a brief discussion about this issue in the new \textbf{Section 2.4} titled ``Assumptions and Scope.''
+
+\end{document}
