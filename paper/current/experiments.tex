@@ -1,126 +1,121 @@
 %!TEX root = <main.tex>
 \section{Experimental Evaluation}
-We empirically validate if \system~ is able reduce the runtime taken for occlusion based deep CNN explainability workloads.
-We then conduct controlled experiments to show the individual contribution of each optimization in \system~ for the overall system efficiency.
+We integrated all of our optimization techniques with the popular deep learning environment PyTorch to create a tool we call \system.
+We now evaluate the speedups yielded by \system~ for OBE for several deep CNNs on real-world image datasets.
+We then drill into the contributions of each of our optimization techniques.
 
 \vspace{2mm}
 \noindent \textbf{Datasets.}
-We use three real-world datasets: \textit{OCT}, \textit{Chest X-Ray}, and a sample from \textit{ImageNet}. \textit{OCT} has about 84,000 optical coherence tomography retinal images categorized into four categories: CNV, DME, DRUSEN, and NORMAL. CNV (choroidal neovascularization), DME (diabetic macular edema), and DRUSEN are three different varieties of Diabetic Retinopathy. NORMAL corresponds to healthy retinal images. \textit{Chest X-Ray} has about 6,000 X-ray images categorized into three categories: VIRAL, BACTERIAL, and NORMAL.
-VIRAL and BACTERIAL categories corresponds to two varieties of Pneumonia. NORMAL corresponds to chest X-Rays of healthy people. Both \textit{OCT} and \textit{Chest X-Ray} datasets are obtained from an original scientific study \cite{kermany2018identifying} which uses CNNs for predicting Diabetic Retinopathy and Pneumonia from radiological images. \textit{ImageNet} sample dataset contains 1,000 images corresponding to two hundred categories selected from the original thousand categorical dataset \cite{deng2009imagenet}.
+We use three diverse real-world image datasets: \textit{OCT}, \textit{Chest X-Ray}, and a sample from \textit{ImageNet}. \textit{OCT} has about 84,000 optical coherence tomography retinal images with four classes: CNV, DME, DRUSEN, and NORMAL. CNV (choroidal neovascularization), DME (diabetic macular edema), and DRUSEN are three varieties of diabetic retinopathy. NORMAL corresponds to healthy retinal images. \textit{Chest X-Ray} has about 6,000 X-ray images with three classes: VIRAL, BACTERIAL, and NORMAL. VIRAL and BACTERIAL are two varieties of pneumonia. NORMAL corresponds to healthy people. Both \textit{OCT} and \textit{Chest X-Ray} are from a recent scientific study that applied deep CNNs to radiology images to detect the respective diseases~\cite{kermany2018identifying}. \textit{ImageNet} is a benchmark dataset in computer vision~\cite{deng2009imagenet}; our sample has 1,000 images with 200 classes.
 
 \vspace{2mm}
 \noindent \textbf{Workloads.}
-We use three popular ImageNet-trained deep CNNs: VGG16 \cite{vggnet}, ResNet18 \cite{resnet}, and Inception3 \cite{inception}, obtained from \cite{torchvisionmodels}. They complement each other in terms of model size, computational cost, amount of theoretical redundancy that exist for occlusion experiments, and the level of architectural complexity of the CNN model. For \textit{OCT} and \textit{Chest X-Ray} datasets, the three CNN models are fine-tuned by retraining the final fully-connected layer with hyper-parameter tuning as per standard practice. More details on the fine-tuning process are included in the Appendix. Heat map for the predicted probabilities is generated using Python Matplotlib library's \texttt{imshow} method using the \texttt{jet\_r} color scheme. For the heatmap, maximum threshold value is set to \texttt{min}$(1, 1.25 \times p)$ and minimum threshold value is set to $0.75 \times p$ where $p$ is predicted class probability for the unmodified image. Original images were resized to the size required by the CNNs ($224\times224$ for VGG16 and ResNet18 and $299\times299$ for Inception3) and no additional pre-processing is done. For GPU experiments a batch size of 128 and for CPU experiments a batch size 16 is used. CPU experiments are executed with a thread parallelism of 8.
-All of our datasets, fine-tuning, experiment, and system code will be made available on our project web page.
+We use 3 diverse ImageNet-trained deep CNNs: VGG16~\cite{vggnet}, ResNet18~\cite{resnet}, and Inception3~\cite{inception}, obtained from~\cite{torchvisionmodels}. They complement each other in terms of model size, architectural complexity, computational cost, and our predicted theoretical speedups (Figure 3 in Section 3). For \textit{OCT} and \textit{Chest X-Ray}, the 3 CNNs were fine-tuned by retraining their final Fully-Connected layers as per standard practice. The details of fine-tuning are not relevant for the rest of our discussion; so, we present further details in the appendix. The OBE heat maps are plotted using Python Matplotlib's \texttt{imshow} method using the \texttt{jet\_r} color scheme; we set the maximum threshold to \texttt{min}$(1, 1.25 p)$ and minimum to $0.75 p$, where $p$ is predicted class probability on a given image. All images are resized to the input size required by the CNNs ($224\times224$ for VGG16 and ResNet18; $299\times299$ for Inception3); no additional pre-processing was done. The GPU-based experiments used a batch size of $128$; for CPUs, the batch size was $16$. All CPU-based experiments were executed with a thread parallelism of $8$. All of our datasets, experimental scripts, and the \system~ codebase will be made publicly available on our project webpage.
 
 \vspace{2mm}
 \noindent \textbf{Experimental Setup.}
-We use a workstation which has 32 GB RAM, Intel i7-6700 @ 3.40GHz CPU, 1 TB Seagate ST1000DM010-2EP1, and Nvidia Titan X (Pascal) 12 GB memory GPU.
-The system runs Ubuntu 16.04 operating system with PyTorch version of 0.4.0, CUDA version of 9.0, and cuDNN version of 7.1.2.
-Each runtime reported is the average of three runs with 95\% confidence intervals shown.
+We use a machine with 32 GB RAM, Intel i7-6700 3.40GHz CPU, and NVIDIA Titan X (Pascal) GPU with 12 GB memory. %1 TB Seagate ST1000DM010-2EP1
+The machine runs Ubuntu 16.04 with PyTorch version 0.4.0, CUDA version 9.0, and cuDNN version 7.1.2.
+All reported runtimes are the average of 3 runs, with 95\% confidence intervals shown.
 
-\subsection{End-to-End Evaluation}
+\vspace{-2mm}
+\subsection{End-to- End Runtimes}
 
 \begin{figure*}[t]
-\includegraphics[width=\textwidth]{images/5_1_all_edited}
-\caption{End-to-end efficiency achieved by \system~ over naive approaches.}
+\includegraphics[width=\textwidth]{images/5_1_all_edited_b}
+\vspace{-6mm}
+\caption{End-to-end runtimes of \system~ and baselines on all 3 datasets, 3 CNNs, and both GPU and CPU.}
 \label{fig:5_1_all_edited}
 \end{figure*}
 
-For the GPU based environment, we compare two variations \system, \system-Exact which only applies the \textit{incremental inference} optimization and \system-Approximate which applies both \textit{incremental inference} and \textit{approximate inference} optimizations, against two baselines.
-\textit{Naive} is the current dominant practice of performing full inference for multiple images with each corresponding to individual occlusion patch position in batched manner.
-\textit{Naive Incremental Inference-Exact} is a pure PyTorch based implementation of Algorithm \ref{alg:incinference} which does not use any GPU optimized kernels for memory copying where as \system~ does.
-For CPU based environments we only compare \system-Exact and \system-Approximate against \textit{Naive} as no customization is needed for the pure PyTorch based implementation.
-For different datasets we set \textit{adaptive drill-down} system tuning parameters differently.
-For \textit{OCT} images the region of interest is relative small and hence a $r_{drill-down}$ value of 0.1 and a target \texttt{speedup} of 5 is used.
-For \textit{Chest X-Ray} images the region of interest can be large and hence a $r_{drill-down}$ value of 0.4 and a target \texttt{speedup} of 2 is used.
-For \textit{ImageNet} experiments we use a $r_{drill-down}$ value of $0.25$ and a target \texttt{speedup} value of 3, which are also the \system~ default values.
-For all experiments, $\tau$ is configured using a separate tuning image dataset $(n=30)$ for a target SSIM of $0.9$.
-Visual examples for each dataset is shown in Appendix X.
-Figure \ref{fig:5_1_all_edited} presents the final results.
+We focus on the most common OBE scenario of producing the whole heat map, i.e., $G$ is automatically created (``non-interactive'' mode). We use an occlusion patch of size 16 and stride 4. We compare two variants of \system: \system-Exact uses only incremental inference (Section 3), while \system-Approximate uses our approximate inference optimizations too (Section 4). The main baseline is \textit{Naive}, the current dominant practice of performing full inference for OBE with just naive batching of images. We have another baseline for the GPU environment: \textit{Naive Inc.~Inference-Exact}, which is a direct implementation of Algorithm~\ref{alg:incinference} in PyTorch/Python without using our GPU-optimized CUDA kernel, which \system~ uses (Section 3.4). Note that \textit{Naive Inc.~Inference-Exact} is not applicable to the CPU environment.
 
-We see that \system~ improves the efficiency of the occlusion based explainability workload across the board.
-\system-Approximate for \textit{OCT} results in the highest speedup with VGG16 on both CPU and GPU environments (16X for CPU and 34.5X for GPU).
-Speedups obtained by \system-Exact for all the datasets are same for all three CNN models.
-However with \system-Approximate they result in different speedup values.
-This is because with \textit{approximate inference} each dataset uses different system configuration parameters.
-\textit{OCT} which is configured with a low $r_{drill-down}$ of (0.1), high target \texttt{speedup} of 5, and a \textit{projective field threshold} value of 0.5 results in the highest speedup.
-Speedup obtained by \system-Exact on GPU with Inception3 model (0.7X) is slightly lower than one.
-However ResNet18 which has roughly the same theoretical speedup (see Figure \ref{fig:redundancy_ratio}) results in a higher speedup value (1.6X).
-The reason for this is Inception3's internal architecture is more complex compared ResNet18 with more branches and depth-wise stacking operations.
-Thus Inception3 requires more memory copying operations whose overheads are not captured by our theoretical speedup calculation.
-Overall compared to GPU environment, \system~ results in higher speedups on the CPU environment though the actual runtimes are much slower.
-GPUs enable higher parallelism with thousands of processing cores compared to CPUs with several cores.
-Hence computations are much cheaper on GPU.
-Memory operations required by \system~ throttles the overall performance on GPU and hinders it from achieving higher speedups.
-On CPU environment as computational cost dominates the overall runtime the additional overhead introduced by the memory operations does not matter much.
-Therefore on CPU \system~ achieves higher speedups which are closer to the theoretical speedup value.
-Overall \system~ offers the best efficiency on these workloads.
-This confirms the benefits of different optimizations performed by \system~ for improving the efficiency of the workload and there by to reduce the computational and runtime costs.
-Brining down the runtimes also make occlusion experiments more amenable for interactive diagnosis of CNN predictions.
+We set the user-given tuning parameters for adaptive drill-down based on the semantics of each dataset's prediction task (Section 4.3). For \textit{OCT}, since the region of interest is likely to be small, we set $r_{drill-down}=0.1$ and $\mathit{target} = 5$. For \textit{Chest X-Ray}, the region of interest can be large; so, we set $r_{drill-down} = 0.4$ and $\mathit{target} = 2$. For \textit{ImageNet}, which falls in between, we use the \system~ default values of $r_{drill-down}=0.25$  and $\mathit{target} = 3$. For all experiments $\tau$ is auto-tuned with a target SSIM of $0.9$ (Section 4.3). Figure~\ref{fig:5_1_all_edited} presents the results. Visual examples of images and the heat maps produced are presented in the appendix.
 
+Overall, we see \system~ offers significant speedups across the board on both GPU and CPU. The highest speedups are reported by \system-Approximate on \textit{OCT} with VGG16: $16$X on GPU and $34.5$X on CPU. The highest speedups of  \system-Exact are also on VGG16: $3.9$X on GPU and $5.4$X on CPU. The speedups of \system-Exact are identical across datasets for a given CNN, since it does not depend on the image semantics, unlike \system-Approximate due to its data-dependent parameters. \system-Approximate reports the highest speedups on \textit{OCT} because our auto-tuning yielded the lowest $r_{drill-down}$, highest target speedup, and lowest $\tau$ on that dataset. 
 
-\subsection{Lesion Study}
-We now present the results of controlled experiments that are conducted to identify the contribution of various optimizations discussed in Section \ref{sec:optimizer}.
-The speedup values are calculated compared to the runtime taken by the current dominant practice of performing full inference for batches of modified images.
+The speedups are lower with ResNet18 and Inception3 than VGG16 due to their architectural properties (kernel filter dimensions, stride, etc.) that make the projective field grow faster. Moreover, Inception3 has a complex DAG architecture with more branches and depth-wise concatenation, which limits GPU throughput for incremental inference. In fact, \system-Exact on GPU shows a minor slow-down ($0.7$X) with Inception3. But \system-Approximate still offers speedups on GPU with Inception3 (up to $4.5$X). We also see that ResNet18 and VGG16 almost near their theoretical speedups (Figure~\ref{fig:redundancy_ratio}) but Inception3 does not. Note that the theoretical speedup definition only counts FLOPs and does not account for memory stalls.
 
-\vspace{2mm}
-\noindent \textbf{Speedups from Incremental Inference.}
+Finally, the speedups of \system~ are higher on CPU than GPU. This is because CPU does not suffer much due to memory stalls during incremental inference. But the \textit{absolute} runtimes are almost an order of magnitude higher on CPUs than GPUs, which is to be expected. Overall, \system~ improves the efficiency of OBE significantly for multiple datasets and deep CNNs. We ran an additional experiment on the ``interactive'' mode by reducing $|G|$. The speedups go down as $|G|$ goes down, which is expected because the benefits of amortization are reduced. Due to space constraints, these additional results are presented in the appendix.
+
+\vspace{-2mm}
+\subsection{Ablation Study}
+We now analyze the contributions of our 3 optimizations individually. We compare the speedups of \system~ over \textit{Naive} (batched inference) on both CPU and GPU, termed  Empirical-CPU and Empirical-GPU respectively, against the theoretical speedups (explained in Sections 3 and 4).
+% Does not matter. These experiments are dataset independent.
+% All experiments use an image from the \textit{OCT} dataset (\red{TODO: Check}) and produce the full heat maps.
+
 \begin{figure}[t]
 \includegraphics[width=\columnwidth]{images/5_2_1_edited}
-\caption{Theoretical versus empirical speedup for \textit{incremental inference} with varying occlusion patch sizes and different CNN models (Occlusion patch stride $S=4$).}
+\vspace{-8mm}
+\caption{Speedups with only the incremental inference optimization (occlusion patch stride $S=4$).}
+\vspace{-2mm}
 \label{fig:5_2_1_edited}
 \end{figure}
 
-We compare theoretical speedup and empirical speedups obtained by \textit{incremental inference} implementations for both CPU and GPU environments.
-The patch sizes that we have selected cover the range of sizes used in most practical applications.
-Occlusion patch stride is set to 4.
-Figure \ref{fig:5_2_1_edited} shows the results.
-Empirical-GPU Naive results in the worst performance for all three CNN models.
-Empirical-GPU and Empirical-CPU implementations result in higher speedups with Empirical-CPU being closer to the theoretical speedup value.
-As the occlusion patch size increases the speedups decrease.
-
 \vspace{2mm}
-\noindent \textbf{Speedups from Projective Field Thresholding.}
+\noindent \textbf{Only Incremental Inference.} 
+We vary the patch size and set the stride to $4$. Figure~\ref{fig:5_2_1_edited} shows the results. As expected, the speedups go down as the patch size increases. Empirical-GPU Naive yields no speedups because it does not use our GPU-optimized kernel, while Empirical-GPU does. But Empirical-CPU is closer to theoretical speedup and almost matches it on ResNet18. Thus, there is still some room for improvement to improve the efficiency of incremental inference in both environments.
+
+
 \begin{figure}[t]
 \includegraphics[width=\columnwidth]{images/5_2_2_edited}
-\caption{Theoretical versus empirical speedup for \textit{incremental inference} with \textit{projective field thresholding} with varying threshold values ($\tau$) and different CNN models (Occlusion patch size = $16 \times 16$, stride $S=4$).}
+\vspace{-8mm}
+\caption{Speedups with incremental inference combined with only projective field thresholding.}
+\vspace{-2mm}
 \label{fig:5_2_2_edited}
 \end{figure}
 
-We vary \textit{projective field threshold} $(\tau)$ from 1.0 (no thresholding) to 0.4 and evaluate the speedups.
-The occlusion patch size used is 16 and the stride is 4.
-The results are shown in Figure \ref{fig:5_2_2_edited}.
-Empirical-CPU and Empirical-GPU both results in higher speedups with Empirical-CPU being closer to the theoretical speedup value.
-When $\tau$ decreases the speedups increase as the amount of computational savings increase.
-
 \vspace{2mm}
-\noindent \textbf{Speedups from Adaptive Drill-Down.}
+\noindent \textbf{Projective Field Thresholding.} We vary $\tau$ from $1.0$ (no approximation) to $0.4$. Adaptive drill-down is disabled but note that this optimization builds on top of our incremental inference. The occlusion patch size is $16$ and stride is $4$. Figure~\ref{fig:5_2_2_edited} shows the results. The speedups go up steadily as $\tau$ drops for all 3 CNNs. Once again, Empirical-CPU nears the theoretical speedups on ResNet18, but the gap between Empirical-GPU and Empirical-CPU remains due to the disproportionate impact of memory stalls on GPU. Overall, this approximation offers some speedups in both environments, but has a higher impact on CPU than GPU.
 
 \begin{figure}[t]
 \includegraphics[width=\columnwidth]{images/5_2_3_edited}
-\caption{Theoretical versus empirical speedup for \textit{adaptive drill-down} with (a) varying drill-down ratios ($r_{drill-down}$) and (b) varying stage one stride $S_1$ values for different CNN models (Occlusion patch size = $16 \times 16$, stage two stride $S_2=4$, projective field threshold $\tau=1.0$).}
+\vspace{-8mm}
+\caption{Speedups with incremental inference combined with adaptive drill-down. For (a), we set $S_1=16$. For (b), we set $r_{drill\_down}=0.25$).}
+\vspace{-2mm}
 \label{fig:5_2_3_edited}
 \end{figure}
 
-Finally we evaluate the effect of \textit{adaptive drill-down} on overall \system~ efficiency.
-The experiments are run on top of the \textit{incremental inference} approach with no \textit{projective field thresholding} ($\tau$=1.0).
-$r_{drill-down}$ is varied between 0.1 to 0.5 fixing the stage one stride value ($S_1$) to 16.
-Occlusion patch size is set to 16 and the stage two stride ($S_2$) is set to 4.
-Figure \ref{fig:5_2_3_edited} (a) shows the results.
-We also vary $S_1$ fixing $r_{drill-down}$ to 0.25.
-Occlusion patch size and the $S_2$ are set similar to the previous case.
-Figure \ref{fig:5_2_3_edited} (b) presents the results.
-In both cases we see Empirical-GPU and Empirical-CPU achieve higher speedups with Empirical-CPU being very close to the theoretical speedup.
-On the CPU environment the relative cost of other overheads are much smaller than the CNN computational cost.
-Hence on the CPU environment \system~ achieves near theoretical speedups for \textit{adaptive drill-down}.
-Speedups decrease as we increase $r_{drill-down}$ and decrease $S_1$.
+\vspace{2mm}
+\noindent \textbf{Adaptive Drill-Down.} Finally we study the effects of adaptive drill-down (again, on top of incremental inference) and disable projective field thresholding. The occlusion patch size is $16$. Stage two stride is $S_2 = 4$. First, we vary $r_{drill-down}$, while fixing stage one stride ($S_1 = 16$). Figure~\ref{fig:5_2_3_edited} (a) shows the results. Next, we vary $S_1$, while fixing $r_{drill-down} = 0.25$. Figure~\ref{fig:5_2_3_edited} (b) shows the results. As expected, the speedups go up as $r_{drill-down}$ goes down or $S_1$ goes up, since fewer re-inference queries arise in both cases. Empirical-CPU almost matches the theoretical speedups across the board; in fact, even Empirical-GPU almost matches theoretical speedups on Inception3. Empirical-GPU flattens out at high $S_1$, since the number of re-inference queries drops, thus resulting in diminishing returns for the benefits of batched execution on GPU. Overall, this optimization has a major impact on speeding up OBE for all CNNs in both environments.
+
 
 \vspace{2mm}
-\noindent \textbf{Summary of Experimental Results.}
-Overall, \system~ increases the efficiency of the occlusion based CNN explainability workload by up to 16X on GPU and 34.5X on CPU.
-Speedup obtained by \textit{approximate inference} optimization (\system-Approximate) depends on the characteristics of the CNN model such as the effective growth of the projective field and the characteristics of the occlusion use case such as the relative size of the interesting regions on the image.
-Furthermore \system~ results in higher speedups on CPU environment compared to GPU environment.
-Increasing the occlusion patch size and $\tau$ decrease the speedup.
-Increasing $r_{drill-down}$ and decreasing $S_1$ also decrease the speedup.
+\noindent \textbf{\red{Memory Overhead.}} \red{We evaluate the memory overhead of our incremental inference approach compared to the full CNN inference.
+We record the peak GPU memory utilization while the CNN models perform inference on image batches of size 128.
+The results are shown in Figure \ref{fig:mem_overhead}.
+We see that the incremental inference approach has a significantly lower memory overhead compared to the full inference approach.
+}
 
+\begin{figure}[t]
+\includegraphics[width=\columnwidth]{images/mem_overhead}
+\vspace{-8mm}
+\caption{Peak GPU memory usage when performing CNN inference on a batch of 128 images.}
+\vspace{-2mm}
+\label{fig:mem_overhead}
+\end{figure}
+
+
+\vspace{-2mm}
+\subsection{\red{Other approaches for CNN prediction explanation and faster inference}}
+\red{
+We evaluate Axiomatic Attribution for Deep Networks method (a.k.a. integrated gradients method) \cite{sundararajan2017axiomatic} against OBE, which is also a popular approach for explaining CNN predictions.
+This method requires performing a series of forward-backward passes through the CNN to generate a sensitivity heatmap.
+The number of passes is determined by the \textit{steps} hyperparameter, which is usually set to value between 20 and 300.
+We evaluate integrated gradient method with 50 steps and OBE on three representative images from our datasets.
+The results are shown in Figure \ref{fig:igd}.
+}
+
+\begin{figure}[t]
+\includegraphics[width=\columnwidth]{images/igd}
+\vspace{-8mm}
+\caption{Comparison of integrated gradients method against OBE. (a) Heat maps generated by integrated gradients method with a step size of 50. The three color channel gradients of a pixel point are aggregated using $L2$ norm}
+\vspace{-2mm}
+\label{fig:igd}
+\end{figure}
+
+
+
+\vspace{-2mm}
+\subsection{Summary of Experiments.}
+Overall, our empirical evaluation shows that \system~ is able to substantially accelerate the OBE workload for explaining CNN predictions, up to $16$X speedups on GPU and $34.5$X speedups on CPU. The speedups of all 3 of our optimizations depend on the CNN's architectural properties. The speedups of our approximate inference optimizations also depend on the dataset due to their tunable parameters, which \system ~can tune automatically. Finally, the speedups of \system ~are higher on CPU than GPU but the absolute runtimes are much lower on GPU. Overall, all of our optimizations in \system ~help reduce waiting times for users and can save resource costs, since they only use existing compute resources without forcing users to pay for more resources (say, renting more GPUs in the cloud).

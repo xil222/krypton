@@ -1,0 +1,66 @@
+\documentclass{article}
+
+\usepackage{amsmath,amssymb}
+
+\newcommand{\red}{\textcolor{red}}
+
+\begin{document}
+\section{Effective Projective Field Size (One dimensional scenario)}
+
+What follows formalizes the effective projective field growth for the one dimensional scenario with $n$ convolution layers (assuming certain conditions).
+
+The input is $u(t)$ where
+\begin{align}
+	u(t) = 
+	\begin{cases}
+		1, & t = 0\\
+		0, & t \neq 0 
+	\end{cases}
+\end{align}
+and $t = 0, 1, -1, 2, -2, ...$ indexes the input pixels.
+
+Each layer has the \textbf{same kernel} $v(t)$ of size $k$. The kernel signal can be formally defined as
+\begin{align}
+	v(t) = \sum_{m=0}^{k-1} w(m)\delta(t-m)
+\end{align}
+where $w(m)$ is the weight for the $m$th pixel in the kernel.
+Without loosing generality, we can assume the weights are normalized, i.e. $\sum_{m}w(w)=1$. The output signal of the $n$th layer $o(t)$ is simply $o = u * v * ... * v$, convolving $u$ with $n$ such $v$\'s.
+To compute the convolution, we can use the Discrete Time Fourier Transform to convert the signals into the Fourier domain, and obtain
+\begin{align}
+	U(\omega) = \sum_{t=-\infty}^{\infty} u(t)e^{-j\omega t} = 1, ~V(\omega) = \sum_{t=-\infty}^{\infty} v(t)e^{-j\omega t} = \sum_{m=0}^{k-1} w(m)e^{-j\omega t}
+\end{align}
+
+Applying the convolution theorem, we have the Fourier transform of $o$ is
+\begin{align}
+	\mathcal{F}(o) = \mathcal{F}(u*v*...*v)(\omega) = U(\omega) . V(\omega)^n = \Bigg(\sum_{m=0}^{k-1}w(m)e^{-j\omega t}\Bigg)^n
+\end{align}
+
+With inverse Fourier transform
+\begin{align}
+	o(t) = \frac{1}{2\pi}\int_{-\pi}^{\pi}\Big(\sum_{m=0}^{k-1}w(m)e^{-j\omega t}\Big)^ne^{j\omega t} d\omega
+\end{align}
+
+The space domain signal $o(t)$ is given by the coefficients of $e^{-j\omega t}$.
+These coefficients turn out to be well studied in the combinatorics literature \cite{eger2013restricted}.
+It can be shown that if $\mathbf{\sum_{m}w(m) = 1}$  and $\mathbf{w(m) \geq 0 ~\forall~ m}$ , then
+\begin{align}
+	o(t) = p(S_n=t), \text{where} ~S_n = \sum_{i=1}^{n} X_i ~\text{and}~p(X_i=m) = w(m)
+\end{align}
+
+From the central limit theorem, as $n \rightarrow~\infty$, $\sqrt{n}(\frac{1}{n}S_n - \mathop{\mathbb{E}}[X]) \sim \mathcal{N}(0, Var[X])$ and $S_n \sim \mathcal{N}(n\mathop{\mathbb{E}}[X]), nVar[X])$.
+As $o(t) = p(S_n=t)$, $o(t)$ also has a Gaussian shape with
+\begin{align}
+	\mathop{\mathbb{E}}[S_n] = n\sum_{m=0}^{k-1}mw(m), Var[S_n] = n \Bigg(\sum_{m=0}^{k-1}m^2w(m) - \Big(\sum_{m=0}^{k-1}mw(m)\Big)^2 \Bigg)
+\end{align}
+
+This indicates that $o(t)$ decays from the center of the projective field squared exponentially according to the Gaussian distribution.
+As the rate of decay is related to the variance of the Gaussian and assuming the size of the effective projective field is one standard deviation, the size can be expressed as
+\begin{align}
+	\sqrt{Var[S_n]} = \sqrt{nVar[X_i]} = O(\sqrt{n})
+\end{align}
+
+On the other hand stacking more convolution layers would grow the theoretical projective field linearly. But the effective projective field size is shrinking at a rate of $O(1/\sqrt{n})$.
+
+\bibliographystyle{unsrt}
+\bibliography{projective_field}
+\end{document}

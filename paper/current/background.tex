@@ -3,21 +3,33 @@
 
 \vspace{2mm}
 \noindent \textbf{Deep CNNs.} Deep CNNs are a type of neural networks specialized for image data.
-They exploit spatial locality of information in image pixels to construct a hierarchy of parametric feature extractors and transformers organized as layers of various types: \textit{convolutions}, which use image
-filters from graphics, except with variable filter weights, to extract features; \textit{pooling}, which subsamples features in a spatial
-locality-aware way; \textit{batch-normalization}, which normalizes the output of the layer; \textit{non-linearity}, which applies a non-linear transformation (e.g., ReLU); \textit{fully connected}, which is the building block of a multi-layer perceptron; and \textit{softmax}, which emits predicted probabilities to each class label.
-In most ``deep'' CNN architectures, above layers are simply stacked together with ones output is simply fed as the input to the other, while adding multiple layers element-wise or stacking multiple layers together depth-wise to produce a new layer is also present in some architectures.
+They exploit spatial locality of information in image pixels to construct a hierarchy of parametric feature extractors and transformers organized as layers of various types: \textit{Convolution}, which use image
+filters from graphics, except with variable filter weights, to extract features; \textit{Pooling}, which subsamples features in a spatial
+locality-aware way; \textit{Batch-Normalization}, which normalizes the output of the layer; \textit{Non-Linearity}, which applies a non-linear transformation (e.g., ReLU); \textit{Fully Connected}, which is the building block of a multi-layer perceptron; and \textit{Softmax}, which emits predicted probabilities to each class label.
+In most deep CNN architectures, the above layers are stacked together with one\'s output being fed as the input to the other.
+Adding multiple layers element-wise or stacking multiple layers together depth-wise to produce a new layer is also present in some architectures.
 Popular deep CNN model architectures include AlexNet \cite{alexnet}, VGG \cite{vggnet}, Inception~\cite{inception}, ResNet~\cite{resnet}, SqueezeNet~\cite{squeezenet}, and MobileNet~\cite{mobilenets}.
 % In this work, the discussion and evaluation is focused on VGG-16 (16 layer version), ResNet-18 (18 layer version) and Inception-V3 (version 3) which are three widely used CNN models in real world transfer learning applications.
 % Nevertheless, our work is orthogonal to the specifics of a particular architecture and the proposed approaches can be easily extended to any architecture.
 
 \vspace{2mm}
 \noindent \textbf{Deep CNN Explainability} \eat{With image recognition models, natural question is if the model is truly identifying objects in the image or just using surrounding or other objects for making false prediction.}
-Various approaches used to explain CNN predictions can be broadly divided into two categories, gradient based and perturbation based approaches. Gradient based approaches generate a sensitivity heatmap by computing the partial derivatives of model output with respect to every input pixel via back propagation.
-In perturbation based approaches the output of the model is observed by masking out regions in the input image and there by identify the sensitive regions. The most popular perturbation based approach is occlusion experiments which was first introduced by Zeiler et. al. \cite{zeiler2014visualizing}.
-Even though gradient approaches require only a single forward inference and a single backpropagation to generate the sensitivity heatmap, the output may not be very intuitive and hard to understand because the salient pixels tend to spread over a very large area of the input image.
-Also as explained in ~\cite{miller2017explanation}, the back-propagation based methods are based on the AI researchers\'~ intuition of what constitutes a ``good'' explanation. But if the focus is on explaining decision to a human observer, then the approach used to produce the explanation should have a structure that humans accept.
-As a result in most real world use cases such as in medical imaging, practitioners tend to use occlusion experiments as the preferred approach for explanations despite being time consuming, as they produce high quality fine grained sensitivity heatmaps ~\cite{jung2017deep}.
+Various approaches used to explain CNN predictions can be broadly divided into two categories, gradient-based and perturbation based approaches. Gradient-based approaches generate a sensitivity heat map by computing the partial derivatives of model output with respect to every input pixel via backpropagation.
+In perturbation based approaches the output of the model is observed by modifying regions on the input image and thereby identifying the sensitive regions.
+\eat{
+Even though gradient approaches require only a single forward inference and a single backpropagation to generate the sensitivity heat map, the output may not be very intuitive and hard to understand because the salient pixels tend to spread over a very large area of the input image.
+}
+Despite being time-consuming, in most real world use cases such as in medical imaging, practitioners tend to use occlusion experiments, a perturbation approach, as the preferred approach for explanations as they produce high quality fine grained sensitivity heat maps using a process which is very intuitive to the human observer ~\cite{zeiler2014visualizing,jung2017deep,miller2017explanation}.
 
+
+\eat{
+Occlusion experiment is one of the widely used perturbation based approaches which was first introduced by Zeiler et. al. \cite{zeiler2014visualizing}.
+
+Also as explained in ~\cite{miller2017explanation}, the back-propagation based methods are based on the AI researchers\'~ intuition of what constitutes a ``good'' explanation.
+But if the focus is on explaining decision to a human observer, then the approach used to produce the explanation should have a structure that humans accept.
+}
+
+\eat{
 Over the years there has been several modifications proposed to the original occlusion experiment approach. More recently Zintgraf. et. al. \cite{zintgraf2017visualizing} proposed a variation to the original occlusion experiment approach named \textit{Prediction Difference Analysis}. In their method instead of masking with a black or gray patch, samples from surrounding regions in the image are chosen as occlusion patches.
 In our work we mainly focus on the original occlusion experiment method. But, the methods and optimizations proposed in our work are readily applicable to more advanced occlusion based explainability approaches.
+}

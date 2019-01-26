@@ -1,7 +1,20 @@
 %!TEX root = <main.tex>
 \documentclass[10pt, sigconf]{acmart}
-\usepackage[font=small,labelfont=bf]{caption}
 
+% Copyright
+%\setcopyright{none}
+%\setcopyright{acmcopyright}
+%\setcopyright{acmlicensed}
+% \setcopyright{rightsretained}
+%\setcopyright{usgov}
+%\setcopyright{usgovmixed}
+%\setcopyright{cagov}
+%\setcopyright{cagovmixed}
+%\settopmatter{printacmref=false}
+%\renewcommand\footnotetextcopyrightpermission[1]{} % removes footnote with 
+%\pagestyle{plain} % removes running headers
+
+\usepackage[font=small,labelfont=bf]{caption}
 \usepackage{graphicx,xspace,verbatim,comment}
 \usepackage{hyperref,array,color,balance,multirow}
 \usepackage{balance,float,url,amsfonts,alltt}
@@ -51,33 +64,28 @@
 
 \DeclareMathOperator*{\argmin}{arg\,min}
 
-% \setcopyright{none}
-% \settopmatter{printacmref=false}
-% \renewcommand\footnotetextcopyrightpermission[1]{} % removes footnote with 
-\pagestyle{plain} % removes running headers
 
 \begin{document}
-\sloppy
+\emergencystretch 1em
 
-\title{\textsc{Krypton}: Accelerating Occlusion based Deep CNN\\ Explainability Workloads}
+\title{Incremental and Approximate Inference for\\Faster Occlusion-based Deep CNN Explanations}
 
-\author{Anonymous Author(s)}
+% \author{Supun Nakandala, Arun Kumar, and Yannis Papakonstantinou}
 % \affiliation{
-  % \institution{University of California, San Diego}
+%   \institution{University of California, San Diego}
 % }
-% \email{@eng.ucsd.edu}
+% \email{{snakanda,arunkk,yannis}@eng.ucsd.edu}
 
 
 \begin{abstract}
-Deep Convolution Neural Networks (CNN) have revolutionized the field of computer vision with even surpassing human level accuracy in some of the image recognition tasks. Thus they are now being deployed in many real-world use cases ranging from health care, autonomous vehicles, and e-commerce applications. However one of the major criticisms pointed against Deep CNNs is the black-box nature of how they make predictions. This is a critical issue when applying CNN based approaches to critical applications such as in health care where the explainability of the predictions is also very important. For interpreting CNN predictions several approaches have been proposed and one of the widely used method in image recognition tasks is occlusion experiments. In occlusion experiments one would mask the regions of the input image using a small gray or black patch and record the change in the predicted label probability. By systematically changing the position of the patch location, a sensitivity map can be generated from which the regions in the input image which influence the predicted class label most can be identified. However, this method requires performing multiple forward passes of CNN inference for explaining a single prediction and hence is very time consuming.
-We present \system, the first data system to elevate occlusion experiments to a declarative level and enable database inspired automated \textit{incremental} and \textit{approximate} inference optimizations. Experiments with real-world datasets and deep CNNs show that \system~can enable speedup over 10x in certain cases.
+Deep Convolutional Neural Networks (CNNs) now match human accuracy in many image prediction tasks, resulting in a growing adoption in e-commerce, radiology, and other domains. Naturally, ``explaining'' CNN predictions is a key concern for many users. Since the internal workings of CNNs are unintuitive for most users, \textit{occlusion-based explanations} (OBE) are popular for understanding which parts of a image matter most for a prediction. One occludes a region of the image using a patch and moves it around to produce a \textit{heat map} of changes to the prediction probability. Alas, this approach is computationally expensive due to the large number of re-inference requests produced, which wastes time and raises resource costs. We tackle this issue by casting the OBE task as a new instance of the classical incremental view maintenance problem. We create a novel and comprehensive algebraic framework for incremental CNN inference combining materialized views with multi-query optimization to reduce computational costs. We then present two novel approximate inference optimizations that exploit the semantics of CNNs and the OBE task to further reduce runtimes. We prototype our ideas in Python to create a tool we call \textsc{Krypton} that supports both CPUs and GPUs. Experiments with real data and CNNs show that \textsc{Krypton} reduces runtimes by up to $5$X (resp.~$35$X) to produce exact (resp.~high-quality approximate) results without raising resource requirements.
 \end{abstract}
 
 \maketitle
 
 \input{introduction}
 
-\input{background}
+% \input{background}
 
 \input{system_overview}
 
@@ -87,7 +95,22 @@ We present \system, the first data system to elevate occlusion experiments to a 
 
 \section{Other Related Work}
 
+\vspace{2mm}
+\noindent \textbf{Query Optimization.}
+Our work is inspired by the long line of work on incremental view maintenance (IVM) in databases~\cite{chirkova2012materialized, gupta1995maintenance, levy1995answering}, but this is the first work to use the IVM lens for the occlusion-based CNN explanation workload. Our novel algebraic IVM framework for CNN inference is closely tied to the dataflow of CNN layers, which transform tensors in non-trivial ways. Closely related to our work is the IVM framework for linear algebra in~\cite{nikolic2014linview}. They focus on bulk matrix operators and incremental addition of rows to the data matrix. We do not deal with bulk matrix operators or additions of rows, but more fine-grained CNN inference computations and in-place updates to image pixels due to occlusions. Also closely related is the IVM framework for distributed multi-dimensional array database queries in~\cite{zhao2017incremental}. An interesting connection is that CNN layers with local spatial context (Section 2.2) can be viewed as a variant of spatial array join-aggregate queries. But our framework enables end-to-end incremental inference for entire CNNs, not just one-off spatial queries involving data materialization and loading. Our focus is also on popular deep learning environments, not array databases. Finally, we also go beyond algebraic IVM ideas to further exploit CNN-specific semantics and human perception properties in our problem setting.
+
+Our work is also inspired by the multi-query optimization (MQO) literature~\cite{sellis1988multiple,le2012scalable}. But we focus on CNN inference, not relational queries. To the best of our knowledge, ours is the first work to present an MQO-style optimization combined with IVM for optimizing CNN inference for occlusion-based explanations.
+Our approximate inference optimizations are inspired by approximate query processing (AQP) techniques~\cite{park2018verdictdb,garofalakis2001approximate}. But unlike statistical approximations of aggregations over relations, our techniques are novel CNN-specific and human perception-oriented heuristic approximations tailored to reducing the computational cost of CNN inference for the OBE workload.
+
+\vspace{2mm}
+\noindent \textbf{Multimedia DBMSs.} 
+There is much work in the database and multimedia literatures on multimedia DBMSs~\cite{adjeroh1997multimedia,kalipsiz2000multimedia}. The main focus of such work is on retrieval, including content-based image retrieval (CBIR) and video retrieval using similarity search or indexes. Our work is orthogonal to this body of work since we focus on accelerating CNN explanations, not multimedia retrieval queries. CBinfer is a video analytics tool for change-based approximate CNN inference that can accelerate real-time object recognition in video~\cite{cavigelli2017cbinfer}. Our work also deals with incremental and approximate CNN inference, but our ideas exploit the specific properties of the OBE workload, not general object recognition in video. NoScope is a system to accelerate object detection in video streams using model cascades~\cite{kang2017noscope}. Our focus is on accelerating the OBE workload, not object recognition or video. Overall, both these tools are orthogonal to our focus.
+
 \section{Conclusions And Future Work}
+Deep CNNs are gaining widespread adoption for image prediction tasks but their internal workings are unintuitive for most users. Thus, occlusion-based explanations (OBE) have become a popular mechanism for non-technical users to understand CNN predictions. But OBE is highly compute-intensive due to the large number of CNN inference requests produced. In this work, we formalize OBE from a data management standpoint and introduce several novel database-inspired optimization techniques to speed up OBE. Our techniques span exact incremental inference and multi-query optimization for CNN inference, as well as CNN-specific and human perception-aware approximate inference. Overall, our ideas yield even over an order of magnitude speedups for OBE in both CPU and GPU environments. As for future work, we plan to apply our ideas to other complex visual recognition tasks and video analytics. It is also interesting future work to generalize our framework to other CNN explanation mechanisms and data types.
+
+\pagebreak
+
 
 \bibliographystyle{unsrt}
 \bibliography{main}

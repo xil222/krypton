@@ -1,0 +1,13 @@
+# Fdb version 3
+["pdflatex"] 1539737408 "background.tex" "background.pdf" "background" 1539737409
+  "/usr/local/texlive/2016/texmf-dist/fonts/map/fontname/texfonts.map" 1272929888 3287 e6b82fe08f5336d4d5ebc73fb1152e87 ""
+  "/usr/local/texlive/2016/texmf-dist/fonts/tfm/public/cm/cmbx10.tfm" 1136768653 1328 c834bbb027764024c09d3d2bf908b5f0 ""
+  "/usr/local/texlive/2016/texmf-dist/fonts/tfm/public/cm/cmti10.tfm" 1136768653 1480 aa8e34af0eb6a2941b776984cf1dfdc4 ""
+  "/usr/local/texlive/2016/texmf-dist/web2c/texmf.cnf" 1463093894 31953 b9489e6e586f798610c60aec1f5ec548 ""
+  "/usr/local/texlive/2016/texmf-var/web2c/xetex/xelatex.fmt" 1463979168 3520378 010aaf5a738348f136b1de9595fa7567 ""
+  "/usr/local/texlive/2016/texmf.cnf" 1463979140 577 2938757e76f31531e65cc647e3507693 ""
+  "background.aux" 1539737408 8 a94a2480d3289e625eea47cd1b285758 ""
+  "background.tex" 1539278498 4241 c707e133df3851bfe828080f54be3c57 ""
+  (generated)
+  "background.log"
+  "background.pdf"
