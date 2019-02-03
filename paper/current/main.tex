@@ -98,14 +98,13 @@ Deep Convolutional Neural Networks (CNNs) now match human accuracy in many image
 \vspace{2mm}
 \noindent \textbf{Methods for explaining CNN Predictions.}
 \red{Methods used for explain CNN predictions can be broadly divided into two categories, perturbation based and gradient based methods.
-Perturbation based methods observe the output of the model by modifying regions of the input image.
-OBE falls into this category.
-Another recently introduced perturbation based method is the \textit{Prediction Difference Analysis} method \cite{zintgraf2017visualizing}, which modifies individual pixel values which can be considered as a special case of OBE with a patch size of one with different values.}
+Perturbation based methods \cite{zeiler2014visualizing,zintgraf2017visualizing,ribeiro2016should} observe the output of the model by modifying regions of the input image.
+OBE falls into this category.}
+% Another recently introduced perturbation based method is the \textit{Prediction Difference Analysis} method \cite{zintgraf2017visualizing}, which modifies individual pixel values which can be considered as a special case of OBE with a patch size of one with different values.}
 
-\red{Gradient-based methods generate a sensitivity heat map by computing the partial derivatives of model output with respect to every input pixel using the backpropagation method.
+\red{Gradient-based methods \cite{simonyan2013deep,selvaraju2017grad,sundararajan2017axiomatic} generate a sensitivity heat map by computing the partial derivatives of model output with respect to every input pixel using the backpropagation method.
 \textit{Axiomatic Attribution for Deep Networks using Integrated Gradients} method \cite{sundararajan2017axiomatic} is a recently proposed method which falls into this category.
-We evaluated the runtime and visual quality of the generated heat maps for integrated gradients and OBE methods on three representative images from our datasets.
-Due to space constraints we present the results in Appendix Figure \ref{fig:igd}} 
+We evaluated OBE with integrated gradients methods and found comparable results (see Appendix \ref{sec:igd}).} 
 
 % Even though gradient approaches require only a single forward inference and a single backpropagation to generate the sensitivity heat map, the output may not be very intuitive and hard to understand because the salient pixels tend to spread over a very large area of the input image.
 % Despite being time-consuming, in most real world use cases such as in medical imaging, practitioners tend to use occlusion experiments, a perturbation based approach, as the preferred approach for explanations as they produce high quality fine grained sensitivity heat maps using a process which is very intuitive to the human observer ~\cite{zeiler2014visualizing,jung2017deep,miller2017explanation}.

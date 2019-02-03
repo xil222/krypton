@@ -269,6 +269,7 @@ For transformations with local spatial context, invoke \textproc{BatchedIncremen
 \vspace{-2mm}
 \section{Approximate Inference Optimizations}\label{sec:approx}
 Since incremental inference is \textit{exact}, i.e., it yields the same heat map as full inference, it does not exploit a capability of human perception: tolerance of some degradation in visual quality. Thus, we now build upon our IVM framework to create two novel heuristic approximate inference optimizations that trade off the heat map's quality in a user-tunable manner to accelerate OBE further. We first explain the techniques and then explain how to tune them.
+\red{It is also important to note that there exists several other methods such as low-precision computation \cite{moons20160} and CNN model pruning \cite{he2017channel} which enable faster approximate CNN inference. Our optimizations are complementary to these existing approaches and can be applied together.}
 
 \subsection{Projective Field Thresholding}
 

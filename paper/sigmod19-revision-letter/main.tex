@@ -56,24 +56,28 @@ As an overall summary, we made following major changes to the paper:
 
 \vspace{2mm}
 \noindent \textbf{Response:}\\
+\red{I think we are doing a reasonable job here. A supporting figure is given and the text refers the different values showed in the image. The equations 13, 14, 15, and 16 are also explained in plain English.}
 
 \vspace{2mm}
 \noindent \textbf{W2:} \textit{Not clear to me OBE is the best choice and other interpretability methods are generally cheaper.}
 
 \vspace{2mm}
 \noindent \textbf{Response:} \\
+\red{Check related work section on CNN explainability methods}
 
 \vspace{2mm}
 \noindent \textbf{D1:} \textit{Very little work in the interpretability space is cite. Most relevant is "Axiomatic Attribution for Deep Networks" which computes per-pixel attributions by comparing importance relative to a black pixel, similar to occlusion, but does so through mathematical analysis of the network, not many inferences. Comparing to this seems important to justify why OBE is better.}
 
 \vspace{2mm}
 \noindent \textbf{Response:} \\
+\red{Check related work section on CNN explainability methods}
 
 \vspace{2mm}
 \noindent \textbf{D2:} \textit{I believe the components in this systems are individually interesting outside of interpretability. It would be interesting to understand if this ideas would be useful in other inference settings where inputs change only slightly between queries (for example, subsequent frames in a video).}
 
 \vspace{2mm}
 \noindent \textbf{Response:} \\
+\red{Check future work section}
 
 
 \section{Reviewer 2}
@@ -83,6 +87,7 @@ As an overall summary, we made following major changes to the paper:
 
 \vspace{2mm}
 \noindent \textbf{Response:}\\
+\red{Check related work section on methods for accelerating CNN inference, CNN explainability methods, and future work.}
 
 
 \vspace{2mm}
@@ -90,12 +95,14 @@ As an overall summary, we made following major changes to the paper:
 
 \vspace{2mm}
 \noindent \textbf{Response:}\\
+\red{Check future work section.}
 
 \vspace{2mm}
 \noindent \textbf{W3:} \textit{A third potential weakness lies in the approximate inference section, because there are many ways of doing approximate inference (e.g. low-precision computation, pruning, etc.) and it's not clear whether these could perform better than the new approximate inference methods proposed in this work. It would be an improvement to see some comparison to other methods for accelerating approximate inference.}
 
 \vspace{2mm}
 \noindent \textbf{Response:}\\
+\red{Added a starting line in the approximate inference section which states what is the focus of the section. Other hardware level and pruning style approx. optimizations are complementary to the optimizations proposed in this section.}
 
 \vspace{2mm}
 \noindent \textbf{D1:} \textit{Figure 2 is hard to read. A lot is happening in that diagram for a "simplified illustration" and I think the font should be larger. Figure 15 in the appendix is very difficult to read. You should make the font size larger. In Figure 17 in the appendix, there seems to be an interesting phenomenon in which performance breaks down at a protective field threshold of 0.3 across all three images. This is interesting, and might be worth a sentence or two of discussion.}
@@ -103,6 +110,7 @@ As an overall summary, we made following major changes to the paper:
 
 \vspace{2mm}
 \noindent \textbf{Response:}\\
+\red{Refined the text in Figure 2 and increased the font size. Added a sentence to the Appendix figure caption.}
 
 
 \section{Reviewer 5}
@@ -112,36 +120,42 @@ As an overall summary, we made following major changes to the paper:
 
 \vspace{2mm}
 \noindent \textbf{Response:}\\
+\red{Section 3.1}
 
 \vspace{2mm}
 \noindent \textbf{W2:} \textit{ Increasingly, CNNs are synthesized by learn to learn techniques. As future work, the authors should consider how a limited projective field can be included as a first class evaluation metric in such synthesis process and if this leads to new architectures that are IVM friendly.}
 
 \vspace{2mm}
 \noindent \textbf{Response:}\\
+\red{Future work}
 
 \vspace{2mm}
 \noindent \textbf{W3:} \textit{ The experimental evaluation is largely focused on the speed up obtained when dealing with one image (and its distortions) at a time. Maintaining the output tensors in memory incurs additional memory overhead. This can become significant in a shared serving environment where multiple inference requests (multiple raw images) are processed by the model concurrently. It would be good to have some experiment that also illustrates the memory overhead.}
 
 \vspace{2mm}
 \noindent \textbf{Response:}\\
+\red{Added an experiment.}
 
 \vspace{2mm}
 \noindent \textbf{D1:} \textit{ Page 2 typo, "coverts" -> "converts".}
 
 \vspace{2mm}
 \noindent \textbf{Response:}\\
+\red{Fixed.}
 
 \vspace{2mm}
 \noindent \textbf{D2:} \textit{ Font size of text in Figure 2 is a bit small.}
 
 \vspace{2mm}
 \noindent \textbf{Response:}\\
+\red{Fixed}
 
 \vspace{2mm}
 \noindent \textbf{D3:} \textit{  I wonder if such IVM techniques can also be applied to non-CNN models that have certain structural properties. For instance, in case of multi-tower models, the perturbation of input values of one tower do not affect the intermediate tensors of other towers until the final few layers.}
 
 \vspace{2mm}
 \noindent \textbf{Response:}\\
+\red{? may be, time series CNN}
 
 \section{Reviewer 6}
 
@@ -150,49 +164,57 @@ As an overall summary, we made following major changes to the paper:
 
 \vspace{2mm}
 \noindent \textbf{Response:}\\
+\red{Related work CNN explainability and future work on broad applicability.}
 
 \vspace{2mm}
 \noindent \textbf{W2:} \textit{Not clear how this generalizes to some of the more complex architectures, such as DenseNet or ResNext -- could you please discuss this?}
 
 \vspace{2mm}
 \noindent \textbf{Response:}\\
+\red{Section 3.3 Extending to DAG like CNNs}
 
 \vspace{2mm}
 \noindent \textbf{W3:} \textit{Could there by other applications in the A/V space beyond partial occlusion that use the same techniques -- maybe painting parts of an image, or erasing parts of an image and them repainting it with something new?}
 
 \vspace{2mm}
 \noindent \textbf{Response:}\\
-
+\red{Future work}
 
 \vspace{2mm}
 \noindent \textbf{W4:} \textit{There is a section on approximate inference, and it is rather ad-hoc, especially given the plethora of other methods such as quantization, pruning or collapsing a deep net, etc.)}
 
 \vspace{2mm}
 \noindent \textbf{Response:}\\
+\red{Added a starting line in the approximate inference section which states what is the focus of the section. Other hardware level and pruning style approx. optimizations are complementary to the optimizations proposed in this section.}
 
 \vspace{2mm}
 \noindent \textbf{W5:} \textit{Not clear how Krypton is integrated into PyTorch. Is there a special API? What is the architecture of the integration?}
 
 \vspace{2mm}
 \noindent \textbf{Response:}\\
+\red{Appendix section B. Referred from Experiments section.}
 
 \vspace{2mm}
 \noindent \textbf{D1:} \textit{I would have liked to see some network architectures where this does not work so well -- what are conditions where this is the case? Section 3 discusses this a bit, but could we have a clear characterization based on the architecture -- it seems that I can do a pre-calculations that based on the size of the occlusion I can calculate the savings?}
 
 \vspace{2mm}
 \noindent \textbf{Response:}\\
+\red{Section 3.1 ?}
 
 \vspace{2mm}
 \noindent \textbf{D2:} \textit{It is not clear to me how this is implemented. How do we bring the data back and forth to the GPU? Why are we getting such huge savings -- it is really just the number of add/multiplies saved? How do we now organize such irregular computations inside a GPU? Would be great to get answers to these questions.}
 
 \vspace{2mm}
 \noindent \textbf{Response:}\\
+\red{Appendix section B. Referred from Experiments section.}
 
 \vspace{2mm}
 \noindent \textbf{D3:} \textit{Are there network architectures where these techniques work especially well or badly?}
 
 \vspace{2mm}
 \noindent \textbf{Response:}\\
+\red{Section 3.1 ?}
+
 
 \vspace{2mm}
 \begin{sloppypar}
@@ -208,5 +230,6 @@ How does your work compare to this related work?}
 
 \vspace{2mm}
 \noindent \textbf{Response:}\\
+\red{?}
 
 \end{document}

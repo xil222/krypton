@@ -1,6 +1,6 @@
 %!TEX root = <main.tex>
 \section{Experimental Evaluation}
-We integrated all of our optimization techniques with the popular deep learning environment PyTorch to create a tool we call \system.
+We integrated all of our optimization techniques with the popular deep learning environment PyTorch to create a tool we call \system~(\red{for more details on \system~ integration into PyToch see Appendix \ref{sec:pytorch_integration}}).
 We now evaluate the speedups yielded by \system~ for OBE for several deep CNNs on real-world image datasets.
 We then drill into the contributions of each of our optimization techniques.
 
@@ -19,7 +19,7 @@ The machine runs Ubuntu 16.04 with PyTorch version 0.4.0, CUDA version 9.0, and 
 All reported runtimes are the average of 3 runs, with 95\% confidence intervals shown.
 
 \vspace{-2mm}
-\subsection{End-to- End Runtimes}
+\subsection{End-to- End Runtimes}\label{sec:end_to_end}
 
 \begin{figure*}[t]
 \includegraphics[width=\textwidth]{images/5_1_all_edited_b}
@@ -81,12 +81,7 @@ We vary the patch size and set the stride to $4$. Figure~\ref{fig:5_2_1_edited} 
 
 
 \vspace{2mm}
-\noindent \textbf{Memory Overhead.} \red{We evaluate the memory overhead of our incremental inference approach compared to the full CNN inference.
-We record the peak GPU memory utilization while the CNN models perform inference on image batches of size 128.
-We found that incremental inference approach has a significantly lower memory overhead compared to the full inference approach as the size of the intermediate memory buffers required for propagating the changes is small.
-Due space constraints the results are shown in Appendix Figure \ref{fig:mem_overhead}.
-}
-
+\noindent \textbf{Memory Overhead.} \red{We also evaluated the memory overhead of IVM approach compared to the full CNN inference method and found that it can enable up to 58\% lower memory overheads (see Appendix \ref{sec:mem_overhead}).}
 
 % \vspace{-2mm}
 % \subsection{\red{Other approaches for CNN prediction explanation and faster inference}}
