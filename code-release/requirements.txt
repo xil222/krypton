@@ -1,8 +1,1 @@
-opencv-python
-h5py
-numpy
-matplotlib
-torch
-torchvision
-Pillow
-scipy
+docker/requirements.txt

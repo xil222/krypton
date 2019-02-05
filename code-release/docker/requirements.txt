@@ -1,0 +1,8 @@
+opencv-python
+h5py
+numpy
+matplotlib
+torch==0.4.0
+torchvision
+Pillow
+scipy
