@@ -7,10 +7,8 @@
 \usepackage{balance,float,url,amsfonts,alltt}
 \usepackage{mathtools,rotating,amsmath,amssymb}
 \usepackage{color,ifpdf,fancyvrb,array}
-% \usepackage{algorithm,algpseudocode}
 \usepackage{etoolbox,listings,subcaption}
 \usepackage{bigstrut,morefloats}
-%\usepackage[linesnumbered,boxruled]{algorithm2e}
 \usepackage[boxruled]{algorithm2e}
 \usepackage{pbox}
 \usepackage[T1]{fontenc}
@@ -38,44 +36,200 @@
 \maketitle
 
 We thank the reviewers for their feedback and suggestions. We have made the utmost effort to carefully incorporate all of the feedback. 
-We think the paper has improved substantially as a result of these changes. All changes made to the paper have been highlighted with blue font color.
+We think the paper has improved as a result of these changes.
+All changes made to the paper have been highlighted with red font color.
 In this letter, we discuss the changes made and respond to the specific revision items listed in the reviews and metareview. 
 
-As an overall summary, we made three major changes to the paper: (1) Added a lot more background material on machine learning and the prior work to make the 
-paper more readable and self-contained, (2) Dropped two assumptions (all features are categorical; class label is binary) and redid all the experiments with the 
-real-world datasets using k-fold cross-validation, and (3) Added a hypothesis testing experiment regarding the significance of the error increases caused by avoiding joins.
+As an overall summary, we made following major changes to the paper:
+\begin{enumerate}
+	\item Added a related work section on CNN explanation methods. We also evaluated \textit{Axiomatic Attribution for Deep Networks} method against OBE. Due to space constraints we added the runtimes plot and the heatmap visualizations into the Appendix, which we refer from the related work section.
+	\item Added a related work section on methods for accelerating CNN inference. We referenced EVA$^2$ method and explained how the optimizations proposed by our system are complementary to EVA$^2$.
+	\item Added an experiment to the experiments section to evaluate the memory overhead associated with incremental inference approach. Due to space constraints the results plot is added to the Appendix.
+	\item Elaborated more on the integration of our custom GPU kernel into PyTorch in the Appendix section and referenced that information from the experimental setup section.
+	\item Added details on broad applicability of our optimizations for other use cases into conclusions and future work section.
+\end{enumerate}
 
-\section{Review 1}
-
-\vspace{2mm}
-\noindent \textbf{D1:} \textit{Introduce the various machine learning terms in the paper: VC dimension, IID assumption, ``cold start'' issue, linear vs high-capacity classifier, and holdout testing.}
-
-\vspace{2mm}
-\noindent \textbf{Response:} We have expanded Section 2 and added definitions of these and other relevant machine learning (ML) terms and concepts in a new 
-\textbf{Section 2.2} titled ``Background: ML Terms and Concepts.''\\
-
-\noindent \textbf{D2:} \textit{Improve notation: did not introduce $R$; tuple-ratio metric is confusing; $n_R$ is not defined properly; did not introduce $FK$; explain $FK$ vs $FK_i$.}
+\section{Reviewer 1}
 
 \vspace{2mm}
-\noindent \textbf{Response:} We apologize for these issues and thank the reviewer for pointing them out. We have fixed these notation issues in the new 
-\textbf{Section 2.1} titled ``Notation.'' In particular, we have clarified that $\textbf{R}$ (without a subscript) is the simplified notation for the dimension 
-table in a two-table join, i.e., when $q=1$; $\mathit{FK}$ and $n_R$ are defined similarly. The tuple ratio for the $i^{\mathit{th}}$ dimension table is defined 
-as $n_S / n_{R_i}$, which becomes $n_S / n_R$ for $q=1$.\\
-
-\noindent \textbf{D3:} \textit{It is not clear, why simplifying multi-class classification to binary classification does not affect your discussion. Please add a sentence on that.}
+\noindent \textbf{W1:} \textit{Writing is very difficult to follow. In particular, the calculation of receptive field across layers (and its efficiency of calculation) is very hard to follow. I am not sure if there is an alternative notation that would be clearer.}
 
 \vspace{2mm}
-\noindent \textbf{Response:}
-For this paper's purposes, we had binarized the targets only to help simplify our experimental setup. Our focus is orthogonal to the assumption of whether the class label is 
-binary or multi-class or whether features in $X$ are categorical or numeric. Following the reviewer feedback, we have now dropped these two assumptions and updated the new 
-\textbf{Section 2.4} titled ``Assumptions and Scope'' accordingly. We now use the original versions of the seven datasets from the prior work, i.e., without binarizing 
-the targets and without discretizing numeric features. We use RMSE for errors for the (ordinal) multi-class targets, in line with the prior work. We also use $10$-fold 
-nested cross-validation instead of holdout validation. All the corresponding results in \textbf{Section 3} have been updated. We have also released these new versions of 
-the datasets (without binarizing the targets  and without binning numeric features), as well as the corresponding experimental code on our \textbf{project webpage}.\\
-
-\noindent \textbf{D4:} \textit{Please add more details of the ``cold start" issue.}
+\noindent \textbf{Response:}\\
+\red{I think we are doing a reasonable job here. A supporting figure is given and the text refers the different values showed in the image. The equations 13, 14, 15, and 16 are also explained in plain English.}
 
 \vspace{2mm}
-\noindent \textbf{Response:} We have added a brief discussion about this issue in the new \textbf{Section 2.4} titled ``Assumptions and Scope.''
+\noindent \textbf{W2:} \textit{Not clear to me OBE is the best choice and other interpretability methods are generally cheaper.}
+
+\vspace{2mm}
+\noindent \textbf{Response:} \\
+\red{Check related work section on CNN explainability methods}
+
+\vspace{2mm}
+\noindent \textbf{D1:} \textit{Very little work in the interpretability space is cite. Most relevant is "Axiomatic Attribution for Deep Networks" which computes per-pixel attributions by comparing importance relative to a black pixel, similar to occlusion, but does so through mathematical analysis of the network, not many inferences. Comparing to this seems important to justify why OBE is better.}
+
+\vspace{2mm}
+\noindent \textbf{Response:} \\
+\red{Check related work section on CNN explainability methods}
+
+\vspace{2mm}
+\noindent \textbf{D2:} \textit{I believe the components in this systems are individually interesting outside of interpretability. It would be interesting to understand if this ideas would be useful in other inference settings where inputs change only slightly between queries (for example, subsequent frames in a video).}
+
+\vspace{2mm}
+\noindent \textbf{Response:} \\
+\red{Check future work section}
+
+
+\section{Reviewer 2}
+
+\vspace{2mm}
+\noindent \textbf{W1:} \textit{The problem of occlusion-based explanations seems rather narrow, and it is not clear whether a more general tool could be used to get similar benefits here. For example, you could represent the occluding box moving around the image as a video, and then use techniques for fast inference on videos, for example the ones in the paper EVA: Exploiting Temporal Redundancy in Live Computer Vision (Buckler et al, ISCA 2018). Comparing against a more general tool would make this paper stronger.}
+
+\vspace{2mm}
+\noindent \textbf{Response:}\\
+\red{Check related work section on methods for accelerating CNN inference, CNN explainability methods, and future work.}
+
+
+\vspace{2mm}
+\noindent \textbf{W2:} \textit{Another weakness is that it seems likely that the techniques in Krypton can produce improvements for applications beyond the scope of occlusion-based explanations. For example, how would Krypton perform on an infrequently changing video feed, or one that changes in only a small part of the image? I think a comparison like this would improve the paper.}
+
+\vspace{2mm}
+\noindent \textbf{Response:}\\
+\red{Check future work section.}
+
+\vspace{2mm}
+\noindent \textbf{W3:} \textit{A third potential weakness lies in the approximate inference section, because there are many ways of doing approximate inference (e.g. low-precision computation, pruning, etc.) and it's not clear whether these could perform better than the new approximate inference methods proposed in this work. It would be an improvement to see some comparison to other methods for accelerating approximate inference.}
+
+\vspace{2mm}
+\noindent \textbf{Response:}\\
+\red{Added a starting line in the approximate inference section which states what is the focus of the section. Other hardware level and pruning style approx. optimizations are complementary to the optimizations proposed in this section.}
+
+\vspace{2mm}
+\noindent \textbf{D1:} \textit{Figure 2 is hard to read. A lot is happening in that diagram for a "simplified illustration" and I think the font should be larger. Figure 15 in the appendix is very difficult to read. You should make the font size larger. In Figure 17 in the appendix, there seems to be an interesting phenomenon in which performance breaks down at a protective field threshold of 0.3 across all three images. This is interesting, and might be worth a sentence or two of discussion.}
+
+
+\vspace{2mm}
+\noindent \textbf{Response:}\\
+\red{Refined the text in Figure 2 and increased the font size. Added a sentence to the Appendix figure caption.}
+
+
+\section{Reviewer 5}
+
+\vspace{2mm}
+\noindent \textbf{W1:} \textit{ The speedups achievable using the technique are dependent on the architectural properties of the CNN. The authors have explicitly identified the limitation in the paper. It would be good if given a CNN architecture, KRYPTON can provide an estimate of the speedup upfront to see if techniques in the paper will be beneficial for the architecture.}
+
+\vspace{2mm}
+\noindent \textbf{Response:}\\
+\red{Section 3.1}
+
+\vspace{2mm}
+\noindent \textbf{W2:} \textit{ Increasingly, CNNs are synthesized by learn to learn techniques. As future work, the authors should consider how a limited projective field can be included as a first class evaluation metric in such synthesis process and if this leads to new architectures that are IVM friendly.}
+
+\vspace{2mm}
+\noindent \textbf{Response:}\\
+\red{Future work}
+
+\vspace{2mm}
+\noindent \textbf{W3:} \textit{ The experimental evaluation is largely focused on the speed up obtained when dealing with one image (and its distortions) at a time. Maintaining the output tensors in memory incurs additional memory overhead. This can become significant in a shared serving environment where multiple inference requests (multiple raw images) are processed by the model concurrently. It would be good to have some experiment that also illustrates the memory overhead.}
+
+\vspace{2mm}
+\noindent \textbf{Response:}\\
+\red{Added an experiment.}
+
+\vspace{2mm}
+\noindent \textbf{D1:} \textit{ Page 2 typo, "coverts" -> "converts".}
+
+\vspace{2mm}
+\noindent \textbf{Response:}\\
+\red{Fixed.}
+
+\vspace{2mm}
+\noindent \textbf{D2:} \textit{ Font size of text in Figure 2 is a bit small.}
+
+\vspace{2mm}
+\noindent \textbf{Response:}\\
+\red{Fixed}
+
+\vspace{2mm}
+\noindent \textbf{D3:} \textit{  I wonder if such IVM techniques can also be applied to non-CNN models that have certain structural properties. For instance, in case of multi-tower models, the perturbation of input values of one tower do not affect the intermediate tensors of other towers until the final few layers.}
+
+\vspace{2mm}
+\noindent \textbf{Response:}\\
+\red{? may be, time series CNN}
+
+\section{Reviewer 6}
+
+\vspace{2mm}
+\noindent \textbf{W1:} \textit{Occlusion-based inference is not such a common case, so the use case is small.}
+
+\vspace{2mm}
+\noindent \textbf{Response:}\\
+\red{Related work CNN explainability and future work on broad applicability.}
+
+\vspace{2mm}
+\noindent \textbf{W2:} \textit{Not clear how this generalizes to some of the more complex architectures, such as DenseNet or ResNext -- could you please discuss this?}
+
+\vspace{2mm}
+\noindent \textbf{Response:}\\
+\red{Section 3.3 Extending to DAG like CNNs}
+
+\vspace{2mm}
+\noindent \textbf{W3:} \textit{Could there by other applications in the A/V space beyond partial occlusion that use the same techniques -- maybe painting parts of an image, or erasing parts of an image and them repainting it with something new?}
+
+\vspace{2mm}
+\noindent \textbf{Response:}\\
+\red{Future work}
+
+\vspace{2mm}
+\noindent \textbf{W4:} \textit{There is a section on approximate inference, and it is rather ad-hoc, especially given the plethora of other methods such as quantization, pruning or collapsing a deep net, etc.)}
+
+\vspace{2mm}
+\noindent \textbf{Response:}\\
+\red{Added a starting line in the approximate inference section which states what is the focus of the section. Other hardware level and pruning style approx. optimizations are complementary to the optimizations proposed in this section.}
+
+\vspace{2mm}
+\noindent \textbf{W5:} \textit{Not clear how Krypton is integrated into PyTorch. Is there a special API? What is the architecture of the integration?}
+
+\vspace{2mm}
+\noindent \textbf{Response:}\\
+\red{Appendix section B. Referred from Experiments section.}
+
+\vspace{2mm}
+\noindent \textbf{D1:} \textit{I would have liked to see some network architectures where this does not work so well -- what are conditions where this is the case? Section 3 discusses this a bit, but could we have a clear characterization based on the architecture -- it seems that I can do a pre-calculations that based on the size of the occlusion I can calculate the savings?}
+
+\vspace{2mm}
+\noindent \textbf{Response:}\\
+\red{Section 3.1 ?}
+
+\vspace{2mm}
+\noindent \textbf{D2:} \textit{It is not clear to me how this is implemented. How do we bring the data back and forth to the GPU? Why are we getting such huge savings -- it is really just the number of add/multiplies saved? How do we now organize such irregular computations inside a GPU? Would be great to get answers to these questions.}
+
+\vspace{2mm}
+\noindent \textbf{Response:}\\
+\red{Appendix section B. Referred from Experiments section.}
+
+\vspace{2mm}
+\noindent \textbf{D3:} \textit{Are there network architectures where these techniques work especially well or badly?}
+
+\vspace{2mm}
+\noindent \textbf{Response:}\\
+\red{Section 3.1 ?}
+
+
+\vspace{2mm}
+\begin{sloppypar}
+\noindent \textbf{D4:} \textit{There is work on self-adjusting computation, where a program learns how to react to changes in its inputs (\url{http://www.umut-acar.org/self-adjusting-computation}).
+How does your work compare to this related work?}
+\end{sloppypar}
+
+\vspace{2mm}
+\noindent \textbf{Response:}\\
+
+\vspace{2mm}
+\noindent \textbf{D5:} \textit{Section 4.3 has a lot of formulas, but the reader is missing the intuition behind these formulas, Could they be made more accessible?}
+
+\vspace{2mm}
+\noindent \textbf{Response:}\\
+\red{?}
 
 \end{document}
