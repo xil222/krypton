@@ -55,7 +55,7 @@ def calc_bbox_coordinates(batch_size, loc_out_tensor, loc_tensor1, loc_tensor2):
     inc_conv_lib.calc_bbox_coordinates(batch_size, loc_out_tensor, loc_tensor1, loc_tensor2)
     return loc_out_tensor
 
-def full_inference_e2e_with_model(full_model, file_path, patch_size, stride, batch_size=256, gpu=True, version='v1', image_size=224, x_size=224, y_size=224, n_labels=1000, weights_data=None, loader=None, c=0.0):
+def full_inference_e2e_with_model(full_model, file_path, patch_size, stride, batch_size=256, gpu=True, version='v1', image_size=224, x_size=224, y_size=224, n_labels=1000, weights_data=None, loader=None, c=0.0, g=None):
     if loader == None:
         loader = transforms.Compose([transforms.Resize([image_size, image_size]), transforms.ToTensor()])
     orig_image = Image.open(file_path).convert('RGB')
@@ -73,7 +73,13 @@ def full_inference_e2e_with_model(full_model, file_path, patch_size, stride, bat
     prob = np.max(temp)
     
     output_width = int(math.ceil((x_size*1.0 - patch_size) / stride))
-    total_number = output_width * output_width
+    
+    if g is None:
+        total_number = output_width * output_width
+    else:
+        total_number = g
+        
+    #print(output_width, total_number)
 
     logit_values = []
     image_patch = torch.FloatTensor(3, patch_size, patch_size).fill_(c)
@@ -118,7 +124,7 @@ def inc_inference_e2e(model_class, file_path, patch_size, stride, batch_size=64,
     return inc_inference_e2e_with_model(inc_model, file_path, patch_size, stride, batch_size=batch_size, beta=beta, x0=x0, y0=y0, image_size=image_size, x_size=x_size, y_size=y_size, gpu=gpu, version=version, n_labels=n_labels, weights_data=weights_data, loader=loader, c=c)
 
 def inc_inference_e2e_with_model(inc_model, file_path, patch_size, stride, batch_size=64, beta=1.0, x0=0, y0=0, image_size=224,
-                      x_size=224, y_size=224, gpu=True, version='v1', n_labels=1000, weights_data=None, loader=None, c=0.0):
+                      x_size=224, y_size=224, gpu=True, version='v1', n_labels=1000, weights_data=None, loader=None, c=0.0, g=None):
     
     if loader == None:
         loader = transforms.Compose([transforms.Resize([image_size, image_size]), transforms.ToTensor()])
@@ -131,7 +137,11 @@ def inc_inference_e2e_with_model(inc_model, file_path, patch_size, stride, batch
     x_output_width = int(math.ceil((x_size*1.0 - patch_size) / stride))
     y_output_width = int(math.ceil((y_size*1.0 - patch_size) / stride))
 
-    total_number = x_output_width * y_output_width
+    if g is None:
+        total_number = x_output_width * y_output_width
+    else:
+        total_number = g
+        
     logit_values = np.zeros((x_output_width, y_output_width), dtype=np.float32)
 
     image_patches = torch.FloatTensor(3, patch_size, patch_size).fill_(c).repeat(batch_size, 1, 1, 1)
