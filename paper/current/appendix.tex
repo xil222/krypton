@@ -22,7 +22,7 @@ However, for the GPU environment such iterative memory copying operations introd
 To overcome this we extended PyTorch by adding a custom GPU kernel which optimizes the input preparation for \textit{incremental inference} by invoking parallel memory copy operations.
 This custom kernel is integrated to PyTorch using Python foreign function interface (FFI).
 Python FFI integrates with the Custom Kernel Interface layer which then invokes the Custom Memory Copy Kernel Implementation.
-The high-level architecture of the Custom Kernel integration is shown in Figure~\ref{fig:custom_kernel_integration}
+The high-level architecture of the Custom Kernel integration is shown in Figure~\ref{fig:custom_kernel_integration}.
 }
 
 \begin{figure}[t]
@@ -31,7 +31,6 @@ The high-level architecture of the Custom Kernel integration is shown in Figure~
 \caption{Custom GPU Kernel integration architecture}
 \label{fig:custom_kernel_integration}
 \end{figure}
-
 
 
 \section{Special Cases for Incremental Inference}
@@ -165,7 +164,7 @@ Chest X-Ray & 3,463 & 1,237 & 1,156 \\ \hline
 
 
 \section{Memory Overhead of IVM}\label{sec:mem_overhead}
-\red{We evaluate the memory overhead of IVM approach compared to the full CNN inference.
+\red{We evaluate the memory overhead of IVM approach, with no projective field thresholding ($\tau=1.0$) and a projective field thresholding value of $\tau=0.6$, compared to the full CNN inference.
 For this we record the peak GPU memory utilization while the CNN models perform inference on image batches of size 128.
 We found that incremental inference approach can enable up to 58\% lower memory overhead (see Figure \ref{fig:mem_overhead}).
 }
