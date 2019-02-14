@@ -35,18 +35,22 @@
 
 \maketitle
 
-We thank the reviewers for their feedback and suggestions. We have made the utmost effort to carefully incorporate all of the feedback. 
+We thank the reviewers for their feedback and suggestions.
+We have made the utmost effort to carefully incorporate all of the feedback. 
 We think the paper has improved as a result of these changes.
 All changes made to the paper have been highlighted with red font color.
-In this letter, we discuss the changes made and respond to the specific revision items listed in the reviews and metareview. 
+In this letter, we discuss the changes made and respond to the specific revision items listed in the reviews and metareview.
 
 As an overall summary, we made following major changes to the paper:
 \begin{enumerate}
-	\item Added a related work section on CNN explanation methods. We also evaluated \textit{Axiomatic Attribution for Deep Networks} method against OBE. Due to space constraints we added the runtimes plot and the heatmap visualizations into the Appendix, which we refer from the related work section.
-	\item Added a related work section on methods for accelerating CNN inference. We referenced EVA$^2$ method and explained how the optimizations proposed by our system are complementary to EVA$^2$.
-	\item Added an experiment to the experiments section to evaluate the memory overhead associated with incremental inference approach. Due to space constraints the results plot is added to the Appendix.
-	\item Elaborated more on the integration of our custom GPU kernel into PyTorch in the Appendix section and referenced that information from the Experiments section.
-	\item Added details on broad applicability of our optimizations for other use cases into the Conclusions and Future Work section.
+	\item Added a related work section on CNN explanation methods to \textbf{Section 6}.
+	We also evaluated \textit{Axiomatic Attribution for Deep Networks} method against OBE.
+	Due to space constraints we added the runtimes plot and the heatmap visualizations into the \textbf{Appendix H}, which we refer from \textbf{Section 6}.
+	\item Added a related work section on methods for accelerating CNN inference to \textbf{Section 6}.
+	We referenced EVA$^2$ method and explained how the optimizations proposed by our system are complementary to EVA$^2$.
+	\item Added an experiment to the experiments section (\textbf{Section 5.2}) to evaluate the memory overhead associated with incremental inference approach. Due to space constraints the results to the \textbf{Appendix F}.
+	\item We elaborated more on how our system is integrated into PyTorch in the \textbf{Appendix B} section and referenced that information from the Experiments section (\textbf{Section 5}).
+	\item We also added details on the broad applicability of our optimizations for other use cases into the Summary and Discussion section (\textbf{Section 5.3}).
 \end{enumerate}
 
 \section{Reviewer 1}
@@ -56,36 +60,42 @@ As an overall summary, we made following major changes to the paper:
 
 \vspace{2mm}
 \noindent \textbf{Response:}\\
-\red{?? I think we are doing a reasonable job here. A supporting figure is given and the text refers the different values showed in the image. The equations 13, 14, 15, and 16 are also explained in plain English.}
+We have refined the text in receptive field (\textbf{Section 3.2}) and efficiency calculation (\textbf{Section 3.1}) sections and refer to the corresponding visual depictions when explaining the equations to make the intuition behind the equations more clearer.
+We believe that having these formal definitions is important as simplifying
+them would create important unanswered questions.
 
 \vspace{2mm}
 \noindent \textbf{W2:} \textit{Not clear to me OBE is the best choice and other interpretability methods are generally cheaper.}
 
 \vspace{2mm}
 \noindent \textbf{Response:} \\
-\red{
-We agree with the reviewer that there exist other methods for explaining CNN predictions. However, we found OBE is widely used over those methods especially in domains like medical imaging as they produce high quality fine-grained heat maps [10, 12, 14] (Appendix F).
-Also the process of generating the explanation is very intuitive to the users who are not ML experts.
-There are more recent versions of OBE such as ``Prediction Difference Analysis - ICLR 2017' [14] which underscores the importance of optimizing OBE.}
+From the literature we found that OBE is usually preferred over other methods by domain users, such as in radiology, as they produce high quality fine-grained heat maps using a process very intuitive to the human user [10, 34].
+There are more recent versions of OBE such as ``Prediction Difference Analysis - ICLR 2017' which underscores the importance of optimizing OBE.
+In \textbf{Section 6} we summarized different approaches that are available for explaining CNN predictions and cited related work that shows the importance of OBE as an explainability approach.
 
-\red{
-Furthermore we evaluated ``Axiomatic Attribution of Deep Networks'' methods against OBE and found comparable results with respect both the runtime and the quality of generated heatmaps.
-Due to space constraints we included this information in Appendix H. 
-}
 
 \vspace{2mm}
 \noindent \textbf{D1:} \textit{Very little work in the interpretability space is cite. Most relevant is ``Axiomatic Attribution for Deep Networks'' which computes per-pixel attributions by comparing importance relative to a black pixel, similar to occlusion, but does so through mathematical analysis of the network, not many inferences. Comparing to this seems important to justify why OBE is better.}
 
 \vspace{2mm}
 \noindent \textbf{Response:} \\
-\red{Please see our response to Reviewer 1 W2.}
+We evaluated ``Axiomatic Attribution of Deep Networks'' (IGD) method against OBE and found that OBE can generate more fine-grained heat maps compared to IGD.
+The runtime of IGD method is dependant on the number of gradient steps used for approximating the integration, which is tunable by the user. 
+The runtime of our system also depends on tunable parameters which CNN specific and dataset specific.
+From our experiments we found that runtimes of IGD and OBE method with our optimization are comparable to each other.
+Due to space constraints we included this information in \textbf{Appendix H}.
+
+Also see our response to Reviewer 1, W2.
 
 \vspace{2mm}
 \noindent \textbf{D2:} \textit{I believe the components in this systems are individually interesting outside of interpretability. It would be interesting to understand if this ideas would be useful in other inference settings where inputs change only slightly between queries (for example, subsequent frames in a video).}
 
 \vspace{2mm}
 \noindent \textbf{Response:} \\
-\red{We completely agree with the reviewer and we are currently exploring the the wide applicability of our theoretical framework in other use cases. In the Conclusions and Future Work section we summarized different avenues on which our work can be extended.}
+In the Summary and Discussion section (\textbf{Section 5.3}) we summarized different avenues on which our work can be extended.
+For this first paper on this work, we decided to use OBE as the concrete use case to demonstrate the effectiveness of our incremental CNN inference framework.
+Applying our optimizations to other use cases such as video analytics with infrequently changing frames require solving several open problems such as batching update patches with different sizes to utilize the maximum hardware throughput.
+We are currently exploring the wide applicability of our framework for such use cases.
 
 
 \section{Reviewer 2}
@@ -95,31 +105,27 @@ Due to space constraints we included this information in Appendix H.
 
 \vspace{2mm}
 \noindent \textbf{Response:}\\
-\red{Focus of $EVA^2$ system is on exploiting the temporal redundancy of the video frames for faster inference. It does not exploit the spatial redundancy of the images. As the reviewer suggested the different occlusion positions can be treated as a video. However, $EVA^2$ will still perform motion estimation computations for the entire frame. Optimizations proposed in Krypton exploits the spatial redundancy of frames. Therefore, our work is complementary to $EVA^2$.}
+We added a related work section on different methods for faster CNN inference (\textbf{Section 6}) and summarized various other approaches including EVA$^2$ and explained how our system is either complementary or orthogonal to those systems.
 
-\red{
-Furthermore, Krypton\'s optimizations are logical optimizations. They can be implemented on any hardware platform that support convolution operations.
-We also added a related work section on different ``Methods for Faster CNN Inference'' and summarized various other approaches including $EVA^2$ and explained how our system is either complementary or orthogonal to those systems.
-}
-
+Focus of EVA$^2$ system is on exploiting the temporal redundancy of the video frames for faster inference. It does not exploit the spatial redundancy of the images. As the reviewer suggested the different occlusion positions can be treated as a video. However, EVA$^2$ will still perform motion estimation computations for the entire frame. Optimizations proposed in Krypton exploits the spatial redundancy of frames. Therefore, our work is complementary to EVA$^2$.
+Furthermore, our optimizations are logical optimizations. They can be implemented on any hardware platform that support convolution operations.
 
 \vspace{2mm}
 \noindent \textbf{W2:} \textit{Another weakness is that it seems likely that the techniques in Krypton can produce improvements for applications beyond the scope of occlusion-based explanations. For example, how would Krypton perform on an infrequently changing video feed, or one that changes in only a small part of the image? I think a comparison like this would improve the paper.}
 
 \vspace{2mm}
 \noindent \textbf{Response:}\\
-\red{Please see our response to Reviewer 1 D2.}
+Please see our response to Reviewer 1 D2.
 
 \vspace{2mm}
 \noindent \textbf{W3:} \textit{A third potential weakness lies in the approximate inference section, because there are many ways of doing approximate inference (e.g. low-precision computation, pruning, etc.) and it's not clear whether these could perform better than the new approximate inference methods proposed in this work. It would be an improvement to see some comparison to other methods for accelerating approximate inference.}
 
 \vspace{2mm}
 \noindent \textbf{Response:}\\
-\red{As the optimizations performed by Krypton are logical optimizations they are complementary to other physical optimizations such as low-precision computation. The optimizations introduced in Krypton are readily applicable to a pruned version of a CNN as it exploits only the spatial redundancy. Thus they are complementary to each other.
-}
+To be more precise on the scope of our optimizations we have refined the introduction paragraph in the Approximate Inference section (\textbf{Section 4}).
+The optimizations performed by our system are logical optimizations and they are complementary to other physical optimizations such as low-precision computation.
+The optimizations introduced in Krypton are applicable to a pruned version of a CNN as well as it exploits only the spatial redundancy. Thus they are complementary to each other.
 
-\red{However, to avoid confusion we refined the introduction paragraph in the Approximate Inference section to clearly mention the scope of our approximate inference optimizations.
-}
 
 \vspace{2mm}
 \noindent \textbf{D1:} \textit{Figure 2 is hard to read. A lot is happening in that diagram for a "simplified illustration" and I think the font should be larger. Figure 15 in the appendix is very difficult to read. You should make the font size larger. In Figure 17 in the appendix, there seems to be an interesting phenomenon in which performance breaks down at a protective field threshold of 0.3 across all three images. This is interesting, and might be worth a sentence or two of discussion.}
@@ -127,7 +133,8 @@ We also added a related work section on different ``Methods for Faster CNN Infer
 
 \vspace{2mm}
 \noindent \textbf{Response:}\\
-\red{We refined the text in Figure 2 and increased the font size. We also added a sentence to the Appendix figure caption.}
+We refined the text in \textbf{Figure 2} and \textbf{Figure 15} and also increased the font size.
+We also added a sentence describing quality degradation phenomena to the Appendix \textbf{Figure 17} (new \textbf{Figure 19}) caption.
 
 
 \section{Reviewer 5}
@@ -137,44 +144,48 @@ We also added a related work section on different ``Methods for Faster CNN Infer
 
 \vspace{2mm}
 \noindent \textbf{Response:}\\
-\red{Calculating the total cost of inference is largely impractical as it requires calculating the computational cost, memory copy overheads etc. Therefore, we evaluate the theoretical bounds for attainable speedup by estimating FLOPs savings for CNN operations (Section 2.2 Computational Cost of Inference). We also estimate the speedup attainable from adaptive drill-down (Section 4.2 Theoretical Speedups). These speedups can be used to characterize the benefits based on architecture.
-}
+We evaluate the theoretical bounds for attainable speedup by estimating FLOPs savings for CNN operations (\textbf{Section 2.2} Computational Cost of Inference).
+We also estimate the speedup attainable from adaptive drill-down (\textbf{Section 4.2} Theoretical Speedups).
+These speedups can be used to characterize the benefits based on architecture.
+Calculating the total cost of inference is largely impractical as it requires calculating the computational cost, memory copy overheads etc.
+
 
 \vspace{2mm}
 \noindent \textbf{W2:} \textit{ Increasingly, CNNs are synthesized by learn to learn techniques. As future work, the authors should consider how a limited projective field can be included as a first class evaluation metric in such synthesis process and if this leads to new architectures that are IVM friendly.}
 
 \vspace{2mm}
 \noindent \textbf{Response:}\\
-\red{We very much agree with the reviewer and it is something we are currently looking into as an extension of our work.
-We identified this as one of the potential avenues to extend our work in the Conclusion and Future Work section.}
+We identified this as one of the potential avenues to extend our work in the Summary and Discussion section (\textbf{Section 5.3}).
+We agree with the reviewer and it is something we are currently looking into as an extension of our work.
 
 \vspace{2mm}
 \noindent \textbf{W3:} \textit{ The experimental evaluation is largely focused on the speed up obtained when dealing with one image (and its distortions) at a time. Maintaining the output tensors in memory incurs additional memory overhead. This can become significant in a shared serving environment where multiple inference requests (multiple raw images) are processed by the model concurrently. It would be good to have some experiment that also illustrates the memory overhead.}
 
 \vspace{2mm}
 \noindent \textbf{Response:}\\
-\red{The memory overhead of IVM approach will be much smaller (even up to $52\%$) than the full inference as it only needs to maintain buffers for the modified small patches. We added an additional experiment to evaluate the memory usage behavior to the Appendix F to improve the comprehensiveness of our evaluations.}
-
-\vspace{2mm}
-\noindent \textbf{D1:} \textit{ Page 2 typo, "coverts" -> "converts".}
-
-\vspace{2mm}
-\noindent \textbf{Response:}\\
-\red{We thank the reviewer for pointing out this and we have fixed it in the revised version.}
+We added an additional experiment to evaluate the memory usage behavior to the \textbf{Appendix F} and referred it from the main experiments section (\textbf{Section 5}).
+The memory overhead of IVM approach will be much smaller (even up to $52\%$) than the full inference.
+Krypton materializes a single copy of all CNN layers corresponding to the unmodified image and reuses it across a batch of occluded images with IVM. For IVM the size of required memory buffers are much smaller than the memory buffers required for full inference as only the updated patches need to be propagated.
+% However, if incremental inference is performed with a batch size of one our system will incur more memory overheads as it now needs to allocate memory buffers to keep both a full copy of CNN features and incremental propagated patches.
+% But when the batch size is greater than one it's memory overhead will be smaller.
 
 \vspace{2mm}
 \noindent \textbf{D2:} \textit{ Font size of text in Figure 2 is a bit small.}
 
 \vspace{2mm}
 \noindent \textbf{Response:}\\
-\red{We have revised the text in Figure 2 and have increased the font size.}
+We have revised the text in \textbf{Figure 2} and have increased the font size.
 
 \vspace{2mm}
 \noindent \textbf{D3:} \textit{I wonder if such IVM techniques can also be applied to non-CNN models that have certain structural properties. For instance, in case of multi-tower models, the perturbation of input values of one tower do not affect the intermediate tensors of other towers until the final few layers.}
 
 \vspace{2mm}
 \noindent \textbf{Response:}\\
-\red{Our IVM optimization is readily applicable to multi-tower scenario. This is something that we are planning to work in the future.}
+The redundancies that exists in multi-tower models are very coarse-grained.
+We can easily exploit these redundancies by simply caching the final layer of the towers that do not change.
+On the other hand the focus of our system is on more fine-grained redundancies that exists in convolutional layers with small spatially localized updates.
+However, in a multi-tower CNN model it is possible to integrate both approaches to exploit both coarse-grained and fine-grained redundancies.
+
 
 \section{Reviewer 6}
 
@@ -183,58 +194,65 @@ We identified this as one of the potential avenues to extend our work in the Con
 
 \vspace{2mm}
 \noindent \textbf{Response:}\\
-\red{Please see our response to Reviewer 1 W2.}
+Please see our response to Reviewer 1 W2.
 
 \vspace{2mm}
 \noindent \textbf{W2:} \textit{Not clear how this generalizes to some of the more complex architectures, such as DenseNet or ResNext -- could you please discuss this?}
 
 \vspace{2mm}
 \noindent \textbf{Response:}\\
-\red{We have addressed this in Section 3.3 “Extending to DAG like CNNs.” The complexity of ResNeXt arises from element wise addition operations and the complexity of DenseNet arises from depth wise concatenation operations.
-}
+We have addressed this in \textbf{Section 3.3} ``Extending to DAG like CNNs.'' The complexity of ResNeXt arises from element wise addition operations and the complexity of DenseNet arises from depth wise concatenation operations.
 
 \vspace{2mm}
 \noindent \textbf{W3:} \textit{Could there by other applications in the A/V space beyond partial occlusion that use the same techniques -- maybe painting parts of an image, or erasing parts of an image and them repainting it with something new?}
 
 \vspace{2mm}
 \noindent \textbf{Response:}\\
-\red{Please see our response to Reviewer 1 D2}
+Please see our response to Reviewer 1 D2.
 
 \vspace{2mm}
 \noindent \textbf{W4:} \textit{There is a section on approximate inference, and it is rather ad-hoc, especially given the plethora of other methods such as quantization, pruning or collapsing a deep net, etc.)}
 
 \vspace{2mm}
 \noindent \textbf{Response:}\\
-\red{Please see our response to Reviewer 2 W3}
+Please see our response to Reviewer 2 W3
 
 \vspace{2mm}
 \noindent \textbf{W5:} \textit{Not clear how Krypton is integrated into PyTorch. Is there a special API? What is the architecture of the integration?}
 
 \vspace{2mm}
 \noindent \textbf{Response:}\\
-\red{Due to space constraints we had to add this information to the Appendix B. Appendix Figure 15 shows the architecture of the integration. Data is not transferred to the main memory in-between layers.}
+We have extended information about the integration of Krypton in to PyTorch in \textbf{Appendix B} and referred it from the experimental setup section (\textbf{Section 5}). Appendix \textbf{Figure 15} shows the architecture of the integration. Data is not transferred to the main memory in-between layers.
 
 \vspace{2mm}
 \noindent \textbf{D1:} \textit{I would have liked to see some network architectures where this does not work so well -- what are conditions where this is the case? Section 3 discusses this a bit, but could we have a clear characterization based on the architecture -- it seems that I can do a pre-calculations that based on the size of the occlusion I can calculate the savings?}
 
 \vspace{2mm}
 \noindent \textbf{Response:}\\
-\red{Section 3.1 ?}
+Yes. Given a CNN model architecture, in \textbf{Section 3.1} we provide an approach to estimate the expected speedups by applying our IVM method. Expected speedups is a function of the rate of projective field growth of the CNN which is determined by factors such as number of layers, convolution filter sizes, and filter stride values. For example, as shown in the End-to-End experimental results, VGG16 works really well as it uses small filter kernels and strides. But ResNet18 and Inception3 does not yield gains as high as VGG16.
 
 \vspace{2mm}
 \noindent \textbf{D2:} \textit{It is not clear to me how this is implemented. How do we bring the data back and forth to the GPU? Why are we getting such huge savings -- it is really just the number of add/multiplies saved? How do we now organize such irregular computations inside a GPU? Would be great to get answers to these questions.}
 
 \vspace{2mm}
 \noindent \textbf{Response:}\\
-\red{Appendix section B. Referred from Experiments section.}
+We explain the high level flow of our system in \textbf{Section 3.4 Algorithm 1}.
+Though the updated regions are spatially localized they do not reside in contiguous memory locations. So before we perform the incremental CNN inference we copy the updated regions into a contiguous memory location.
+Basically, we take a copy of the read-in context from the pre-materialized CNN layer values corresponding to the unmodified image and superimpose the updated patch.
+We repeat this for all the CNN layers.
+
+\textbf{Appendix B} summarizes how we have implemented this on PyTorch.
+For the CPU environment we implement this purely on top of PyTorch using built-in tensor slicing and stitching primitives.
+However, for the GPU environment such iterative memory copying operations introduce high overheads as the many GPU cores now have to idle wait for the slow memory copy operations. To overcome this we extended PyTorch by adding a custom GPU kernel which optimizes the input preparation for incremental inference by invoking parallel memory copy operations. This custom kernel is integrated to PyTorch using Python foreign function interface (FFI). Python FFI integrates with the Custom Kernel Interface layer which then invokes the Custom Memory Copy Kernel Implementation. The high-level architecture of the Custom Kernel integration is shown in \textbf{Figure 15}.
+
+The savings mainly come from the saving of redundant computations. However, this introduces memory slicing and stitching overheads which our system tries to minimize using an optimized memory copy kernel. Once the initial input data is transferred to GPU memory, the entire incremental CNN inference can be done using only the GPU memory.
 
 \vspace{2mm}
 \noindent \textbf{D3:} \textit{Are there network architectures where these techniques work especially well or badly?}
 
 \vspace{2mm}
 \noindent \textbf{Response:}\\
-\red{Given a CNN model architecture, in section 3.1 we provide an approach to estimate the expected speedups by applying our IVM method. Expected speedups is a function of the rate of projective field growth of the CNN which is determined by factors such as number of layers, convolution filter sizes, and filter stride values. For example, as shown in the End-to-End experimental results, VGG16 works really well as it uses small filter kernels and strides. But ResNet18 and Inception3 does not yield gains as high as VGG16.}
-
+Please see our response to Reviewer 6 D1.
 
 \vspace{2mm}
 \begin{sloppypar}
@@ -244,13 +262,15 @@ How does your work compare to this related work?}
 
 \vspace{2mm}
 \noindent \textbf{Response:}\\
-\red{TODO}
+Self-adjusting computation and other reactive computation methods found in the programming languages literature falls into the broader category of general incremental computation approaches. On the other hand the optimizations performed by our systems are specialized optimizations which takes into account the specific dataflow patterns in CNNs, the OBE workload, and also the characteristics of image datasets to perform incremental computations.
+Therefore, the two lines of work are complementary to each other.
 
 \vspace{2mm}
 \noindent \textbf{D5:} \textit{Section 4.3 has a lot of formulas, but the reader is missing the intuition behind these formulas, Could they be made more accessible?}
 
 \vspace{2mm}
 \noindent \textbf{Response:}\\
-\red{TODO}
+The equations in Section 4.3 are essentially derivations from theoretical speedup calculation explained in \textbf{Section 4.2 Equation 28}.
+To clarify this more we have refined the text in \textbf{Section 4.3}.
 
 \end{document}
