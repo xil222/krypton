@@ -1,6 +1,6 @@
 %!TEX root = <main.tex>
 \section{Experimental Evaluation}
-We integrated all of our optimization techniques with the popular deep learning environment PyTorch to create a tool we call \system~(\red{for more details on \system~ integration into PyToch see Appendix \ref{sec:pytorch_integration}}).
+We integrated all of our optimization techniques with the popular deep learning environment PyTorch to create a tool we call \system~(\red{more details in Appendix \ref{sec:pytorch_integration}}).
 We now evaluate the speedups yielded by \system~ for OBE for several deep CNNs on real-world image datasets.
 We then drill into the contributions of each of our optimization techniques.
 
@@ -81,7 +81,7 @@ We vary the patch size and set the stride to $4$. Figure~\ref{fig:5_2_1_edited} 
 
 
 \vspace{2mm}
-\noindent \textbf{Memory Overhead.} \red{We also evaluated the memory overhead of IVM approach compared to the full CNN inference method and found that it can enable up to 58\% lower memory overheads (see Appendix \ref{sec:mem_overhead}).}
+\noindent \textbf{Memory Overhead.} \red{We evaluated the memory overhead of IVM approach compared to the full CNN inference method and found that it can enable up to 58\% lower memory overheads (see Appendix \ref{sec:mem_overhead}).}
 
 % \vspace{-2mm}
 % \subsection{\red{Other approaches for CNN prediction explanation and faster inference}}
@@ -95,5 +95,11 @@ We vary the patch size and set the stride to $4$. Figure~\ref{fig:5_2_1_edited} 
 
 
 \vspace{-2mm}
-\subsection{Summary of Experiments.}
+\subsection{Summary and Discussion}
 Overall, our empirical evaluation shows that \system~ is able to substantially accelerate the OBE workload for explaining CNN predictions, up to $16$X speedups on GPU and $34.5$X speedups on CPU. The speedups of all 3 of our optimizations depend on the CNN's architectural properties. The speedups of our approximate inference optimizations also depend on the dataset due to their tunable parameters, which \system ~can tune automatically. Finally, the speedups of \system ~are higher on CPU than GPU but the absolute runtimes are much lower on GPU. Overall, all of our optimizations in \system ~help reduce waiting times for users and can save resource costs, since they only use existing compute resources without forcing users to pay for more resources (say, renting more GPUs in the cloud).
+
+\red{For this first paper on this work, we decided to use OBE as the concrete use case to demonstrate the effectiveness of our IVM framework.
+However, the applicability of our optimizations can go beyond just the OBE workload.
+Our IVM approach may be applied to optimize a broad range of complex visual recognition and video analytics tasks where the contents of subsequent frames does not change significantly ~\cite{cavigelli2017cbinfer,buckler2018eva}.
+On the other hand, one can treat the IVM friendliness of a CNN as a selection criteria for the model selection process when selecting an IVM accelerated CNN architecture for video analytics ~\cite{motamedi2018resource}.
+However, these require addressing several open challenges such as batching arbitrary sized update patches to utilize the maximum hardware throughput which we leave for future work.}

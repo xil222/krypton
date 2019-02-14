@@ -291,10 +291,8 @@ INPUT /usr/local/texlive/2016/texmf-dist/tex/latex/libertine/TS1LinuxLibertineT-
 INPUT /usr/local/texlive/2016/texmf-dist/fonts/tfm/public/libertine/LinLibertineT-tlf-ts1.tfm
 INPUT /usr/local/texlive/2016/texmf-dist/fonts/tfm/public/libertine/LinLibertineTB-tlf-t1.tfm
 INPUT /usr/local/texlive/2016/texmf-dist/fonts/tfm/public/libertine/LinLibertineTB-tlf-t1.tfm
-INPUT /usr/local/texlive/2016/texmf-dist/fonts/tfm/public/libertine/LinLibertineT-tlf-sc-t1.tfm
-INPUT /usr/local/texlive/2016/texmf-dist/fonts/tfm/public/libertine/LinLibertineT-tlf-t1.tfm
-INPUT /usr/local/texlive/2016/texmf-dist/fonts/tfm/public/libertine/LinLibertineTB-tlf-t1.tfm
 INPUT /usr/local/texlive/2016/texmf-dist/fonts/tfm/public/libertine/LinLibertineTI-tlf-t1.tfm
+INPUT /usr/local/texlive/2016/texmf-dist/fonts/tfm/public/libertine/LinLibertineT-tlf-sc-t1.tfm
 INPUT /usr/local/texlive/2016/texmf-dist/fonts/tfm/public/libertine/LinLibertineT-tlf-ot1.tfm
 INPUT /usr/local/texlive/2016/texmf-dist/fonts/tfm/public/libertine/LinLibertineT-tlf-ot1.tfm
 INPUT /usr/local/texlive/2016/texmf-dist/fonts/tfm/public/newtx/nxlmi.tfm
@@ -327,9 +325,8 @@ INPUT /usr/local/texlive/2016/texmf-dist/fonts/tfm/public/newtx/ntxbsy.tfm
 INPUT /usr/local/texlive/2016/texmf-dist/fonts/tfm/public/newtx/ntxbsy7.tfm
 INPUT /usr/local/texlive/2016/texmf-dist/fonts/tfm/public/newtx/ntxbexx.tfm
 INPUT /usr/local/texlive/2016/texmf-dist/fonts/tfm/public/newtx/ntxbexx.tfm
-INPUT introduction.tex
-INPUT introduction.tex
-INPUT ./images/krypton_overview.pdf
+INPUT /usr/local/texlive/2016/texmf-dist/fonts/tfm/public/libertine/LinLibertineT-tlf-t1.tfm
+INPUT /usr/local/texlive/2016/texmf-dist/fonts/tfm/public/libertine/LinLibertineTB-tlf-t1.tfm
 INPUT /usr/local/texlive/2016/texmf-dist/fonts/tfm/public/libertine/LinLibertineTI-tlf-t1.tfm
 INPUT /usr/local/texlive/2016/texmf-dist/fonts/tfm/public/libertine/LinLibertineT-tlf-ot1.tfm
 INPUT /usr/local/texlive/2016/texmf-dist/fonts/tfm/public/newtx/nxlmi.tfm
@@ -345,9 +342,12 @@ INPUT /usr/local/texlive/2016/texmf-dist/fonts/tfm/public/libertine/LinLibertine
 INPUT /usr/local/texlive/2016/texmf-dist/fonts/tfm/public/newtx/nxlbmi.tfm
 INPUT /usr/local/texlive/2016/texmf-dist/fonts/tfm/public/newtx/ntxbsy.tfm
 INPUT /usr/local/texlive/2016/texmf-dist/fonts/tfm/public/newtx/ntxbexx.tfm
+INPUT introduction.tex
+INPUT introduction.tex
+INPUT ./images/krypton_overview.pdf
+INPUT system_overview.tex
+INPUT system_overview.tex
 INPUT /usr/local/texlive/2016/texmf-dist/fonts/tfm/public/libertine/LinBiolinumT-tlf-t1.tfm
-INPUT system_overview.tex
-INPUT system_overview.tex
 INPUT /usr/local/texlive/2016/texmf-dist/tex/latex/inconsolata/t1zi4.fd
 INPUT /usr/local/texlive/2016/texmf-dist/tex/latex/inconsolata/t1zi4.fd
 INPUT /usr/local/texlive/2016/texmf-dist/fonts/tfm/public/inconsolata/t1-zi4r-4.tfm
@@ -390,6 +390,5 @@ INPUT images/interactive_experiment.pdf
 INPUT images/gpu_kernel_impl.pdf
 INPUT images/less_one_example.pdf
 INPUT /usr/local/texlive/2016/texmf-dist/fonts/tfm/public/libertine/LinLibertineT-tlf-t1.tfm
-INPUT images/visual_examples.pdf
-INPUT /usr/local/texlive/2016/texmf-dist/fonts/tfm/public/inconsolata/t1-zi4b-4.tfm
+INPUT visualsjpeg.pdf
 INPUT main.aux

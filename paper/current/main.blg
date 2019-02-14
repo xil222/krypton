@@ -1,0 +1,48 @@
+This is BibTeX, Version 0.99d (TeX Live 2016)
+Capacity: max_strings=35307, hash_size=35307, hash_prime=30011
+The top-level auxiliary file: main.aux
+The style file: unsrt.bst
+Database file #1: main.bib
+Warning--can't use both volume and number fields in he2017channel
+You've used 46 entries,
+            1791 wiz_defined-function locations,
+            686 strings with 11512 characters,
+and the built_in function-call counts, 11525 in all, are:
+= -- 1099
+> -- 429
+< -- 19
++ -- 161
+- -- 115
+* -- 633
+:= -- 1653
+add.period$ -- 150
+call.type$ -- 46
+change.case$ -- 44
+chr.to.int$ -- 0
+cite$ -- 47
+duplicate$ -- 575
+empty$ -- 1173
+format.name$ -- 115
+if$ -- 2731
+int.to.chr$ -- 0
+int.to.str$ -- 46
+missing$ -- 42
+newline$ -- 233
+num.names$ -- 40
+pop$ -- 202
+preamble$ -- 1
+purify$ -- 0
+quote$ -- 0
+skip$ -- 338
+stack$ -- 0
+substring$ -- 750
+swap$ -- 209
+text.length$ -- 19
+text.prefix$ -- 0
+top$ -- 0
+type$ -- 0
+warning$ -- 1
+while$ -- 108
+width$ -- 48
+write$ -- 498
+(There was 1 warning)

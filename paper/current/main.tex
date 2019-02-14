@@ -29,7 +29,7 @@
 \usepackage{bm}
 
 \newtheorem{theorem}{Theorem}[section]
-\newtheorem{proposition}{Proposition}[section]
+\newtheorem{prop}{Proposition}[section]
 \newtheorem{corollary}[theorem]{Corollary}
 \newtheorem{lemma}[theorem]{Lemma}
 \newtheorem{definition}{Definition}[section]
@@ -101,18 +101,20 @@ Deep Convolutional Neural Networks (CNNs) now match human accuracy in many image
 Perturbation based methods \cite{zeiler2014visualizing,zintgraf2017visualizing,ribeiro2016should} observe the output of the model by modifying regions of the input image.
 OBE falls into this category.}
 % Another recently introduced perturbation based method is the \textit{Prediction Difference Analysis} method \cite{zintgraf2017visualizing}, which modifies individual pixel values which can be considered as a special case of OBE with a patch size of one with different values.}
-\red{Gradient-based methods \cite{simonyan2013deep,selvaraju2017grad,sundararajan2017axiomatic} generate a sensitivity heat map by computing the partial derivatives of model output with respect to every input pixel using the backpropagation method.
-\textit{Axiomatic Attribution for Deep Networks using Integrated Gradients} method \cite{sundararajan2017axiomatic} is a recently proposed method which falls into this category.
-We evaluated OBE with integrated gradients methods and found comparable results (see Appendix \ref{sec:igd}).} 
+\red{Gradient-based methods \cite{simonyan2013deep,selvaraju2017grad,sundararajan2017axiomatic} generate a sensitivity heat map by computing the partial derivatives of model output with respect to every input pixel.
+\textit{Axiomatic Attribution for Deep Networks using Integrated Gradients} (IGD) method \cite{sundararajan2017axiomatic} is a recently proposed method which falls into this category.
+We evaluated OBE with IGD methods and found OBE can better localize relevant regions from the images (see Appendix \ref{sec:igd}).
+In general from literature we found that OBE is usually preferred over other methods by domain users, such as is radiology, as they produce high quality fine-grained heat maps using a process very intuitive to the human user ~\cite{jung2017deep,miller2017explanation}.}
+
 
 % Even though gradient approaches require only a single forward inference and a single backpropagation to generate the sensitivity heat map, the output may not be very intuitive and hard to understand because the salient pixels tend to spread over a very large area of the input image.
 % Despite being time-consuming, in most real world use cases such as in medical imaging, practitioners tend to use occlusion experiments, a perturbation based approach, as the preferred approach for explanations as they produce high quality fine grained sensitivity heat maps using a process which is very intuitive to the human observer ~\cite{zeiler2014visualizing,jung2017deep,miller2017explanation}.
 
 \vspace{2mm}
 \noindent \textbf{Accelerating CNN Inference.} 
-\red{EVA$^2$ \cite{buckler2018eva} is a custom software-hardware integrated stack for exploiting temporal redundancy across video frames.
-While one can map OBE to a video, EVA$^2$ will still perform motion estimation fully on all frames.
-Our IVM can avoid such spatial redundancy and our MQO optimizations amortizes hardware overheads, which makes \system ~complementary to EVA$^2$.}
+\red{In the literature there exist several approaches for accelerating CNN inference. EVA$^2$ \cite{buckler2018eva} is a custom software-hardware integrated stack for exploiting temporal redundancy across video frames.
+While one can map OBE to a video, EVA$^2$ will still perform motion estimation computations for the entire frame. Optimizations in our system exploits the spatial redundancy of frames.
+Furthermore, our optimizations are logical optimizations. They can be implemented on any hardware platform that support convolution operations.}
 CBinfer is a video analytics tool for change-based approximate CNN inference that can accelerate real-time object recognition in video~\cite{cavigelli2017cbinfer}. Our work also deals with incremental and approximate CNN inference, but our ideas exploit the specific properties of the OBE workload, not general object recognition in video. NoScope is a system to accelerate object detection in video streams using model cascades~\cite{kang2017noscope}.
 Our focus is on accelerating the OBE workload, not object recognition or video.
 Overall, both these tools are orthogonal to our focus.
@@ -129,17 +131,17 @@ Our approximate inference optimizations are inspired by approximate query proces
 % \noindent \textbf{Multimedia DBMSs.} 
 % There is much work in the database and multimedia literatures on multimedia DBMSs~\cite{adjeroh1997multimedia,kalipsiz2000multimedia}. The main focus of such work is on retrieval, including content-based image retrieval (CBIR) and video retrieval using similarity search or indexes. Our work is orthogonal to this body of work since we focus on accelerating CNN explanations, not multimedia retrieval queries. CBinfer is a video analytics tool for change-based approximate CNN inference that can accelerate real-time object recognition in video~\cite{cavigelli2017cbinfer}. Our work also deals with incremental and approximate CNN inference, but our ideas exploit the specific properties of the OBE workload, not general object recognition in video. NoScope is a system to accelerate object detection in video streams using model cascades~\cite{kang2017noscope}. Our focus is on accelerating the OBE workload, not object recognition or video. Overall, both these tools are orthogonal to our focus.
 
+
 \section{Conclusions And Future Work}
 Deep CNNs are gaining widespread adoption for image prediction tasks but their internal workings are unintuitive for most users. Thus, occlusion-based explanations (OBE) have become a popular mechanism for non-technical users to understand CNN predictions. But OBE is highly compute-intensive due to the large number of CNN inference requests produced. In this work, we formalize OBE from a data management standpoint and introduce several novel database-inspired optimization techniques to speed up OBE. Our techniques span exact incremental inference and multi-query optimization for CNN inference, as well as CNN-specific and human perception-aware approximate inference. Overall, our ideas yield even over an order of magnitude speedups for OBE in both CPU and GPU environments.
+As for future work, we plan to apply our ideas to other complex visual recognition tasks and video analytics.
 
 % The applicability of our optimizations goes beyond just the OBE workload.
 % As for future work, we plan to apply our ideas to other complex visual recognition tasks and video analytics. It is also interesting future work to generalize our framework to other CNN explanation mechanisms and data types.
 
-\red{The applicability of our optimizations goes beyond just the OBE workload.
-Our IVM approach can be applied to optimize a broad range of complex visual recognition and video analytics tasks where the contents of subsequent frames does not change significantly.
-On the other hand one can also treat the IVM friendliness of a CNN as a selection criteria when selecting a CNN architecture for a particular task.
-It is also interesting future work to generalize our framework to other types of models and data types.
-}
+% \red{
+% It is also interesting future work to generalize our framework to other types of models and data types.
+% }
 
 \pagebreak
 
