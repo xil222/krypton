@@ -1,38 +1,39 @@
 %!TEX root = <main.tex>
 \section{Incremental Inference Optimizations}\label{sec:exact}
-We start with a theoretical characterization of how much speedups we can expect from incremental inference for OBE. We then dive into our novel algebraic framework that enables incremental CNN inference and combine it with our multi-query optimization for OBE.
+We start with a theoretical characterization of the speedups incremental inference can yield. We then dive into our novel algebraic framework to enable incremental CNN inference and combine it with our multi-query optimization for OBE.
 
 %inspired by incremental view maintenance in relational databases~\cite{ivm}. We start with a theoretical characterization of how much speedup is possible to set the expectation. We then dive into our novel algebraic framework to enable and optimize incremental inference for OBE. To the best of our knowledge, ours is the first work to combine incremental view maintenance with multi-query optimization for repeated CNN inference.
 
 \vspace{-2mm}
 \subsection{Expected Speedups}
 
-\begin{figure}[t]
-\includegraphics[width=\columnwidth]{images/redundancy_ratio}
-\caption{Theoretical speedups for popular deep CNN architectures with incremental inference.}
-\label{fig:redundancy_ratio}
-\vspace{-8mm}
-\end{figure}
+In relational IVM, when a part of the input relation is updated, we recompute only the part of output that gets changed. We bring this notion to CNNs; a CNN layer is our ``query'' and the materialized feature tensor is our ``relation.'' OBE updates only a part of the image; so, only some parts of the tensors need to be recomputed. We create an algebraic framework to determine which parts these are for a CNN layer (Section 3.2) and how to propagate updates across layers (Section 3.3). \red{Given a CNN $f$ and the occlusion patch, our framework determines using ``static analysis'' over $f$ how many FLOPs can be saved, yielding us an upper bound on speedups.}
 
-The basic reason why IVM offers speedups is that when a part of the input relation is updated, IVM only computes the part of output that gets changed. We bring the IVM notion to CNNs; a CNN layer is our ``query'' and the materialized feature tensor is our ``relation.'' OBE updates only a part of the image; so, only some parts of the tensors need to be recomputed. We create an algebraic framework to determine which parts these are for a CNN layer (Section 3.2) and how to propagate updates across layers (Section 3.3). Given a CNN $f$ and the occlusion patch, our framework determines using ``static analysis'' over $f$ how many FLOPs can be saved. This gives us an upper bound on the possible speedup--we call this the ``theoretical speedup.''
-%
 More precisely, let the output tensor dimensions of layer $l$ be $(C_{\mathcal{O}:l} , H_{\mathcal{O}:l} , W_{\mathcal{O}:l})$. An incremental update recomputes a smaller local spatial context with width $W_{\mathcal{P}:l} \le W_{\mathcal{O}:l}$ and height $H_{\mathcal{P}:l} \le H_{\mathcal{O}:l}$.
-\red{Thus, the computational cost of incremental inference for layer $l$, denoted by $Q_{inc:l}$, is equal to the volume of the individual filter kernel times the total volume of the updated output which can be expressed as per Equation~(\ref{eqn:inc_local}). The total computational cost for incremental inference $Q_{inc}$ is given by Equation~(\ref{eqn:inc_all}).}
+\red{Thus, the computational cost of incremental inference for layer $l$, denoted by $Q_{\mathit{inc}:l}$, is equal to the volume of the individual filter kernel times the total volume of the updated output, as given by Equation~(\ref{eqn:inc_local}). The total computational cost for incremental inference, denoted $Q_\mathit{inc}$, is given by Equation~(\ref{eqn:inc_all}).}
 
 \vspace{-2mm}
 \begin{align}
 \label{eqn:inc_local}
-Q_{inc:l} =&~ (C_{\mathcal{I}:l} \cdot H_{\mathcal{K}:l} \cdot W_{\mathcal{K}:l})  (C_{\mathcal{O}:l} \cdot H_{\mathcal{P}:l} \cdot W_{\mathcal{P}:l})\\
+Q_{\mathit{inc}:l} =&~ (C_{\mathcal{I}:l} \cdot H_{\mathcal{K}:l} \cdot W_{\mathcal{K}:l})  (C_{\mathcal{O}:l} \cdot H_{\mathcal{P}:l} \cdot W_{\mathcal{P}:l})\\
 \label{eqn:inc_all}
-Q_{inc} =&~ \sum_{l~\mathit{in}~f} Q_{inc:l}
+Q_\mathit{inc} =&~ \sum_{l~\mathit{in}~f} Q_{\mathit{inc}:l}
 \end{align}
 
 The above costs can be much smaller than $Q_{:l}$ and $Q$ in Equations~(\ref{eqn:full_local}) and~(\ref{eqn:full_all}) earlier.
-The \textit{theoretical speedup} is defined as the ratio $\frac{Q}{Q_{inc}}$. It tells us how beneficial incremental inference can be in the best case \textit{without} performing the inference itself. It depends on several factors: the occlusion patch size, its location, the parameters of layers (kernel dimensions, stride, etc.), and so on. Calculating it is non-trivial and requires careful analysis, which we perform. The location of patch affects this ratio because a patch placed in the corner leads to fewer updates overall than one placed in the center of the image. Thus, the ``worst-case'' theoretical speedup is determined by placing the patch at the center.
+\red{We define the \textit{theoretical speedup} as the ratio $\frac{Q}{Q_\mathit{inc}}$.} It tells us how beneficial incremental inference can be in the best case \textit{without} performing the inference itself. It depends on several factors: the occlusion patch size, its location, the parameters of layers (kernel dimensions, stride, etc.), and so on. Calculating it is non-trivial and requires careful analysis, which we perform. The location of patch affects this ratio because a patch placed in the corner leads to fewer updates overall than one placed in the center of the image. Thus, the ``worst-case'' theoretical speedup is determined by placing the patch at the center.
 
-We performed a sanity check experiment to ascertain the theoretical speedups for a few popular deep CNNs. For varying occlusion patch sizes\eat{worst case: does not matter (with the same stride of 1)}, we plot the theoretical speedups of different deep CNNs. Figure~\ref{fig:redundancy_ratio} shows the results. VGG-16 has the highest theoretical speedups, while DenseNet-121 has the lowest. Most CNNs fall in the 2X--3X range. The differences arise due to the specifics of the CNNs' architectures: VGG-16 has small Convolution filter kernels and strides, which means full inference incurs a high computational cost ($Q = 15$ GFLOPs). In turn, incremental inference is most beneficial for VGG-16. Note that we assumed an image size of $224 \times 224$ for this plot; if the image is larger, the theoretical speedups will be higher.
+We perform a sanity check experiment to ascertain the theoretical speedups for a few popular deep CNNs. For varying occlusion patch sizes (with a stride of 1), we plot the theoretical speedups in Figure~\ref{fig:redundancy_ratio}. VGG-16 has the highest theoretical speedups, while DenseNet-121 has the lowest. Most CNNs fall in the 2X--3X range. The differences arise due to the specifics of the CNNs' architectures: VGG-16 has small Convolution filter kernels and strides, which means full inference incurs a high computational cost ($Q = 15$ GFLOPs). Thus, VGG-16 benefits the most from incremental inference. Note the image size is assumed to be $224 \times 224$ for this plot; if the image is larger, the theoretical speedups will be higher.
 
-While one might be tempted to think that speedups of 2X-3X may not be ``that significant'' in practice, we find that they indeed are significant for at least two reasons. First, \textit{users often wait in the loop} for OBE workloads for performing interactive diagnoses and analyses. Thus, even such speedups can improve their productivity, e.g., reducing the time taken on a CPU from about 6min to just 2min, or on a GPU from 1min to just 20s. Second, and equally importantly, incremental inference is the \textit{foundation for our approximate inference} optimizations (Section 4), which amplify the speedups we achieve for OBE. For instance, the speedup for Inception3 goes up from only 2X for incremental inference to up to 8X with all of our optimizations enabled. Thus, incremental inference is critical to optimizing OBE.
+\begin{figure}[t]
+\includegraphics[width=\columnwidth]{images/redundancy_ratio}
+\vspace{-8mm}
+\caption{Theoretical speedups for popular deep CNN architectures with incremental inference.}
+\label{fig:redundancy_ratio}
+\vspace{-4mm}
+\end{figure}
+
+While speedups of 2X-3X may sound ``not that significant'' in practice, we find that they indeed are significant for at least two reasons. First, \textit{users often wait in the loop} for OBE workloads for performing interactive diagnoses and analyses. Thus, even such speedups can improve their productivity, e.g., reducing the time taken on a CPU from about 6min to just 2min, or on a GPU from 1min to just 20s. Second, and equally importantly, incremental inference is the \textit{foundation for our approximate inference} optimizations (Section 4), which amplify the speedups we achieve for OBE. For instance, the speedup for Inception3 goes up from only 2X for incremental inference to up to 8X with all of our optimizations enabled. Thus, incremental inference is critical to optimizing OBE.
 
 \subsection{Single Layer Incremental Inference}\label{sec:inc_computation}
 
@@ -41,7 +42,7 @@ While one might be tempted to think that speedups of 2X-3X may not be ``that sig
 \vspace{-8mm}
 \caption{Simplified illustration of input and output update patches for Convolution/Pooling layers.}
 \label{fig:dimensions}
-\vspace{-6mm}
+\vspace{-4mm}
 \end{figure}
 
 We now present our algebraic framework for incremental updates to the materialized output tensor of a CNN layer. As per the discussion in Section 2.2, we focus only on the non-trivial layers that operate at the granularity of a local spatial context (Convolution and Pooling). We call our modified version of such layers ``incremental inference operations.''
@@ -98,13 +99,6 @@ W^\mathcal{R}_{\mathcal{P}:l} =&~ W_{\mathcal{K}:l} + (W^\mathcal{O}_{\mathcal{P
 % \end{align}
 
 
-Equation~(\ref{eqn:xcoordinate}) calculates the coordinates of the output update patch.
-\red{As shown in Figure \ref{fig:dimensions}}, padding effectively shifts the coordinate system and thus, $P_{x:l}$ is added to correct it.
-Due to overlaps among the filter kernels, the affected region of the input update patch \red{(blue shaded region in Figure \ref{fig:dimensions})} will be increased by $W_{\mathcal{K}:l}-1$, which needs to be subtracted from the input coordinate $x^\mathcal{I}_{\mathcal{P}:l}$.
-A filter of size $W_{\mathcal{K}:l}$ that is placed starting at $x^\mathcal{I}_{\mathcal{P}:l} - W_{\mathcal{K}:l} + 1$ will see an update starting from $x^\mathcal{I}_{\mathcal{P}:l}$.
-Equation~(\ref{eqn:patchwidth}) calculates the width of the output update patch \red{which is essentially the number of filter kernel stride positions on the read-in input context. However, this value cannot be larger than the output size}.
-Given these, a start coordinate and width of the read-in context are given by Equations~(\ref{eqn:xreadcoordinate}) and~(\ref{eqn:readpatchwidth}); similar equations hold for the height dimension (skipped for brevity).
-
 
 \begin{table}[t]
   \centering
@@ -134,6 +128,14 @@ Given these, a start coordinate and width of the read-in context are given by Eq
 \vspace{-4mm}
 \end{table}
 
+Equation~(\ref{eqn:xcoordinate}) calculates the coordinates of the output update patch.
+\red{As shown in Figure \ref{fig:dimensions}}, padding effectively shifts the coordinate system and thus, $P_{x:l}$ is added to correct it.
+Due to overlaps among the filter kernels, the affected region of the input update patch \red{(blue/shaded region in Figure \ref{fig:dimensions})} will be increased by $W_{\mathcal{K}:l}-1$, which needs to be subtracted from the input coordinate $x^\mathcal{I}_{\mathcal{P}:l}$.
+A filter of size $W_{\mathcal{K}:l}$ that is placed starting at $x^\mathcal{I}_{\mathcal{P}:l} - W_{\mathcal{K}:l} + 1$ will see an update starting from $x^\mathcal{I}_{\mathcal{P}:l}$.
+Equation~(\ref{eqn:patchwidth}) calculates the width of the output update patch \red{which is essentially the number of filter kernel stride positions on the read-in input context. However, this value cannot be larger than the output size}.
+Given these, a start coordinate and width of the read-in context are given by Equations~(\ref{eqn:xreadcoordinate}) and~(\ref{eqn:readpatchwidth}); similar equations hold for the height dimension (skipped for brevity).
+
+
 \vspace{2mm}
 \noindent \textbf{Incremental Inference Operation.}
 For layer $l$, given the transformation function $T_{:l}$, the pre-materialized input tensor $\mathcal{I}_{:l}$, input update patch $\mathcal{P}^\mathcal{O}_{:l}$, and the above calculated coordinates and dimensions of the input, output, and read-in context, the output update patch $\mathcal{P}^\mathcal{O}_{:l}$ is computed as follows:
@@ -154,7 +156,7 @@ Equation~(\ref{eqn:readin}) slices the read-in context $\mathcal{U}$ from the pr
 \subsection{Propagating Updates across Layers}
 
 \vspace{2mm}
-\noindent \textbf{Sequential CNNs.} Unlike relational IVM, CNNs have many layers, often in a sequence. This is analogous to having a sequence of queries that require IVM on their predecessor's updated output. This leads to a new issue: correctly and automatically configuring the update patches across all layers of a CNN. Specifically, output update patch $\mathcal{P}^{\mathcal{O}}_{:l}$ of layer $l$ becomes the input update patch of layer $l+1$. While this seems simple, it requires care at the boundary of a local context transformation and a global context transformation, e.g., going from a Convolution layer (or Pooling layer) to a Fully-Connected layer. In particular, we need to materialize the \textit{full updated output} instead of propagating just the output update patches, since the global context transformation lose spatial locality for subsequent layers.
+\noindent \textbf{Sequential CNNs.} Unlike relational IVM, CNNs have many layers, often in a sequence. This is analogous to a sequence of queries, each requiring IVM on its predecessor's output. This leads to a new issue: correctly and automatically configuring the update patches across all layers of a CNN. Specifically, output update patch $\mathcal{P}^{\mathcal{O}}_{:l}$ of layer $l$ becomes the input update patch of layer $l+1$. While this seems simple, it requires care at the boundary of a local context transformation and a global context transformation, e.g., between a Convolution (or Pooling) layer and a Fully-Connected layer. In particular, we need to materialize the full updated output, not just the output update patches, since global context transformations lose spatial locality for subsequent layers.
 
 \vspace{2mm}
 \noindent \textbf{Extension to DAG CNNs.} Some recent deep CNNs have a more general directed acyclic graph (DAG) structure for layers. They have two new kinds of layers that ``merge'' two branches in the DAG: \textit{element-wise addition} and \textit{depth-wise concatenation}. Element-wise addition requires two input tensors with all dimensions being identical. Depth-wise concatenation takes two input tensors with the same height and width dimensions. We now face a new challenge--how to calculate the output update patch when the two input tensors differ on their input update patches locations and sizes? Figure~\ref{fig:la_operators} shows a simplified illustration of this issue. The first input has its update patch starting at coordinates $(x^\mathcal{I}_{\mathcal{P}_1:l},y^\mathcal{I}_{\mathcal{P}_1:l})$ with dimensions $H^\mathcal{I}_{\mathcal{P}_1:l}$ and $W^\mathcal{I}_{\mathcal{P}_1:l}$, while the second input has its update patch starting at coordinates $(x^\mathcal{I}_{\mathcal{P}_2:l},y^\mathcal{I}_{\mathcal{P}_2:l})$ with dimensions $H^\mathcal{I}_{\mathcal{P}_2:l}$ and $W^\mathcal{I}_{\mathcal{P}_2:l}$. This issue can arise with both element-wise addition and depth-wise concatenation. 
@@ -162,6 +164,7 @@ Equation~(\ref{eqn:readin}) slices the read-in context $\mathcal{U}$ from the pr
 \begin{figure}[t]
 \vspace{-2mm}
 \includegraphics[width=\columnwidth]{images/la_operators}
+\vspace{-6mm}
 \caption{Illustration of bounding box calculation for differing input update patch locations for element-wise addition and depth-wise concatenation layers in DAG CNNs.}
 \label{fig:la_operators}
 \vspace{-4mm}
@@ -182,14 +185,14 @@ W^\mathcal{O}_{\mathcal{P}:l} =&~ \texttt{max}(x^\mathcal{I}_{\mathcal{P}_1:l}+W
 
 \subsection{Multi-Query Incremental Inference}
 OBE issues $|G|$ re-inference requests \textit{in one go}. Viewing each request as a ``query'' makes the connection with multi-query optimization (MQO)~\cite{sellis1988multiple} clear.
-The $|G|$ queries are also \textit{not disjoint}, since the occlusion patch is typically much smaller than the image, which means most the pixels are the same for each query.
-Thus, we now extend our IVM framework for one re-inference with an MQO-style optimization fusing multiple re-inference requests.
+The $|G|$ queries are also \textit{not disjoint}, since the occlusion patch is typically small, which means most pixels are the same for each query.
+Thus, we now extend our IVM framework for re-inference with an MQO-style optimization fusing multiple re-inference requests.
 An analogy with relational queries would be having many incremental update queries on the same relation in one go, with each query receiving a different incremental update. 
 %To the best of our knowledge, this is the first known case of combining IVM with MQO, at least for CNN inference.
 
 \vspace{2mm}
 \noindent \textbf{Batched Incremental Inference.}
-Our optimization works as follows: materialize all tensors \textit{once} and \textit{reuse} them for incremental CNN inference across all $|G|$ queries. Since most of the occluded image pixels are identical, parts of the tensors will likely be identical too. Thus, we amortize the cost of materializing the tensors across all $|G|$ queries. One might wonder, why not just perform ``batched'' inference for the $|G|$ queries? Batched inference is standard practice today for high-throughput compute hardware like GPUs, since it amortizes CNN set up costs, data movement costs, etc. Batch sizes are picked to optimize hardware utilization. We observed that batching is an \textit{orthogonal} (albeit trivial) optimization compared to our optimization. Thus, we can combine both of these ideas to execute incremental inference in a batched manner. We call this approach ``batched incremental inference.'' Empirically, we found that batching alone yields only limited speedups (under $2$X), but combining batching and incremental inference as we do can amplify the speedups. Algorithm~\ref{alg:incinference} formally presents the batched incremental inference operation for layer $l$.
+Our optimization works as follows: materialize all CNN tensors \textit{once} and \textit{reuse} them for incremental inference across all $|G|$ queries. Since the occluded images share most of their pixels, parts of the tensors will likely be identical too. Thus, we can amortize the materialization cost. One might ask: why not just perform ``batched'' inference for the $|G|$ queries? Batched execution is standard practice on high-throughput compute hardware like GPUs, since it amortizes CNN set up costs, data movement costs, etc. Batch sizes are tuned to optimize hardware utilization. We note that batching is an \textit{orthogonal} (albeit trivial) optimization compared to our MQO. Thus, we combine both of these ideas to execute incremental inference in a batched manner. We call this approach ``batched incremental inference.'' Empirically, we find that batching alone yields limited speedups (under $2$X), but our batched incremental inference amplifies the speedups. Algorithm~\ref{alg:incinference} formally presents the batched incremental inference operation for layer $l$.
 
 \begin{algorithm}[t]
     \caption{\textproc{BatchedIncrementalInference}}
@@ -263,7 +266,7 @@ Our optimization works as follows: materialize all tensors \textit{once} and \te
 The \textproc{BatchedIncrementalInference} procedure takes in the original transformation of the layer, pre-materialized input for the layer corresponding to the original image, a batch of updated patches which are 3D volumes of activation values and their geometric properties as input.
 }
 
-\textproc{BatchedIncrementalInference} first calculates the geometric properties of the output update patches and read-in contexts. A temporary tensor $\mathcal{U}$ is initialized to hold the input update patches with their read-in contexts. The \textbf{for} loop iteratively populates $\mathcal{U}$ with corresponding patches. Finally, $T_{:l}$ is applied to $\mathcal{U}$ to compute the output patches. We note that only for the first layer, all input update patches will be identical to the occlusion patch. But for the later layers, the update patches will start to deviate depending on their locations and read-in contexts.
+\textproc{BatchedIncrementalInference} first calculates the geometric properties of the output update patches and read-in contexts. A temporary tensor $\mathcal{U}$ is initialized to hold the input update patches with their read-in contexts. The \textbf{for} loop iteratively populates $\mathcal{U}$ with corresponding patches. Finally, $T_{:l}$ is applied to $\mathcal{U}$ to compute the output patches. We note that for the first layer, all input update patches will be identical to the occlusion patch. But for the later layers, the update patches will start to deviate depending on their locations and read-in contexts.
 
 
 \vspace{2mm}
@@ -275,38 +278,40 @@ Empirically, we found a dichotomy between CPUs and GPUs: \textproc{BatchedIncrem
 \vspace{-2mm}
 \subsection{Putting it All Together}
 
-We summarize the end-to-end workflow of our incremental inference optimizations for OBE. We are given the CNN $f$, image $\mathcal{I}_{:img}$, predicted class label $L$, occlusion patch $\mathcal{P}$ and its stride $S_{\mathcal{P}}$, and the set of occlusion patch positions $G$. Pre-materialize the output tensors of all layers of $f$ with $\mathcal{I}_{:img}$ as the input. Prepare occluded images ($\mathcal{I}^{'}_{(x,y):img}$) for all positions in $G$. For batches of $\mathcal{I}^{'}_{(x,y):img}$ as the input, invoke the transformations functions of the layers of $f$ in topological order and calculate the corresponding entries of heat map $M$. 
+We summarize the end-to-end workflow of our incremental inference optimizations for OBE. We are given the CNN $f$, image $\mathcal{I}_{:\mathit{img}}$, predicted class label $L$, occlusion patch $\mathcal{P}$ and its stride $S_{\mathcal{P}}$, and the set of occlusion patch positions $G$. Pre-materialize the output tensors of all layers of $f$ with $\mathcal{I}_{:\mathit{img}}$ as the input. Prepare occluded images ($\mathcal{I}^{'}_{(x,y):\mathit{img}}$) for all positions in $G$. For batches of $\mathcal{I}^{'}_{(x,y):\mathit{img}}$ as the input, invoke the transformations functions of the layers of $f$ in topological order and calculate the corresponding entries of heat map $M$. 
 For transformations with local spatial context, invoke \textproc{BatchedIncrementalInference}. For layer that precede a global context transformation, materialize the full updated output. For all other layers, invoke the original transformation function. $M$ is now the output heat map.
 
 
 \vspace{-2mm}
 \section{Approximate Inference Optimizations}\label{sec:approx}
 Since incremental inference is \textit{exact}, i.e., it yields the same heat map as full inference, it does not exploit a capability of human perception: tolerance of some degradation in visual quality. Thus, we now build upon our IVM framework to create two novel heuristic approximate inference optimizations that trade off the heat map's quality in a user-tunable manner to accelerate OBE further. 
-\red{
-These optimizations falls into the broad category of logical optimizations and can applied in conjunction with other physical optimizations for faster CNN inference such as low-precision computation \cite{moons20160} and CNN model pruning \cite{he2017channel}.
-% We first explain the techniques and then explain how to tune them.
-}
+\red{We note that our optimizations operate at the logical level and are complementary to more physical-level optimizations such as low-precision computation~\cite{moons20160} and model pruning~\cite{he2017channel}.}
+We first present the techniques and then explain how to tune them.
+
 \subsection{Projective Field Thresholding}
 
 \begin{figure}[t]
 \includegraphics[width=\columnwidth]{images/pf_truncate}
+\vspace{-8mm}
 \caption{(a) Projective field growth for 1-D Convolution (filter size $2$, stride $1$). (b) Projective field \textit{thresholding}; $\tau = 5/7$.}
 \label{fig:pf_truncate}
+\vspace{-2mm}
 \end{figure}
+
+
+The \textit{projective field} of a CNN neuron is the slice of the output tensor that is connected to it~\cite{basiccnnoperations}. It is a term from neuroscience to describe the effects of a retinal cell on the output of the eye's neuronal circuitry~ \cite{de2011projective}. This notion sheds light on the \textit{growth of the size} of the update patches through the layers of a CNN. The 3 kinds of layers (Section 2.2) affect the projective field size growth differently. Transformations at the granularity of individual elements do not alter the projective field size. Global context transformations increase it to the whole output. But local spatial context transformations, which are the most crucial, increase it \textit{gradually} at a rate determined by the filter kernel's size and stride: additively in the size and multiplicatively in the stride. The growth of the projective field size implies the amount of FLOPs saved by IVM decreases as we go to the higher layers of a CNN. Eventually, the output update patch becomes as large as the output tensor. This growth is illustrated by Figure~\ref{fig:pf_truncate}(a).
+
+Our above observation motivates the main idea of this optimization, which we call projective field thresholding: \textit{truncate} the projective field from growing beyond a given \textit{threshold fraction} $\tau$ $(0 < \tau \leq 1)$ of the output size. This means inference in subsequent layers is approximate. Figure~\ref{fig:pf_truncate}(b) illustrates the idea for a filter size 3 and stride 1. One input element is updated (shown in red/dark); the change propagates to 3 elements in the next layer and then 5, but it then gets truncated because we set $\tau = 5/7$. This approximation can alter the accuracy of the output values and the heat map's visual quality. Empirically, we find that modest truncation is tolerable and does not affect the heat map's visual quality too significantly. 
 
 \begin{figure}[t]
 \includegraphics[width=\columnwidth]{images/proj_thresholding}
+\vspace{-6mm}
 \caption{(a) Theoretical speedups with projective field thresholding. (b) Mean Square Error between exact and approximate output of final Convolution/Pooling layers.}
 \label{fig:proj_thresholding}
-\vspace{-4mm}
+\vspace{-2mm}
 \end{figure}
 
-The \textit{projective field} of a CNN neuron is the slice of the output tensor that is connected to it~\cite{basiccnnoperations}. It is a term from neuroscience to describe the effects of a retinal cell on the output of the eye's neuronal circuitry~ \cite{de2011projective}. This notion sheds light on the \textit{growth of the size} of the update patches through the layers of a CNN. The 3 kinds of layers (Section 2.2) affect the projective field size growth differently. Transformations at the granularity of individual elements do not alter the projective field size. Global context transformations increase it to the whole output. But local spatial context transformations, which are the most crucial, increase it \textit{gradually} at a rate determined by the filter kernel's size and stride: additively in the size and multiplicatively in the stride. The growth of the projective field size implies the amount of FLOPs saved by IVM decreases as we go to the higher layers of a CNN. Eventually, the output update patch becomes as large as the output tensor. This growth is illustrated by Figure~\ref{fig:pf_truncate} (a).
-
-
-Our above observation motivates the main idea of this optimization, which we call projective field thresholding: \textit{truncate} the projective field from growing beyond a given \textit{threshold fraction} $\tau$ $(0 < \tau \leq 1)$ of the output size. This means inference in subsequent layers is approximate. Figure~\ref{fig:pf_truncate} (b) illustrates the idea for a filter size 3 and stride 1. One input element is updated (shown in red/dark); the change propagates to 3 elements in the next layer and then 5, but it then gets truncated because we set $\tau = 5/7$. This approximation can alter the accuracy of the output values and the heat map's visual quality. Empirically, we find that modest truncation is tolerable and does not affect the heat map's visual quality too significantly. 
-
-To provide intuition on why the above happens, consider histograms on the side of Figures~\ref{fig:pf_truncate} (a,b) that list the number of unique ``paths'' from the updated element to each element in the last layer. It resembles a Gaussian distribution, with the maximum paths concentrated on the middle element. Thus, for most of the output patch updates, truncation will only discard a few values at the ``fringes'' that contribute to an output element. Of course, we do not consider the weights on these ``paths,'' which is dependent on the given trained CNN. Since the weights can be arbitrary, a tight formal analysis is unwieldy. But under some assumptions on the weights values (similar to the assumptions in~\cite{luo2016understanding} for understanding the ``receptive field'' in CNNs), we show in the appendix that this distribution does indeed converge to a Gaussian. Thus, while this idea is a heuristic, it is grounded in a common behavior of real CNNs.
+To provide intuition on why the above happens, consider histograms on the side of Figures~\ref{fig:pf_truncate}(a,b) that list the number of unique ``paths'' from the updated element to each element in the last layer. It resembles a Gaussian distribution, with the maximum paths concentrated on the middle element. Thus, for most of the output patch updates, truncation will only discard a few values at the ``fringes'' that contribute to an output element. Of course, we do not consider the weights on these ``paths,'' which is dependent on the given trained CNN. Since the weights can be arbitrary, a tight formal analysis is unwieldy. But under some assumptions on the weights values (similar to the assumptions in~\cite{luo2016understanding} for understanding the ``receptive field'' in CNNs), we show in the appendix that this distribution does indeed converge to a Gaussian. Thus, while this idea is a heuristic, it is grounded in a common behavior of real CNNs.
 \eat{
 For more details we refer the reader to \cite{luo2016understanding}, where a similar theoretical result has been proved for the receptive field\footnote{Receptive field of a CNN neuron is the local region (including the depth) of the input volume which is connected to it.} of a Deep CNN.
 }
@@ -340,9 +345,9 @@ As expected, as $\tau$ goes down from $1$, the theoretical speedup goes up for a
 
 
 \subsection{Adaptive Drill-Down}\label{sec:ada-drill-down}
-This optimization is also a heuristic, but it is based on our observation about a peculiar semantics of the OBE task. It modifies the way $G$ (the set of occlusion path locations) is specified and handled, especially in the non-interactive specification mode. We explain our intuition with an example. Consider a radiologist explaining a CNN prediction for diabetic retinopathy on a tissue image. The region of interest typically occupies only a tiny fraction of the image. Thus, it is an overkill to perform regular OBE for \textit{every} patch location: most of the (incremental) inference computations are effectively ``wasted'' on uninteresting regions. In such cases, we modify the OBE workflow to produce an approximate heat map using a two-stage process, illustrated by Figure \ref{fig:adaptive_drill_down} (a).
+This heuristic optimization is based on our observation about a peculiar semantics of OBE that lets us modify how $G$ (the set of occlusion patch locations) is specified and handled, especially in the non-interactive specification mode. We explain our intuition with an example. Consider a radiologist explaining a CNN prediction for diabetic retinopathy on a tissue image. The region of interest typically occupies only a tiny fraction of the image. Thus, it is an overkill to perform regular OBE for \textit{every} patch location: most of the (incremental) inference computations are effectively ``wasted'' on uninteresting regions. In such cases, we modify the OBE workflow to produce an approximate heat map using a two-stage process, illustrated by Figure \ref{fig:adaptive_drill_down}(a).
 
-In stage one, we produce a \textit{lower resolution} heat map by using a larger stride--we call it \textit{stage one stride} $S_1$. Using this heat map, we identify the regions of the input that see the largest drops in predicted probability of the label $L$. Given a predefined parameter \textit{drill-down fraction}, denoted $r_{drill-down}$, we select a proportional number of regions based on the probability drops. In stage two, we perform OBE only for these regions with original stride value (we also call this \textit{stage two stride}, $S_2$) for the occlusion patch to yield a portion of the heat map at the original higher resolution. Since this process ``drills down'' adaptively based on the lower resolution heat map, we call it adaptive drill-down. Note that this optimization also builds upon the incremental inference optimizations of Section 3, but it is \textit{orthogonal} to projective field thresholding and can be used in addition.
+In stage one, we produce a lower resolution heat map by using a larger stride--we call it \textit{stage one stride} $S_1$. Using this heat map, we identify the regions of the input that see the largest drops in predicted probability of the label $L$. Given a predefined parameter \textit{drill-down fraction}, denoted $r_{\mathit{drill}-\mathit{down}}$, we select a proportional number of regions based on the probability drops. In stage two, we perform OBE only for these regions with original stride value (we also call this \textit{stage two stride}, $S_2$) for the occlusion patch to yield a portion of the heat map at the original higher resolution. Since this process ``drills down'' adaptively based on the lower resolution heat map, we call it adaptive drill-down. Note that this optimization also builds upon the incremental inference optimizations of Section 3, but it is \textit{orthogonal} to projective field thresholding and can be used in addition.
 
 % \begin{figure}[t]
 % \includegraphics[width=\columnwidth]{images/adaptive-drill-down}
@@ -352,53 +357,56 @@ In stage one, we produce a \textit{lower resolution} heat map by using a larger 
 
 \vspace{2mm}
 \noindent \textbf{Theoretical Speedups.}
-We now define a notion of theoretical speedup for this optimization; this is independent of the theoretical speedup of incremental inference. We first explain the effects of $r_{drill-down}$ and $S_1$. Setting these parameters is an application-specific balancing act. If $r_{drill-down}$ is low, only a small region will need re-inference at the original resolution, which will save a lot of FLOPs. But this may miss some regions of interest and thus, compromise important explanation details. Similarly, a large $S_1$ also saves a lot of FLOPs by reducing the number of re-inference queries in stage one. But it runs the risk of misidentifying interesting regions, especially when the size of those regions are smaller than the occlusion patch size. We now define the theoretical speedup of adaptive drill-down as the ratio of the number of re-inference queries for regular OBE without this optimization to that with this optimization. We only need the counts, since the occlusion patch dimensions are unaltered, i.e., the cost of a re-inference query is the same with or without this optimization. Given a stride $S$, the number of re-inference queries is $\frac{H_{\mathcal{I}_{img}}}{S} \cdot \frac{W_{\mathcal{I}_{img}}}{S}$. Thus, the theoretical speedup is given by the following equation. Figure~\ref{fig:adaptive_drill_down} (b) illustrates how this ratio varies with $S_1$ and $r_{drill-down}$.
+We now define a notion of theoretical speedup for this optimization; this is independent of the theoretical speedup of incremental inference. We first explain the effects of $r_{\mathit{drill}-\mathit{down}}$ and $S_1$. Setting these parameters is an application-specific balancing act. If $r_{\mathit{drill}-\mathit{down}}$ is low, only a small region will need re-inference at the original resolution, which will save a lot of FLOPs. But this may miss some regions of interest and thus, compromise important explanation details. Similarly, a large $S_1$ also saves a lot of FLOPs by reducing the number of re-inference queries in stage one. But it runs the risk of misidentifying interesting regions, especially when the size of those regions are smaller than the occlusion patch size. We now define the theoretical speedup of adaptive drill-down as the ratio of the number of re-inference queries for regular OBE without this optimization to that with this optimization. We only need the counts, since the occlusion patch dimensions are unaltered, i.e., the cost of a re-inference query is the same with or without this optimization. Given a stride $S$, the number of re-inference queries is $\frac{H_{\mathcal{I}_\mathit{img}}}{S} \cdot \frac{W_{\mathcal{I}_\mathit{img}}}{S}$. Thus, the theoretical speedup is given by the following equation. Figure~\ref{fig:adaptive_drill_down}(b) illustrates how this ratio varies with $S_1$ and $r_{\mathit{drill}-\mathit{down}}$.
 
 \vspace{-2mm}
 \begin{align}
 \label{eqn:adaptive-drill-down-eqn}
-\texttt{speedup} = \frac{S^2_1}{S^2_2+r_{drill-down} \cdot S^2_1}
+\texttt{speedup} = \frac{S^2_1}{S^2_2+r_{\mathit{drill}-\mathit{down}} \cdot S^2_1}
 \end{align}
 
 \begin{figure}[t]
 \includegraphics[width=\columnwidth]{images/adaptive_drill_down}
-\caption{(a) Schematic illustration of the adaptive drill-down idea. (b) Conceptual depiction of the effects of $S_1$ and $r_{drill-down}$ on the theoretical speedup.. }
+\vspace{-8mm}
+\caption{(a) Schematic illustration of the adaptive drill-down idea. (b) Conceptual depiction of the effects of $S_1$ and $r_{\mathit{drill}-\mathit{down}}$ on the theoretical speedup.. }
 \label{fig:adaptive_drill_down}
-\vspace{-4mm}
+\vspace{-2mm}
 \end{figure}
 
 \subsection{Automated Parameter Tuning}
 We now present automated parameter tuning methods for easily configuring our approximate inference optimizations.
 
 \vspace{2mm}
-\noindent \textbf{Tuning projective field thresholding.}
+\noindent \textbf{Tuning Projective Field Thresholding.}
 As Section 4.1 explained, $\tau$ controls the visual quality of the heat map. There is a spectrum of visual quality degradation: imperceptible changes to major structural changes. But mapping $\tau$ to visual quality directly is likely to be unintuitive for users. Thus, to measure visual quality more intuitively, we adopt a cognitive science-inspired metric called Structural Similarity (SSIM) Index, which is widely used to quantify human-perceptible differences between two images~\cite{wang2004image}. In our case, the two ``images'' are the original and approximate heat maps. SSIM is a number in $[-1,1]$, with $1$ meaning a perfect match. SSIM values in the $[0.90,0.95]$ range are considered almost imperceptible distortions in many practical multimedia applications such as image compression and video encoding~\cite{wang2004image}.
 
-Our tuning process for $\tau$ has an offline ``training'' phase and an online usage phase. The offline phase relies on a set of sample images (default $30$) from the same application domain. We compute SSIM for the approximate and exact heat maps for all sample images for a few $\tau$ values (default $1.0, 0.9, 0.8, \dots, 0.4$). We then learn a second-degree polynomial curve for SSIM as a function of $\tau$ with these data points. Figure~\ref{fig:system_tuning} (a) illustrates this phase and the fit SSIM-$\tau$ curves for 3 different CNNs using sample images from an OCT dataset (Section 5). In the online phase, when OBE is needed on a given image, we expect the user to provide a \textit{target SSIM} for the quality--runtime trade-off they want ($1$ yields the exact heat map). We can then use our learned curve to map this target SSIM to the lowest $\tau$. Figure~\ref{fig:system_tuning} (b) shows the CDFs of differences between the target SSIM ($0.9$) and the actual SSIM yielded when using our auto-tuned $\tau$ on both the training set and a holdout test set (also $30$ images). In $80\%$ of the cases, the actual SSIM was \textit{better} than the user-given target; never once did the actual SSIM go $0.1$ below the target SSIM. This suggests that our auto-tuning method for $\tau$ works, is robust, and applicable to different CNNs.
-
-\vspace{2mm}
-\noindent \textbf{Tuning adaptive drill-down.}
-As Section~\ref{sec:ada-drill-down} explained, the speedup offered by adaptive drill-down is controlled by two parameters: stage one stride $S_1$ and drill-down fraction $r_{drill-down}$. We expect the user to provide $r_{drill-down}$ (default $0.25$), since it captures the user's intuition about how large or small the region of interest is likely to be in the images in their specific application domain and dataset. We also expect the user to provide a ``target speedup'' ratio (default $3$) for using this optimization to capture their desired quality-runtime trade-off. Higher the user's target speedup, the more we sacrifice the quality of the ``non-interesting regions'' ($1 - r_{drill-down}$ fraction of the heat map). Our automated tuning process sets $S_1$ using these two user-given settings. Unlike the tuning of $\tau$, setting $S_1$ is more direct, since this optimization relies on the number of re-inference queries, not SSIM. Let $\mathit{target}$ denote the target speedup; the original occlusion patch stride is $S_2$. Equation~\ref{eqn:s1} shows how we calculate $S_1$ \red{which is obtained by making $S1$ the subject of Equation \ref{eqn:adaptive-drill-down-eqn}}. Since $S_1$ cannot be larger than the image width $W_{img}$ (similarly $H_{img}$) and due to the constraint of $(1-r_{drill\-down} \cdot \texttt{speedup})$ being positive, we also have an upper bound on the possible speedups as per Equation~\ref{eqn:speedup_bound}.
-
-\begin{align}
-\label{eqn:s1}
-S_1 = \sqrt{\frac{\mathit{target}}{1 - r_{drill-down} \cdot \mathit{target}}} \cdot S_2
-\end{align}
-
-\vspace{-2mm}
-\begin{align}
-\label{eqn:speedup_bound}
-\mathit{speedup} < \texttt{min}\Bigg(\frac{W^2_{img}}{S^2_2+r_{drill-down} \cdot W^2_{img}}, \frac{1}{r_{drill-down}}\Bigg)
-\end{align}
+Our tuning process for $\tau$ has an offline ``training'' phase and an online usage phase. The offline phase relies on a set of sample images (default $30$) from the same application domain. We compute SSIM for the approximate and exact heat maps for all sample images for a few $\tau$ values (default $1.0, 0.9, 0.8, \dots, 0.4$). We then learn a second-degree polynomial curve for SSIM as a function of $\tau$ with these data points. Figure~\ref{fig:system_tuning}(a) illustrates this phase and the fit SSIM-$\tau$ curves for 3 different CNNs using sample images from an OCT dataset (Section 5). In the online phase, when OBE is needed on a given image, we expect the user to provide a \textit{target SSIM} for the quality--runtime trade-off they want ($1$ yields the exact heat map). We can then use our learned curve to map this target SSIM to the lowest $\tau$. Figure~\ref{fig:system_tuning}(b) shows the CDFs of differences between the target SSIM ($0.9$) and the actual SSIM yielded when using our auto-tuned $\tau$ on both the training set and a holdout test set (also $30$ images). In $80\%$ of the cases, the actual SSIM was \textit{better} than the user-given target; never once did the actual SSIM go $0.1$ below the target SSIM. This suggests that our auto-tuning method for $\tau$ works, is robust, and applicable to different CNNs.
 
 
 \begin{figure}[t]
 \includegraphics[width=\columnwidth]{images/system_tuning}
+\vspace{-8mm}
 \caption{(a) Fitting a second-order curve for SSM against $\tau$ on a sample of the OCT dataset. 
 (b) CDFs of deviation of actual SSIM from the target SSIM ($0.9$) with our auto-tuned $\tau$, which turned out to be $0.5$, $0.7$, and $0.9$ for VGG-16, ResNet-18, and Inception-V3, respectively.}
 \label{fig:system_tuning}
 \vspace{-4mm}
 \end{figure}
+
+\vspace{2mm}
+\noindent \textbf{Tuning Adaptive Drill-Down.}
+As Section~\ref{sec:ada-drill-down} explained, the speedup offered by adaptive drill-down is controlled by two parameters: stage one stride $S_1$ and drill-down fraction $r_{\mathit{drill}-\mathit{down}}$. We expect the user to provide $r_{\mathit{drill}-\mathit{down}}$ (default $0.25$), since it captures the user's intuition about how large or small the region of interest is likely to be in the images in their specific application domain and dataset. We also expect the user to provide a ``target speedup'' ratio (default $3$) for using this optimization to capture their desired quality-runtime trade-off. Higher the user's target speedup, the more we sacrifice the quality of the ``non-interesting regions'' ($1 - r_{\mathit{drill}-\mathit{down}}$ fraction of the heat map). Our automated tuning process sets $S_1$ using these two user-given settings. Unlike the tuning of $\tau$, setting $S_1$ is more direct, since this optimization relies on the number of re-inference queries, not SSIM. Let $\mathit{target}$ denote the target speedup; the original occlusion patch stride is $S_2$. Equation~\ref{eqn:s1} shows how we calculate $S_1$; \red{it is obtained by making $S1$ the subject of Equation~\ref{eqn:adaptive-drill-down-eqn}}. Since $S_1$ cannot be larger than the image width $W_\mathit{img}$ (similarly $H_\mathit{img}$) and due to the constraint of $(1-r_{\mathit{drill}-\mathit{down}} \cdot \texttt{speedup})$ being positive, we also have an upper bound on the possible speedups as per Equation~\ref{eqn:speedup_bound}.
+
+\begin{align}
+\label{eqn:s1}
+S_1 = \sqrt{\frac{\mathit{target}}{1 - r_{\mathit{drill}-\mathit{down}} \cdot \mathit{target}}} \cdot S_2
+\end{align}
+
+\vspace{-2mm}
+\begin{align}
+\label{eqn:speedup_bound}
+\mathit{speedup} < \texttt{min}\Bigg(\frac{W^2_\mathit{img}}{S^2_2+r_{\mathit{drill}-\mathit{down}} \cdot W^2_{img}}, \frac{1}{r_{\mathit{drill}-\mathit{down}}}\Bigg)
+\end{align}
+
 
 % \begin{figure}[t]
 % \includegraphics[width=\columnwidth]{images/adaptive_ssim}

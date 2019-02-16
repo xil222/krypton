@@ -93,39 +93,30 @@ Deep Convolutional Neural Networks (CNNs) now match human accuracy in many image
 
 \input{experiments}
 
+\vspace{-2mm}
 \section{Other Related Work}
 
 \vspace{2mm}
-\noindent \textbf{Methods for explaining CNN Predictions.}
-\red{Perturbation based and gradient based are the two main types of CNN explainability approaches.
-Perturbation based methods \cite{zeiler2014visualizing,zintgraf2017visualizing,ribeiro2016should} observe the output of the model by modifying regions of the input image.
-OBE falls into this category.}
+\noindent \textbf{Methods for Explaining CNN Predictions.}
+\red{Perturbation-based and gradient-based are the two main kinds of methods. Perturbation-based methods observe the output of the CNN by modifying regions of the input image~\cite{zeiler2014visualizing,zintgraf2017visualizing,ribeiro2016should}. OBE belongs to this category.}
 % Another recently introduced perturbation based method is the \textit{Prediction Difference Analysis} method \cite{zintgraf2017visualizing}, which modifies individual pixel values which can be considered as a special case of OBE with a patch size of one with different values.}
-\red{Gradient-based methods \cite{simonyan2013deep,selvaraju2017grad,sundararajan2017axiomatic} generate a sensitivity heat map by computing the partial derivatives of model output with respect to every input pixel.
-\textit{Axiomatic Attribution for Deep Networks using Integrated Gradients} (IGD) method \cite{sundararajan2017axiomatic} is a recently proposed method which falls into this category.
-We evaluated OBE with IGD methods and found OBE can better localize relevant regions from the images (see Appendix \ref{sec:igd}).
-In general from literature we found that OBE is usually preferred over other methods by domain users, such as is radiology, as they produce high quality fine-grained heat maps using a process very intuitive to the human user ~\cite{jung2017deep,miller2017explanation}.}
+\red{Gradient-based methods generate a sensitivity heatmap by computing the partial derivatives of model outputs with respect to every input pixel~\cite{simonyan2013deep,selvaraju2017grad,sundararajan2017axiomatic}. The recently proposed ``Integrated Gradients'' (IGD) method belongs into this category~\cite{sundararajan2017axiomatic}. Empirically, we found that OBE produces higher quality heatmaps with better localized regions of interest compared to IGD, while being competitive on runtime (see Appendix \ref{sec:igd} for details). In practice, however, OBE is usually the method of choice for domain scientific users, especially in radiology~\cite{jung2017deep,miller2017explanation}, since it is easy to understand for non-technical users and typically produces high-quality and well-localized heatmaps.}
 
 
 % Even though gradient approaches require only a single forward inference and a single backpropagation to generate the sensitivity heat map, the output may not be very intuitive and hard to understand because the salient pixels tend to spread over a very large area of the input image.
 % Despite being time-consuming, in most real world use cases such as in medical imaging, practitioners tend to use occlusion experiments, a perturbation based approach, as the preferred approach for explanations as they produce high quality fine grained sensitivity heat maps using a process which is very intuitive to the human observer ~\cite{zeiler2014visualizing,jung2017deep,miller2017explanation}.
 
 \vspace{2mm}
-\noindent \textbf{Accelerating CNN Inference.} 
-\red{In the literature there exist several approaches for accelerating CNN inference. EVA$^2$ \cite{buckler2018eva} is a custom software-hardware integrated stack for exploiting temporal redundancy across video frames.
-While one can map OBE to a video, EVA$^2$ will still perform motion estimation computations for the entire frame. Optimizations in our system exploits the spatial redundancy of frames.
-Furthermore, our optimizations are logical optimizations. They can be implemented on any hardware platform that support convolution operations.}
-CBinfer is a video analytics tool for change-based approximate CNN inference that can accelerate real-time object recognition in video~\cite{cavigelli2017cbinfer}. Our work also deals with incremental and approximate CNN inference, but our ideas exploit the specific properties of the OBE workload, not general object recognition in video. NoScope is a system to accelerate object detection in video streams using model cascades~\cite{kang2017noscope}.
-Our focus is on accelerating the OBE workload, not object recognition or video.
-Overall, both these tools are orthogonal to our focus.
+\noindent \textbf{Faster CNN Inference.} 
+\red{EVA$^2$ \cite{buckler2018eva} is a custom software-hardware integrated stack for exploiting temporal redundancy across video frames. While one can map OBE to a video, EVA$^2$ will still perform motion estimation computations on whole frames and not exploit spatial redundancy across frames as our batched IVM does. Since our optimizations are at the logical level, they are also applicable to any compute hardware.}
+CBinfer performs change-based approximate CNN inference to accelerate real-time object recognition on video~\cite{cavigelli2017cbinfer}. Similarly, NoScope accelerates object classification on video streams using model cascades~\cite{kang2017noscope}. Our focus is on accelerating the OBE workload for images, not video streams. Our IVM and approximate inference optimizations exploit specific semantic properties of OBE, not general object recognition. Overall, both of these tools are orthogonal to our focus.
 
 
 \vspace{2mm}
 \noindent \textbf{Query Optimization.}
-Our work is inspired by the long line of work on incremental view maintenance (IVM) in databases~\cite{chirkova2012materialized, gupta1995maintenance, levy1995answering}, but this is the first work to use the IVM lens for the occlusion-based CNN explanation workload. Our novel algebraic IVM framework for CNN inference is closely tied to the dataflow of CNN layers, which transform tensors in non-trivial ways. Closely related to our work is the IVM framework for linear algebra in~\cite{nikolic2014linview}. They focus on bulk matrix operators and incremental addition of rows to the data matrix. We do not deal with bulk matrix operators or additions of rows, but more fine-grained CNN inference computations and in-place updates to image pixels due to occlusions. Also closely related is the IVM framework for distributed multi-dimensional array database queries in~\cite{zhao2017incremental}. An interesting connection is that CNN layers with local spatial context (Section 2.2) can be viewed as a variant of spatial array join-aggregate queries. But our framework enables end-to-end incremental inference for entire CNNs, not just one-off spatial queries involving data materialization and loading. Our focus is also on popular deep learning environments, not array databases. Finally, we also go beyond algebraic IVM ideas to further exploit CNN-specific semantics and human perception properties in our problem setting.
+Our work is inspired by the long line of work on relational IVM~\cite{chirkova2012materialized, gupta1995maintenance, levy1995answering}, but ours is the first work to use the IVM lens for OBE with CNNs. Our novel algebraic IVM framework is closely tied to the dataflow of CNN layers, which transform tensors in non-trivial ways. Our work is related to the IVM framework for linear algebra in~\cite{nikolic2014linview}. They focus on bulk matrix operators and incremental addition of rows. We do not deal with bulk matrix operators or addition of rows but more fine-grained CNN inference computations and in-place updates to image pixels due to occlusions. Also related is the IVM framework for distributed multi-dimensional array database queries in~\cite{zhao2017incremental}. An interesting connection is that CNN layers with local spatial context (Section 2.2) can be viewed as a variant of spatial array join-aggregate queries. But our work enables end-to-end IVM for entire CNNs, not just one-off spatial queries involving data materialization and loading. Our focus is on popular deep learning tools, not array databases. Finally, we also introduce novel CNN-specific and human perception-aware optimizations to accelerate OBE.
 
-Our work is also inspired by the multi-query optimization (MQO) literature~\cite{sellis1988multiple,le2012scalable}. But we focus on CNN inference, not relational queries. To the best of our knowledge, ours is the first work to present an MQO-style optimization combined with IVM for optimizing CNN inference for occlusion-based explanations.
-Our approximate inference optimizations are inspired by approximate query processing (AQP) techniques~\cite{park2018verdictdb,garofalakis2001approximate}. But unlike statistical approximations of aggregations over relations, our techniques are novel CNN-specific and human perception-oriented heuristic approximations tailored to reducing the computational cost of CNN inference for the OBE workload.
+Our work is also inspired by relational MQO~\cite{sellis1988multiple,le2012scalable}, but our focus is CNN inference, not relational queries. To the best of our knowledge, ours is the first work to combine MQO with IVM, at least in the context of CNN inference. Our approximate inference optimizations are inspired by approximate query processing (AQP) techniques~\cite{garofalakis2001approximate}. But unlike statistical approximations of aggregations over relations, our techniques are novel CNN-specific and human perception-aware heuristics tailored to accelerating OBE.
 
 % \vspace{2mm}
 % \noindent \textbf{Multimedia DBMSs.} 
@@ -133,7 +124,7 @@ Our approximate inference optimizations are inspired by approximate query proces
 
 
 \section{Conclusions And Future Work}
-Deep CNNs are gaining widespread adoption for image prediction tasks but their internal workings are unintuitive for most users. Thus, occlusion-based explanations (OBE) have become a popular mechanism for non-technical users to understand CNN predictions. But OBE is highly compute-intensive due to the large number of CNN inference requests produced. In this work, we formalize OBE from a data management standpoint and introduce several novel database-inspired optimization techniques to speed up OBE. Our techniques span exact incremental inference and multi-query optimization for CNN inference, as well as CNN-specific and human perception-aware approximate inference. Overall, our ideas yield even over an order of magnitude speedups for OBE in both CPU and GPU environments.
+Deep CNNs are gaining widespread adoption for image prediction tasks but their internal workings are unintuitive for most users. Thus, occlusion-based explanations (OBE) have become a popular mechanism for non-technical users to understand CNN predictions. But OBE is highly compute-intensive due to the large number of CNN re-inference requests produced. In this work, we formalize OBE from a data management standpoint and introduce several novel database-inspired optimization techniques to speed up OBE. Our techniques span exact incremental inference and multi-query optimization for CNN inference, as well as CNN-specific and human perception-aware approximate inference. Overall, our ideas yield even over an order of magnitude speedups for OBE in both CPU and GPU environments.
 As for future work, we plan to apply our ideas to other complex visual recognition tasks and video analytics.
 
 % The applicability of our optimizations goes beyond just the OBE workload.
@@ -144,7 +135,6 @@ As for future work, we plan to apply our ideas to other complex visual recogniti
 % }
 
 \pagebreak
-
 
 \bibliographystyle{unsrt}
 \bibliography{main}
