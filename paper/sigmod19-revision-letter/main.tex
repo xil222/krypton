@@ -48,8 +48,8 @@ As an overall summary, we made following major changes to the paper:
 	Due to space constraints we added the runtimes plot and the heatmap visualizations into the \textbf{Appendix H}, which we refer from \textbf{Section 6}.
 	\item Added a related work section on methods for accelerating CNN inference to \textbf{Section 6}.
 	We referenced EVA$^2$ method and explained how the optimizations proposed by our system are complementary to EVA$^2$.
-	\item Added an experiment to the experiments section (\textbf{Section 5.2}) to evaluate the memory overhead associated with incremental inference approach. Due to space constraints the results to the \textbf{Appendix F}.
-	\item We elaborated more on how our system is integrated into PyTorch in the \textbf{Appendix B} section and referenced that information from the Experiments section (\textbf{Section 5}).
+	\item Added an experiment to the experiments section (\textbf{Section 5.2}) to evaluate the memory overhead associated with incremental inference approach. Due to space constraints we added the results to the \textbf{Appendix F}.
+	\item We elaborated more on how our system is integrated into PyTorch in the \textbf{Appendix B} and referenced this information from the Experiments section (\textbf{Section 5}).
 	\item We also added details on the broad applicability of our optimizations for other use cases into the Summary and Discussion section (\textbf{Section 5.3}).
 \end{enumerate}
 
@@ -60,7 +60,7 @@ As an overall summary, we made following major changes to the paper:
 
 \vspace{2mm}
 \noindent \textbf{Response:}\\
-We have refined the text in receptive field (\textbf{Section 3.2}) and efficiency calculation (\textbf{Section 3.1}) sections and refer to the corresponding visual depictions when explaining the equations to make the intuition behind the equations more clearer.
+We have refined the text in receptive field (\textbf{Section 3.2}) and efficiency calculation (\textbf{Section 3.1}) sections and added reference to the corresponding visual depictions when explaining the equations to make the intuition behind the equations more clearer.
 We believe that having these formal definitions is important as simplifying
 them would create important unanswered questions.
 
@@ -69,7 +69,7 @@ them would create important unanswered questions.
 
 \vspace{2mm}
 \noindent \textbf{Response:} \\
-From the literature we found that OBE is usually preferred over other methods by domain users, such as in radiology, as they produce high quality fine-grained heat maps using a process very intuitive to the human user [10, 34].
+From the literature we found that OBE is usually preferred over other methods by domain users, such as in radiology, as they produce high quality fine-grained heat maps using a process very intuitive to the human user [10, 36].
 There are more recent versions of OBE such as ``Prediction Difference Analysis - ICLR 2017' which underscores the importance of optimizing OBE.
 In \textbf{Section 6} we summarized different approaches that are available for explaining CNN predictions and cited related work that shows the importance of OBE as an explainability approach.
 
@@ -79,9 +79,9 @@ In \textbf{Section 6} we summarized different approaches that are available for 
 
 \vspace{2mm}
 \noindent \textbf{Response:} \\
-We evaluated ``Axiomatic Attribution of Deep Networks'' (IGD) method against OBE and found that OBE can generate more fine-grained heat maps compared to IGD.
-The runtime of IGD method is dependant on the number of gradient steps used for approximating the integration, which is tunable by the user. 
-The runtime of our system also depends on tunable parameters which CNN specific and dataset specific.
+We evaluated ``Axiomatic Attribution of Deep Networks'' (IGD) method against OBE and found that OBE can better localize the relevant important regions in the heat maps compared to IGD.
+The runtime of IGD method is dependent on the number of gradient steps used for approximating the integration, which is tunable by the user. 
+The runtime of our system also depends on tunable parameters which are dependent on the CNN architecture and dataset characteristics.
 From our experiments we found that runtimes of IGD and OBE method with our optimization are comparable to each other.
 Due to space constraints we included this information in \textbf{Appendix H}.
 
@@ -105,7 +105,7 @@ We are currently exploring the wide applicability of our framework for such use 
 
 \vspace{2mm}
 \noindent \textbf{Response:}\\
-We added a related work section on different methods for faster CNN inference (\textbf{Section 6}) and summarized various other approaches including EVA$^2$ and explained how our system is either complementary or orthogonal to those systems.
+We added a related work section on different methods for faster CNN inference (\textbf{Section 6}) and summarized various other approaches, including EVA$^2$, and explained how our system is either complementary or orthogonal to those systems.
 
 Focus of EVA$^2$ system is on exploiting the temporal redundancy of the video frames for faster inference. It does not exploit the spatial redundancy of the images. As the reviewer suggested the different occlusion positions can be treated as a video. However, EVA$^2$ will still perform motion estimation computations for the entire frame. Optimizations proposed in Krypton exploits the spatial redundancy of frames. Therefore, our work is complementary to EVA$^2$.
 Furthermore, our optimizations are logical optimizations. They can be implemented on any hardware platform that support convolution operations.
