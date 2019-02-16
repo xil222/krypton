@@ -118,9 +118,7 @@ Please see our response to Reviewer 1 D2.
 
 \vspace{2mm}
 \noindent \textbf{Response:}\\
-To be more precise on the scope of our optimizations we have refined the introduction paragraph in the Approximate Inference section (\textbf{Section 4}).
-The optimizations performed by our system are logical optimizations and they are complementary to other physical optimizations such as low-precision computation.
-The optimizations introduced in Krypton are applicable to a pruned version of a CNN as well as it exploits only the spatial redundancy. Thus they are complementary to each other.
+We have refined the introductory paragraph in \textbf{Section 4} to clarify the scope and qualitative nature of our approximate inference optimizations. Essentially, they exist at the logical level and are tied to the computational and semantic properties of OBE. Our ideas are complementary to more physical-level approximate optimizations such as low-precision computation and model pruning. That is, our techniques do not ``compete'' with these prior approximation techniques--rather, they can easily be used in addition for more efficiency gains. For instance, our  IVM framework can still exploit the spatial redundancy caused by OBE on a pruned CNN. Similarly, lower precision computations and associated compute hardware can readily be used underneath our techniques to speed up the low-level arithmetic.
 
 
 \vspace{2mm}
@@ -129,8 +127,7 @@ The optimizations introduced in Krypton are applicable to a pruned version of a 
 
 \vspace{2mm}
 \noindent \textbf{Response:}\\
-We refined the text in \textbf{Figure 2} and \textbf{Figure 15} and also increased the font size.
-We also added a sentence describing quality degradation phenomena to the Appendix \textbf{Figure 17} (new \textbf{Figure 19}) caption.
+We have refined the text in \textbf{Figure 2} and \textbf{Figure 15} and also increased the font size to make the figures easier to read. We have also added a sentence to explain the said phenomenon to the caption of \textbf{Figure 19} (old \textbf{Figure 17}).
 
 
 \section{Reviewer 5}
