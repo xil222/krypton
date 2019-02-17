@@ -3,13 +3,6 @@
 
 \section{Interactive Mode Execution}
 
-\begin{figure}[t]
-\includegraphics[width=\columnwidth]{images/interactive_experiment.pdf}
-\vspace{-8mm}
-\caption{Interactive mode execution of incremental inference with $G$s of different sizes}
-\label{fig:interactive_experiment}
-\end{figure}
-
 We evaluate interactive-mode incremental inference execution (no approximate inference optimizations) with $G$s of different sizes.
 Similar to non-interactive mode experiments presented in Section 5, all experiments are run in batched mode with a batch size of 16 for CPU based experiments and a batch size 128 for GPU based experiments.
 If the size of $G$ (formally $|G|$) or the remainder of $G$ is smaller than the batch size, that value is used as the batch size (e.g. $|G| = 16$ results in a batch size of 16).
@@ -25,27 +18,28 @@ Python FFI integrates with the Custom Kernel Interface layer which then invokes 
 The high-level architecture of the Custom Kernel integration is shown in Figure~\ref{fig:custom_kernel_integration}.
 }
 
-\begin{figure}[t]
-\includegraphics[width=\columnwidth]{images/gpu_kernel_impl.pdf}
-\vspace{-6mm}
-\caption{Custom GPU Kernel integration architecture}
-\label{fig:custom_kernel_integration}
-\end{figure}
-
-
 \section{Special Cases for Incremental Inference}
-
-\begin{figure}[t]
-\includegraphics[width=\columnwidth]{images/less_one_example}
-\vspace{-6mm}
-\caption{Illustration of special cases for which actual output size will be smaller than the value given by Equation~(\ref{eqn:xcoordinate}). (a) and (b) show cases where the filter stride is equal to the filter size. (c) and (d) show situations where the position of the modified patch affecting the size of the output patch.}
-\vspace{-4mm}
-\label{fig:less_one_example}
-\end{figure}
 
 There are special cases under which the output patch size can be smaller than the values calculated in Section~\ref{sec:inc_computation}. Consider the simplified 1-D case shown in Figure~\ref{fig:less_one_example} (a), where the filter stride\footnote{Note that stride is typically less than or equal to filter size.} (3) is the same as the filter size (3). In this case, the size of the output update patch is one less than the value calculated by Equation~(\ref{eqn:patchwidth}). But this is not the case for the situation shown Figure~\ref{fig:less_one_example} (b), which has the same input patch size but placed at a different location.
 % This issue arises only when the stride value is same as the filter size.
 Another case arises when the modified patch is placed at the edge of the input, as shown in Figure~\ref{fig:less_one_example} (c). In this case, it is impossible for the filter to move freely through all positions, since it hits the input boundary. However, it is not the case for the modified patch shown in Figure \ref{fig:less_one_example} (d). In \system, we do not treat these cases separately but rather use the values calculated by Equation~(\ref{eqn:patchwidth}) for the width dimension (similarly for the height dimension), since they act as an upper bound. In the case of a smaller output patch, \system~ reads and updates a slightly bigger patch to preserve uniformity. This also requires updating the starting coordinates of the patch, as shown in Equation~(\ref{eqn:width_subtract}). This sort of uniform treatment is required for performing batched inference operations, which gives significant speedups compared to per-image inference.
+
+\begin{figure}[t]
+\includegraphics[width=\columnwidth]{images/interactive_experiment.pdf}
+\vspace{-8mm}
+\caption{Interactive mode execution of incremental inference with $G$s of different sizes}
+\label{fig:interactive_experiment}
+\end{figure}
+
+
+\begin{figure}[t]
+\includegraphics[width=\columnwidth]{images/gpu_kernel_impl.pdf}
+\vspace{-6mm}
+\caption{\red{Custom GPU Kernel integration architecture}}
+\label{fig:custom_kernel_integration}
+\end{figure}
+
+
 
 \vspace{-4mm}
 \begin{align}
@@ -57,6 +51,14 @@ x^\mathcal{I}_\mathcal{P} ~ = W_{\mathcal{I}} - W^\mathcal{I}_\mathcal{P};
 x^\mathcal{R}_\mathcal{P} ~ = W_{\mathcal{I}} - W^\mathcal{R}_\mathcal{P}
 \end{split}
 \end{align}
+
+\begin{figure}[t]
+\includegraphics[width=\columnwidth]{images/less_one_example}
+\vspace{-6mm}
+\caption{Illustration of special cases for which actual output size will be smaller than the value given by Equation~(\ref{eqn:xcoordinate}). (a) and (b) show cases where the filter stride is equal to the filter size. (c) and (d) show situations where the position of the modified patch affecting the size of the output patch.}
+\vspace{-4mm}
+\label{fig:less_one_example}
+\end{figure}
 
 
 \section{Effective Projective Field Size}

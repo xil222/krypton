@@ -20,6 +20,7 @@
 
 \newcommand{\eat}[1]{}
 \newcommand{\red}{\textcolor{red}}
+\newcommand{\system}{\textsc{Krypton}}
 
 \pagenumbering{arabic}
 
@@ -41,17 +42,23 @@ We think the paper has improved as a result of these changes.
 All changes made to the paper have been highlighted with red font color.
 In this letter, we discuss the changes made and respond to the specific revision items listed in the reviews and metareview.
 
-As an overall summary, we made following major changes to the paper:
+As an overall summary, we made following major changes to the paper, aligned with the metareviewer's list:
 \begin{enumerate}
-	\item Added a related work section on CNN explanation methods to \textbf{Section 6}.
-	We also evaluated \textit{Axiomatic Attribution for Deep Networks} method against OBE.
-	Due to space constraints we added the runtimes plot and the heatmap visualizations into the \textbf{Appendix H}, which we refer from \textbf{Section 6}.
-	\item Added a related work section on methods for accelerating CNN inference to \textbf{Section 6}.
-	We referenced EVA$^2$ method and explained how the optimizations proposed by our system are complementary to EVA$^2$.
-	\item Added an experiment to the experiments section (\textbf{Section 5.2}) to evaluate the memory overhead associated with incremental inference approach. Due to space constraints the results to the \textbf{Appendix F}.
-	\item We elaborated more on how our system is integrated into PyTorch in the \textbf{Appendix B} section and referenced that information from the Experiments section (\textbf{Section 5}).
-	\item We also added details on the broad applicability of our optimizations for other use cases into the Summary and Discussion section (\textbf{Section 5.3}).
+
+	\item Item (a): Expanded the discussion of the broader applicability of our ideas for other use cases in the new \textbf{Section 5.3} titled ``Summary and Discussion.''
+
+	\item Item (b): Added an experiment in \textbf{Section 5.2} to evaluate the memory overhead of our incremental inference approach. Due to space constraints, the details are deferred to \textbf{Appendix F} and referenced in the body.
+
+	\item Item (c): Expanded the discussion of our PyTorch integration in \textbf{Appendix B} and referenced it from the body (first para of \textbf{Section 5}).
+
+	\item Item (d): Added a related work paragraph in \textbf{Section 6} on methods for accelerating CNN inference. We referenced EVA$^2$ method and explained how the optimizations proposed by our system are complementary to EVA$^2$. Please also see our response to R2 W1.
+
+	\item Item (e): Added a related work paragraph in \textbf{Section 6} on CNN explanation methods, including the \textit{Axiomatic Attribution for Deep Networks} method. We also performed an empirical comparison between that method and OBE. Due to space constraints, the runtime plot and heatmap visualizations are deferred to \textbf{Appendix H} and referenced in the body.
+	
+	\item Item (f): Addressed all other reviewer comments, as detailed below.
+	
 \end{enumerate}
+
 
 \section{Reviewer 1}
 
@@ -60,42 +67,30 @@ As an overall summary, we made following major changes to the paper:
 
 \vspace{2mm}
 \noindent \textbf{Response:}\\
-We have refined the text in receptive field (\textbf{Section 3.2}) and efficiency calculation (\textbf{Section 3.1}) sections and refer to the corresponding visual depictions when explaining the equations to make the intuition behind the equations more clearer.
-We believe that having these formal definitions is important as simplifying
-them would create important unanswered questions.
+We have rewritten parts of the text in \textbf{Section 3.2} (on receptive field) and \textbf{Section 3.1} (on efficiency calculations) to explain them in a more intuitive way. We also reference the corresponding pictorial illustrations in Figure 4 where appropriate. As for the formal definitions and notation, we need them for technical precision lest we introduce ambiguity in explaining exactly how our rewrite framework works.
 
 \vspace{2mm}
 \noindent \textbf{W2:} \textit{Not clear to me OBE is the best choice and other interpretability methods are generally cheaper.}
 
 \vspace{2mm}
 \noindent \textbf{Response:} \\
-From the literature we found that OBE is usually preferred over other methods by domain users, such as in radiology, as they produce high quality fine-grained heat maps using a process very intuitive to the human user [10, 34].
-There are more recent versions of OBE such as ``Prediction Difference Analysis - ICLR 2017' which underscores the importance of optimizing OBE.
-In \textbf{Section 6} we summarized different approaches that are available for explaining CNN predictions and cited related work that shows the importance of OBE as an explainability approach.
+In the practical literature on using CNNs, we found that OBE is often preferred over other methods by domain users, e.g., in radiology, since it produces high quality heatmaps and its process is intuitive for  non-technical users [10, 36]. There are also more recent versions of OBE such as ``Prediction Difference Analysis'' in ICLR 2017, which shows it is crucial to optimize OBE execution. We have added a paragraph in \textbf{Section 6} to summarize major CNN explanation approaches and cited the related work that highlight the importance of OBE for producing explanations. 
 
+As a meta level point, we do not claim that OBE is the ``best choice,'' and we recognize CNN explanation methods are an active ML research topic. We leave it to future work to perform benchmark comparisons among such methods. Our goal in this paper is to optimize OBE from the data systems standpoint given its growing adoption among practitioners in important application settings. 
 
 \vspace{2mm}
 \noindent \textbf{D1:} \textit{Very little work in the interpretability space is cite. Most relevant is ``Axiomatic Attribution for Deep Networks'' which computes per-pixel attributions by comparing importance relative to a black pixel, similar to occlusion, but does so through mathematical analysis of the network, not many inferences. Comparing to this seems important to justify why OBE is better.}
 
 \vspace{2mm}
 \noindent \textbf{Response:} \\
-We evaluated ``Axiomatic Attribution of Deep Networks'' (IGD) method against OBE and found that OBE can generate more fine-grained heat maps compared to IGD.
-The runtime of IGD method is dependant on the number of gradient steps used for approximating the integration, which is tunable by the user. 
-The runtime of our system also depends on tunable parameters which CNN specific and dataset specific.
-From our experiments we found that runtimes of IGD and OBE method with our optimization are comparable to each other.
-Due to space constraints we included this information in \textbf{Appendix H}.
-
-Also see our response to Reviewer 1, W2.
+We thank the reviewer for this reference. We have cited this paper and a few others from the relevant literature in a new paragraph \textbf{Section 6} summarizing CNN explanation methods. We also performed an empirical comparison of OBE against the method prescribed in ``Axiomatic Attribution of Deep Networks,'' which is called the Integrated Gradients (IGD) method. Due to space constraints, we have added these results and visual depictions of the heatmaps produced by both methods in \textbf{Appendix H}. We find that OBE seems to generate higher quality and better localized heatmaps compared to IGD. Of course, perceptual quality can vary in other cases and thus, IGD may be complementary to OBE. In terms of latency, the runtime of IGD is dependent on the number of gradient steps used for approximating the integration, which it expects the user to set.  The runtime of \system ~also depends on tunable parameters that are CNN-specific and dataset-specific. Our results show that the runtimes of IGD and OBE in \system ~are often comparable, with crossovers seen at different parameter regimes. Please also see our response to R1 W2. 
 
 \vspace{2mm}
 \noindent \textbf{D2:} \textit{I believe the components in this systems are individually interesting outside of interpretability. It would be interesting to understand if this ideas would be useful in other inference settings where inputs change only slightly between queries (for example, subsequent frames in a video).}
 
 \vspace{2mm}
 \noindent \textbf{Response:} \\
-In the Summary and Discussion section (\textbf{Section 5.3}) we summarized different avenues on which our work can be extended.
-For this first paper on this work, we decided to use OBE as the concrete use case to demonstrate the effectiveness of our incremental CNN inference framework.
-Applying our optimizations to other use cases such as video analytics with infrequently changing frames require solving several open problems such as batching update patches with different sizes to utilize the maximum hardware throughput.
-We are currently exploring the wide applicability of our framework for such use cases.
+We thank the reviewer for this suggestion. We have added some discussion on this front in the new \textbf{Section 5.3} titled ``Summary and Discussion.'' We highlight some other use cases for applying and extending our optimization techniques. However, as the first paper on a comprehensive algebraic IVM and MQO framework for CNN inference, we prioritized technical depth and chose on OBE, a growing workload in practice, to show the efficiency gains possible with such ideas. That said, extending our optimizations to other use cases such as video analytics with minimal changes across frames may not be straightforward, since we would need to batch update patches of different sizes in unpredictable locations to exploit the throughput of the underlying hardware with our MQO idea. We leave a deeper treatment of such technical challenges to future work, some of which we are already exploring.
 
 
 \section{Reviewer 2}
@@ -105,10 +100,11 @@ We are currently exploring the wide applicability of our framework for such use 
 
 \vspace{2mm}
 \noindent \textbf{Response:}\\
-We added a related work section on different methods for faster CNN inference (\textbf{Section 6}) and summarized various other approaches including EVA$^2$ and explained how our system is either complementary or orthogonal to those systems.
+We thank the author for this reference. We have cited it and some other papers as part of a new paragraph on faster CNN inference in \textbf{Section 6}. We have summarized EVA$^2$ and some other systems and explained how \system ~is either complementary or orthogonal to these other systems.
 
-Focus of EVA$^2$ system is on exploiting the temporal redundancy of the video frames for faster inference. It does not exploit the spatial redundancy of the images. As the reviewer suggested the different occlusion positions can be treated as a video. However, EVA$^2$ will still perform motion estimation computations for the entire frame. Optimizations proposed in Krypton exploits the spatial redundancy of frames. Therefore, our work is complementary to EVA$^2$.
-Furthermore, our optimizations are logical optimizations. They can be implemented on any hardware platform that support convolution operations.
+EVA$^2$ exploits the temporal redundancy in video frames for faster inference. Conceptually, one can map OBE to a ``video'' consisting of the occluded images. However, unlike \system, EVA$^2$ cannot fully exploit spatial redundancy in potentially disparate patch locations. This is because video is a \textit{sequence} unlike the \textit{set} semantics we use for re-inference queries in our MQO technique. Furthermore, EVA$^2$ will still perform motion estimation computations on the entire frame for all frames. Nevertheless, at a meta level, the optimizations we propose in \system ~exist at the logical level and are applicable to virtually any hardware platform. In this sense, our techniques can be complementary to EVA$^2$, and we leave it to future work to extend our ideas to video analytics. Please also see our response to R1 D2.
+
+On the optional request for an empirical comparison with EVA$^2$ as above, we realized that it requires their customized hardware-software co-designed stack for a fair comparison. Since it is not possible for us to replicate their hardware, we contacted the PC Chair to inquire if this empirical comparison was really necessary. In keeping with the PC Chair's response, we have skipped this empirical comparison and only include the qualitative discussion.
 
 \vspace{2mm}
 \noindent \textbf{W2:} \textit{Another weakness is that it seems likely that the techniques in Krypton can produce improvements for applications beyond the scope of occlusion-based explanations. For example, how would Krypton perform on an infrequently changing video feed, or one that changes in only a small part of the image? I think a comparison like this would improve the paper.}
@@ -122,9 +118,7 @@ Please see our response to Reviewer 1 D2.
 
 \vspace{2mm}
 \noindent \textbf{Response:}\\
-To be more precise on the scope of our optimizations we have refined the introduction paragraph in the Approximate Inference section (\textbf{Section 4}).
-The optimizations performed by our system are logical optimizations and they are complementary to other physical optimizations such as low-precision computation.
-The optimizations introduced in Krypton are applicable to a pruned version of a CNN as well as it exploits only the spatial redundancy. Thus they are complementary to each other.
+We have refined the introductory paragraph in \textbf{Section 4} to clarify the scope and qualitative nature of our approximate inference optimizations. Essentially, they exist at the logical level and are tied to the computational and semantic properties of OBE. Our ideas are complementary to more physical-level approximate optimizations such as low-precision computation and model pruning. That is, our techniques do not ``compete'' with these prior approximation techniques--rather, they can easily be used in addition for more efficiency gains. For instance, our  IVM framework can still exploit the spatial redundancy caused by OBE on a pruned CNN. Similarly, lower precision computations and associated compute hardware can readily be used underneath our techniques to speed up the low-level arithmetic.
 
 
 \vspace{2mm}
@@ -133,8 +127,7 @@ The optimizations introduced in Krypton are applicable to a pruned version of a 
 
 \vspace{2mm}
 \noindent \textbf{Response:}\\
-We refined the text in \textbf{Figure 2} and \textbf{Figure 15} and also increased the font size.
-We also added a sentence describing quality degradation phenomena to the Appendix \textbf{Figure 17} (new \textbf{Figure 19}) caption.
+We have refined the text in \textbf{Figure 2} and \textbf{Figure 15} and also increased the font size to make the figures easier to read. We have also added a sentence to explain the said phenomenon to the caption of \textbf{Figure 19} (old \textbf{Figure 17}).
 
 
 \section{Reviewer 5}
@@ -144,10 +137,7 @@ We also added a sentence describing quality degradation phenomena to the Appendi
 
 \vspace{2mm}
 \noindent \textbf{Response:}\\
-We evaluate the theoretical bounds for attainable speedup by estimating FLOPs savings for CNN operations (\textbf{Section 2.2} Computational Cost of Inference).
-We also estimate the speedup attainable from adaptive drill-down (\textbf{Section 4.2} Theoretical Speedups).
-These speedups can be used to characterize the benefits based on architecture.
-Calculating the total cost of inference is largely impractical as it requires calculating the computational cost, memory copy overheads etc.
+Indeed, \system ~already provides such an estimate up front using ``static analysis''--we call it the ``theoretical speedup'' and characterize it in \textbf{Section 3.2}. We also extend it to handle our approximate optimizations in Sections 4.2 and 4.3. The theoretical speedup calculates only the FLOPs saved by our techniques; so, it serves as a rough upper bound on the actual speedups from running code. One could consider creating analytical cost models for more accurate runtime estimates but such cost models could become unwieldy for OBE due to the complexity of modern deep CNN architectures and diversity of compute hardware.
 
 
 \vspace{2mm}
@@ -155,17 +145,14 @@ Calculating the total cost of inference is largely impractical as it requires ca
 
 \vspace{2mm}
 \noindent \textbf{Response:}\\
-We identified this as one of the potential avenues to extend our work in the Summary and Discussion section (\textbf{Section 5.3}).
-We agree with the reviewer and it is something we are currently looking into as an extension of our work.
+We thank the reviewer for this suggestion. We agree such an integration could be an interesting direction for future work. We have added a brief discussion on this to the new \textbf{Section 5.3} titled ``Summary and Discussion.''
 
 \vspace{2mm}
 \noindent \textbf{W3:} \textit{ The experimental evaluation is largely focused on the speed up obtained when dealing with one image (and its distortions) at a time. Maintaining the output tensors in memory incurs additional memory overhead. This can become significant in a shared serving environment where multiple inference requests (multiple raw images) are processed by the model concurrently. It would be good to have some experiment that also illustrates the memory overhead.}
 
 \vspace{2mm}
 \noindent \textbf{Response:}\\
-We added an additional experiment to evaluate the memory usage behavior to the \textbf{Appendix F} and referred it from the main experiments section (\textbf{Section 5}).
-The memory overhead of IVM approach will be much smaller (even up to $52\%$) than the full inference.
-Krypton materializes a single copy of all CNN layers corresponding to the unmodified image and reuses it across a batch of occluded images with IVM. For IVM the size of required memory buffers are much smaller than the memory buffers required for full inference as only the updated patches need to be propagated.
+We have added an experiment to compare the memory usage of full re-inference against our IVM approach on GPU. Due to space constraints, we present the results in \textbf{Appendix F} and briefly summarize it at the end of \textbf{Section 5}. \system ~has a lower memory footprint (up to $52\%$ lower) when explaining one raw image. This is mainly because of the amortization benefit offered by the integration of IVM with MQO (Section 3.4), wherein the materialized feature tensors are reused across all incremental re-inference requests in a given batch. Only when the batch size is one does this amortization benefit vanish. But since OBE typically produces at least dozens (if not thousands) of occluded images, we reckon such a situation is unlikely. Thus, even in a shared serving environment, since OBE produces batches of occluded images per raw image, such memory use amortization can allow \system ~to process even more raw images under the same memory budget.
 % However, if incremental inference is performed with a batch size of one our system will incur more memory overheads as it now needs to allocate memory buffers to keep both a full copy of CNN features and incremental propagated patches.
 % But when the batch size is greater than one it's memory overhead will be smaller.
 
@@ -181,10 +168,7 @@ We have revised the text in \textbf{Figure 2} and have increased the font size.
 
 \vspace{2mm}
 \noindent \textbf{Response:}\\
-The redundancies that exists in multi-tower models are very coarse-grained.
-We can easily exploit these redundancies by simply caching the final layer of the towers that do not change.
-On the other hand the focus of our system is on more fine-grained redundancies that exists in convolutional layers with small spatially localized updates.
-However, in a multi-tower CNN model it is possible to integrate both approaches to exploit both coarse-grained and fine-grained redundancies.
+We thank the reviewer for this suggestion. The redundancy the reviewer mentions can be considered coarse-grained. One can exploit by caching the final layer of the towers whose inputs are unaltered. Our IVM framework, however, is aimed at exploiting the finer grained redundancy that arises in all forms of CNNs across layers when the input is updated in a spatially-localized manner. These ideas are complementary, and one can use both for multi-tower models. However, this requires non-trivial extensions to our input API to support multiple inputs and update patch locations for one re-inference. We leave this extension to future work.
 
 
 \section{Reviewer 6}
@@ -194,65 +178,61 @@ However, in a multi-tower CNN model it is possible to integrate both approaches 
 
 \vspace{2mm}
 \noindent \textbf{Response:}\\
-Please see our response to Reviewer 1 W2.
+Please see our response to R1 W2.
 
 \vspace{2mm}
 \noindent \textbf{W2:} \textit{Not clear how this generalizes to some of the more complex architectures, such as DenseNet or ResNext -- could you please discuss this?}
 
 \vspace{2mm}
 \noindent \textbf{Response:}\\
-We have addressed this in \textbf{Section 3.3} ``Extending to DAG like CNNs.'' The complexity of ResNeXt arises from element wise addition operations and the complexity of DenseNet arises from depth wise concatenation operations.
+Our framework can already support both of those kinds of architectures due to capabilities described in \textbf{Section 3.3} in the paragraph titled ``Extending to DAG CNNs.'' The complexity of ResNeXt and DenseNet arises from element-wise addition and depth-wise concatenation operations. ResNet18 and Inception3, which we show in our experiments, also have these operations.
 
 \vspace{2mm}
 \noindent \textbf{W3:} \textit{Could there by other applications in the A/V space beyond partial occlusion that use the same techniques -- maybe painting parts of an image, or erasing parts of an image and them repainting it with something new?}
 
 \vspace{2mm}
 \noindent \textbf{Response:}\\
-Please see our response to Reviewer 1 D2.
+We thank the reviewer for this suggestion. We agree that the use case the reviewer mentions could also benefit from our framework, since the altered pixels can behave essentially like an occluding patch. Supporting such a functionality in \system ~would require changes to our input API to specify patches, which we leave for future work. Please also see our response to R1 D2.
 
 \vspace{2mm}
 \noindent \textbf{W4:} \textit{There is a section on approximate inference, and it is rather ad-hoc, especially given the plethora of other methods such as quantization, pruning or collapsing a deep net, etc.)}
 
 \vspace{2mm}
 \noindent \textbf{Response:}\\
-Please see our response to Reviewer 2 W3
+Please see our response to R2 W3.
 
 \vspace{2mm}
 \noindent \textbf{W5:} \textit{Not clear how Krypton is integrated into PyTorch. Is there a special API? What is the architecture of the integration?}
 
 \vspace{2mm}
 \noindent \textbf{Response:}\\
-We have extended information about the integration of Krypton in to PyTorch in \textbf{Appendix B} and referred it from the experimental setup section (\textbf{Section 5}). Appendix \textbf{Figure 15} shows the architecture of the integration. Data is not transferred to the main memory in-between layers.
+We have expanded the discussion of how we integrated \system ~into PyTorch in \textbf{Appendix B}. We also reference this discussion in the first paragraph of \textbf{Section 5}. \textbf{Figure 15} has also been clarified to explain the architecture better. In particular, data is \textit{not} transferred to main memory in between CNN layers.
 
 \vspace{2mm}
 \noindent \textbf{D1:} \textit{I would have liked to see some network architectures where this does not work so well -- what are conditions where this is the case? Section 3 discusses this a bit, but could we have a clear characterization based on the architecture -- it seems that I can do a pre-calculations that based on the size of the occlusion I can calculate the savings?}
 
 \vspace{2mm}
 \noindent \textbf{Response:}\\
-Yes. Given a CNN model architecture, in \textbf{Section 3.1} we provide an approach to estimate the expected speedups by applying our IVM method. Expected speedups is a function of the rate of projective field growth of the CNN which is determined by factors such as number of layers, convolution filter sizes, and filter stride values. For example, as shown in the End-to-End experimental results, VGG16 works really well as it uses small filter kernels and strides. But ResNet18 and Inception3 does not yield gains as high as VGG16.
+Indeed, \system ~already provides such a pre-calculated estimate up front using ``static analysis''--we call it the ``theoretical speedup'' and characterize it in \textbf{Section 3.2}. We also extend it to handle our approximate optimizations in Sections 4.2 and 4.3. Our estimate is based on the FLOPs saved by our techniques, which means it serves as a rough upper bound on the actual speedups from running code. The effect of the architecture on this quantity is nuanced but it can be explained in terms of of the rate of projective field growth. This rate is determined by many factors: number of layers, convolution filter sizes, and strides. Intuitively, the more the CNN ``stretches out'' the feature extraction from the pixels and the more the share of the lower layers in the computational cost, the more our IVM-style optimizations can benefit it. This can happen if small filter kernels and strides are used early on and the higher layers do less processing. VGG16 exhibits these properties strongly, while ResNet18 and Inception3, less so. Thus, as our experiments show, VGG16 sees the highest speedups.
 
 \vspace{2mm}
 \noindent \textbf{D2:} \textit{It is not clear to me how this is implemented. How do we bring the data back and forth to the GPU? Why are we getting such huge savings -- it is really just the number of add/multiplies saved? How do we now organize such irregular computations inside a GPU? Would be great to get answers to these questions.}
 
 \vspace{2mm}
 \noindent \textbf{Response:}\\
-We explain the high level flow of our system in \textbf{Section 3.4 Algorithm 1}.
-Though the updated regions are spatially localized they do not reside in contiguous memory locations. So before we perform the incremental CNN inference we copy the updated regions into a contiguous memory location.
-Basically, we take a copy of the read-in context from the pre-materialized CNN layer values corresponding to the unmodified image and superimpose the updated patch.
-We repeat this for all the CNN layers.
+The core of our implementation is the batched incremental inference procedure described in \textbf{Section 3.4}, especially \textbf{Algorithm 1}. The optimized GPU kernel for this procedure is explained in \textbf{Section 3.4} in the paragraph titled ``GPU Optimized Implementation.'' We have also expanded the discussion of our implementation and integration with PyTorch in \textbf{Appendix B} and \textbf{Figure 15} and reference it from the first paragraph of \textbf{Section 5}.
 
-\textbf{Appendix B} summarizes how we have implemented this on PyTorch.
-For the CPU environment we implement this purely on top of PyTorch using built-in tensor slicing and stitching primitives.
-However, for the GPU environment such iterative memory copying operations introduce high overheads as the many GPU cores now have to idle wait for the slow memory copy operations. To overcome this we extended PyTorch by adding a custom GPU kernel which optimizes the input preparation for incremental inference by invoking parallel memory copy operations. This custom kernel is integrated to PyTorch using Python foreign function interface (FFI). Python FFI integrates with the Custom Kernel Interface layer which then invokes the Custom Memory Copy Kernel Implementation. The high-level architecture of the Custom Kernel integration is shown in \textbf{Figure 15}.
+The runtime savings in \system ~do indeed come from the reduction in total arithmetic FLOPs performed by the CNN for OBE. This reduction in FLOPs is precisely characterized by our ``theoretical speedups,'' as explained in \textbf{Section 3.1}. Our IVM framework (Sections 3.2 and 3.3) shows how to actually remove redundant FLOPs during re-inference. Our approximate inference optimizations (Section 4) reduce the total FLOPS even further. The contributions of all of our optimizations relative to our predicted theoretical speedups are empirically validated in \textbf{Section 5.2}.
 
-The savings mainly come from the saving of redundant computations. However, this introduces memory slicing and stitching overheads which our system tries to minimize using an optimized memory copy kernel. Once the initial input data is transferred to GPU memory, the entire incremental CNN inference can be done using only the GPU memory.
+Our MQO technique (Section 3.4) amortizes setup overheads, viz., loading the CNN, materializing the tensors on one image, etc. This suffices on CPUs. Thus, we implement \system ~purely on top of PyTorch using its built-in tensor slicing and stitching primitives. But this is not enough on GPUs, since the slicing and stitching of tensors needed for our IVM approach can impede the GPU's compute throughput due to slow memory copies. Our optimized GPU kernel (Section 3.4), resolves this issue. After a data batch is transferred to GPU memory, incremental inference happens only on GPU memory, with no back-and-forth with main memory. We integrated our GPU kernel with PyTorch using Python foreign function interface (FFI). Python FFI integrates with the Custom Kernel Interface layer, which then invokes our kernel. Figure 15 shows the architecture of this integration.
+
 
 \vspace{2mm}
 \noindent \textbf{D3:} \textit{Are there network architectures where these techniques work especially well or badly?}
 
 \vspace{2mm}
 \noindent \textbf{Response:}\\
-Please see our response to Reviewer 6 D1.
+Please see our response to R6 D1.
 
 \vspace{2mm}
 \begin{sloppypar}
@@ -262,15 +242,13 @@ How does your work compare to this related work?}
 
 \vspace{2mm}
 \noindent \textbf{Response:}\\
-Self-adjusting computation and other reactive computation methods found in the programming languages literature falls into the broader category of general incremental computation approaches. On the other hand the optimizations performed by our systems are specialized optimizations which takes into account the specific dataflow patterns in CNNs, the OBE workload, and also the characteristics of image datasets to perform incremental computations.
-Therefore, the two lines of work are complementary to each other.
+We thank the reviewer for this reference. Self-adjusting computation and other reactive computation methods found in the PL literature falls into the broad category of incremental computation. Our IVM framework can be seen as one such incremental computation approach that is tailored to the complex spatial dataflows of CNN layers. But our MQO optimization is orthogonal and is inspired by the database literature on sharing work across separate queries. Finally, to the best of our knowledge, our approximate inference optimizations have no counterparts in either the PL or database literatures, since they rely on the semantics of CNNs and OBE, as well as human perception properties. In this sense, we view our work as both building upon existing ideas and making novel connections.
 
 \vspace{2mm}
 \noindent \textbf{D5:} \textit{Section 4.3 has a lot of formulas, but the reader is missing the intuition behind these formulas, Could they be made more accessible?}
 
 \vspace{2mm}
 \noindent \textbf{Response:}\\
-The equations in Section 4.3 are essentially derivations from theoretical speedup calculation explained in \textbf{Section 4.2 Equation 28}.
-To clarify this more we have refined the text in \textbf{Section 4.3}.
+We thank the reviewer for this suggestions. The formulas in Section 4.3 are just derivations obtained by substituting relevant quantities in Equation (28) in Section 4.2, which explains the theoretical speedup calculation. We have refined the text in \textbf{Section 4.3} to clarify how we obtained those formulas.
 
 \end{document}
