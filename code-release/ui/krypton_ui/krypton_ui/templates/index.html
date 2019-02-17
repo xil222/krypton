@@ -9,82 +9,203 @@
 
 </head>
 <body>
+<div id="response"></div>
 <input type="file" accept=".jpg" id="imageSelection" onchange="imageDisplay(this);"></input>
-<!-- <img id="imgOriginal" src="#" alt="your image" /> -->
-<img id="target" src="" alt="" >
+<div id="parentImage">
+  <img id="target" src="" onerror="this.style.display='none'" >
+</div>
+
+<!-- Comment out if want to use the button only solution -->
+<form method='post' id ='submit'>
+    {% csrf_token %}
+    <input type='submit' value='Submit'/>
+</form>
+
+<!-- This could be used if only want to use the button and not form just uncomment it-->
+<!-- <button id="submit">Submit</button> -->
+<button id="resetSelect">reset</button>
+
+<form id="coords"
+  class="coords"
+  onsubmit="return false;"
+  action="http://example.com/post.php">
+
+  <div class="inline-labels">
+  <label>X1 <input type="text" size="4" id="x1" name="x1" /></label>
+  <label>Y1 <input type="text" size="4" id="y1" name="y1" /></label>
+  <label>X2 <input type="text" size="4" id="x2" name="x2" /></label>
+  <label>Y2 <input type="text" size="4" id="y2" name="y2" /></label>
+  <label>W <input type="text" size="4" id="w" name="w" /></label>
+  <label>H <input type="text" size="4" id="h" name="h" /></label>
+  </div>
+</form>
+
+<section>
+    <h2>Attribute Selection</h2>
+    <p>
+      <label for="patch">
+        <span>Patch Size</span>
+      </label>
+      <select id="patch" name="patchSize">
+        <option value="1">1</option>
+        <option value="2">2</option>
+        <option value="4">4</option>
+        <option value="8">8</option>
+      </select>
+    </p>
+    <p>
+      <label for="stride">
+          <span>Stride Size</span>
+      </label>
+      <select id="stride" name="strideSize">
+        <option value="1">1</option>
+        <option value="2">2</option>
+        <option value="3">3</option>
+        <option value="4">4</option>
+      </select>
+    </p>
+    <p>
+      <label for="model">
+        <span>Select the model to run:</span>
+      </label>
+      <select id="model" name="modelSize">
+        <option value="VGG">VGG</option>
+        <option value="ResNet">ResNet</option>
+      </select>
+    </p>
+</section>
 
 
-<!-- <script src="../js/jquery.min.js"></script> -->
-<!-- <script src="../js/jquery.Jcrop.js"></script> -->
-<script type="text/javascript">
-function imageDisplay(input){
-  if (input.files && input.files[0]){
-    var imageDisplay = new FileReader();
+  <script type="text/javascript">
+  function imageDisplay(input){
+    if (input.files && input.files[0]){
+      var imageDisplay = new FileReader();
 
-    imageDisplay.onload = function (e) {
-        $('#target')
-            .attr('src', e.target.result)
-            .width(224)
-            .height(224);
+
+      imageDisplay.onload = function (e) {
+          $('#target')
+              .attr('src', e.target.result)
+              // .width(224)
+              // .height(224);
+      };
+
+      imageDisplay.readAsDataURL(input.files[0]);
+    }
+  }
+
+    jQuery(function($){
+
+      var jcrop_api;
+      $('#target').Jcrop({
+        onChange:   showCoords,
+        onSelect:   showCoords,
+        onRelease:  clearCoords,
+      },function(){
+        jcrop_api = this;
+      });
+
+      $('#coords').on('change','input',function(e){
+        var x1 = $('#x1').val(),
+            x2 = $('#x2').val(),
+            y1 = $('#y1').val(),
+            y2 = $('#y2').val();
+        jcrop_api.setSelect([x1,y1,x2,y2]);
+      });
+
+      $('#resetSelect').on('click',function(e){
+
+        jcrop_api.destroy();
+        clearCoords();
+        $('#target').Jcrop({
+          onChange:   showCoords,
+          onSelect:   showCoords,
+          onRelease:  clearCoords,
+        },function(){
+          jcrop_api = this;
+
+        });
+      });
+
+    });
+
+    function showCoords(c)
+    {
+      $('#x1').val(c.x);
+      $('#y1').val(c.y);
+      $('#x2').val(c.x2);
+      $('#y2').val(c.y2);
+      $('#w').val(c.w);
+      $('#h').val(c.h);
     };
 
-    imageDisplay.readAsDataURL(input.files[0]);
-  }
-}
+    function clearCoords()
+    {
+      $('#x1').val("");
+      $('#y1').val("");
+      $('#x2').val("");
+      $('#y2').val("");
+      $('#w').val("");
+      $('#h').val("");
+    };
 
-  jQuery(function($){
+    $(document).ready(function() {
+       $("#submit").click(function(event){
 
-    var jcrop_api;
-    $('#target').Jcrop({
-      onChange:   showCoords,
-      onSelect:   showCoords,
-      onRelease:  clearCoords
-    },function(){
-      jcrop_api = this;
-    });
+            //This will be used with button only
+            // var csrf_token = getCookie('csrftoken');
 
-    $('#coords').on('change','input',function(e){
-      var x1 = $('#x1').val(),
-          x2 = $('#x2').val(),
-          y1 = $('#y1').val(),
-          y2 = $('#y2').val();
-      jcrop_api.setSelect([x1,y1,x2,y2]);
-    });
+            var csrf_token = $('#submit [name="csrfmiddlewaretoken"]').val();
+            var image = document.getElementById("imageSelection").files[0];
+            var ePatch = document.getElementById("patch").value;
+            var eStride = document.getElementById("stride").value;
+            var eModel = document.getElementById("model").value;
+            var fd = new FormData(document.getElementById("coords"));
+            fd.append('image', image);
+            fd.append('patchSize', ePatch);
+            fd.append('strideSize', eStride);
+            fd.append('model', eModel);
+            $.ajax({
+                 type:"POST",
+                 url:"/selectedRegion/",
+                 headers:{
+                   "X-CSRFToken": csrf_token
+                 },
+                 processData: false,
+                 contentType: false,
+                 data: fd,
+                 success: function(message){
+                   console.log(message); // log the returned json to the console
+                   console.log("success");
+                   $("#resetSelect").click();
+                 },
+                 error : function(xhr,errmsg,err) {
+                   console.log(xhr.status + ": " + xhr.responseText);
+                }
+            });
+            return false;
+       });
 
-  });
+     });
 
-  function showCoords(c)
-  {
-    $('#x1').val(c.x);
-    $('#y1').val(c.y);
-    $('#x2').val(c.x2);
-    $('#y2').val(c.y2);
-    $('#w').val(c.w);
-    $('#h').val(c.h);
-  };
 
-  function clearCoords()
-  {
-    $('#coords input').val('');
-  };
+    // This is used with button only solution and not the form
+    //  function getCookie(name) {
+    //     var cookieValue = null;
+    //     if (document.cookie && document.cookie !== '') {
+    //         var cookies = document.cookie.split(';');
+    //         for (var i = 0; i < cookies.length; i++) {
+    //             var cookie = jQuery.trim(cookies[i]);
+    //             // Does this cookie string begin with the name we want?
+    //             if (cookie.substring(0, name.length + 1) === (name + '=')) {
+    //                 cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+    //                 break;
+    //             }
+    //         }
+    //     }
+    //     return cookieValue;
+    // }
 
-</script>
 
-  <form id="coords"
-    class="coords"
-    onsubmit="return false;"
-    action="http://example.com/post.php">
-
-    <div class="inline-labels">
-    <label>X1 <input type="text" size="4" id="x1" name="x1" /></label>
-    <label>Y1 <input type="text" size="4" id="y1" name="y1" /></label>
-    <label>X2 <input type="text" size="4" id="x2" name="x2" /></label>
-    <label>Y2 <input type="text" size="4" id="y2" name="y2" /></label>
-    <label>W <input type="text" size="4" id="w" name="w" /></label>
-    <label>H <input type="text" size="4" id="h" name="h" /></label>
-    </div>
-  </form>
-
-<!-- <link rel="stylesheet" href="../css/jquery.Jcrop.css" type="text/css" /> -->
+  </script>
 
 </body>
