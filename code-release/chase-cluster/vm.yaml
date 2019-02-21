@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: krypton
+spec:
+  containers:
+  - name: krypton
+   
+    image: scnakandala/krypton
+    imagePullPolicy: Always
+    command: ["sleep", "infinity"]
+    resources:
+      limits:
+        memory: "4196Mi"
+        cpu: 2
+        #commont below for not getting gpu 
+        nvidia.com/gpu: 1
