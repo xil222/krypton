@@ -46,6 +46,7 @@ def selectedRegion(request):
 	form = PhotoForm(request.POST,request.FILES)
 	if form.is_valid():
 		photo = form.save()
+		print photo.file.url
 		# data = {'is_valid': True, 'name': photo.file.name, 'url': photo.file.url}
 		data = {'is_valid': True}
 		image_file_path = '../../ui/krypton_ui/media/photos/animals.jpg'
@@ -73,12 +74,13 @@ def selectedRegion(request):
 
 
 	heatmap, prob, label = inc_inference(model_class, image_file_path, patch_size=patch_size, stride=stride_size, beta=1.0, gpu=False, c=0.0)
-	cv2.imwrite("../media/photos/heatmap.png",heatmap)
+	# cv2.imwrite("heatmap.png",heatmap)
 	print heatmap
-	# Image.save(heatmap, 'PNG')
+	plt.imshow(heatmap)
+	plt.savefig("./media/photos/heatmap.png")
 
 	response = HttpResponse(content_type="image/png")
-	img = Image.open('../media/photos/heatmap.png')
+	img = Image.open('./media/photos/heatmap.png')
 	img.save(response,'png')
 	return response
 	# plt.imshow(heatmap)
