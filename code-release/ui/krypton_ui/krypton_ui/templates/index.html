@@ -51,6 +51,7 @@
         <option value="2">2</option>
         <option value="4">4</option>
         <option value="8">8</option>
+        <option value="16">16</option>
       </select>
     </p>
     <p>
@@ -62,6 +63,8 @@
         <option value="2">2</option>
         <option value="3">3</option>
         <option value="4">4</option>
+        <option value="8">8</option>
+        <option value="16">16</option>
       </select>
     </p>
     <p>
@@ -160,7 +163,7 @@
             var eStride = document.getElementById("stride").value;
             var eModel = document.getElementById("model").value;
             var fd = new FormData(document.getElementById("coords"));
-            fd.append('image', image);
+            fd.append('file', image);
             fd.append('patchSize', ePatch);
             fd.append('strideSize', eStride);
             fd.append('model', eModel);

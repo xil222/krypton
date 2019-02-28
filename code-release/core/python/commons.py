@@ -8,6 +8,8 @@ import time
 import gc
 import cv2
 import h5py
+import matplotlib
+matplotlib.use('TkAgg')
 import matplotlib.pyplot as plt
 import numpy as np
 import torch
@@ -18,8 +20,8 @@ from torchvision import transforms
 
 from matplotlib.figure import Figure
 
-sys.path.append('../')
-from core.cuda._ext import inc_conv_lib
+#sys.path.append('../')
+#from core.cuda._ext import inc_conv_lib
 
 
 def inc_convolution(premat_tensor, in_tensor, weights, biases, out_tensor, locations, padding_y, padding_x, stride_y,
@@ -177,7 +179,7 @@ def show_heatmap(image_file_path, x, label="", width=224, alpha=1.0, prob=1.0):
     fig.tight_layout()
     plt.show()
 
-    
+
 def save_dict_to_hdf5(dic, filename):
     with h5py.File(filename, 'w') as h5file:
         __recursively_save_dict_contents_to_group(h5file, '/', dic)
