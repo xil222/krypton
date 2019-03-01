@@ -14,9 +14,12 @@ import os
 import cv2
 from PIL import Image
 
-sys.path.append('/Users/allenord/Documents/CSE291/project/krypton/code-release/core/python')
+#sys.path.append('/krypton/code-release/ui/krypton_ui/krypton')
+sys.path.append('/krypton/code-release/core/python')
+#/krypton/code-release/core/python
+
 import matplotlib
-matplotlib.use('TkAgg')
+matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 
 from commons import inc_inference, show_heatmap
@@ -49,12 +52,13 @@ def selectedRegion(request):
 		print photo.file.url
 		# data = {'is_valid': True, 'name': photo.file.name, 'url': photo.file.url}
 		data = {'is_valid': True}
-		image_file_path = '../../ui/krypton_ui/media/photos/animals.jpg'
+		#image_file_path = '../../ui/krypton_ui/media/photos/animals.jpg'
+		
 	else:
 		data = {'is_valid': False}
+		print ("photo is not valid" );
 
 	#return JsonResponse(data)
-
 
 	patch_size = (int)(float(message['patchSize']))
 	stride_size = (int)(float(message['strideSize']))
@@ -67,13 +71,25 @@ def selectedRegion(request):
 	h = (int)(float(message['h']))
 	w = (int)(float(message['w']))
 
+	prev_path = '/krypton/code-release/ui/krypton_ui/'
+	curr_path = prev_path + photo.file.url
+	print(curr_path)
+
 	model_class = message['model']
 	if model_class == "VGG":
 		model_class = VGG16
+	
+	print ("ready for model")
 
 
+	#version 1 --> the entire image
+	#heatmap, prob, label = inc_inference(model_class, curr_path, patch_size=patch_size, stride=stride_size, beta=1.0, gpu=True, c=0.0)
+	
+	#version --> cropping image
+	heatmap, prob, label = inc_inference(model_class, curr_path, patch_size=patch_size, stride=stride_size, beta=1.0, x0=x1, y0=y1, x_size=w, y_size=h, gpu=True, c=0.0)
 
-	heatmap, prob, label = inc_inference(model_class, image_file_path, patch_size=patch_size, stride=stride_size, beta=1.0, gpu=False, c=0.0)
+	print ("inference done")
+	
 	plt.imshow(heatmap)
 	plt.savefig("./media/photos/heatmap.png")
 
