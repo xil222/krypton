@@ -74,14 +74,13 @@ def selectedRegion(request):
 
 
 	heatmap, prob, label = inc_inference(model_class, image_file_path, patch_size=patch_size, stride=stride_size, beta=1.0, gpu=False, c=0.0)
-	# cv2.imwrite("heatmap.png",heatmap)
-	print heatmap
 	plt.imshow(heatmap)
 	plt.savefig("./media/photos/heatmap.png")
 
 	response = HttpResponse(content_type="image/png")
 	img = Image.open('./media/photos/heatmap.png')
 	img.save(response,'png')
+	print label
 	return response
 	# plt.imshow(heatmap)
 	# plt.savefig("heatmap.png")
