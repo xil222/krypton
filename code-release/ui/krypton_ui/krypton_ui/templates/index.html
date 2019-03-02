@@ -7,14 +7,33 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-jcrop/2.0.4/js/Jcrop.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-jcrop/2.0.4/js/Jcrop.min.js"></script>
 
+  <style>
+    .column {
+      float: left;
+      width: 49%;
+      padding: 5px;
+    }
+
+  /* Clear floats after image containers */
+    .row::after {
+      content: "";
+      clear: both;
+      display: table;
+    }
+  </style>
+
 </head>
 <body>
 <div id="response"></div>
 <input type="file" accept=".jpg" id="imageSelection" onchange="imageDisplay(this);"></input>
-<div id="parentImage">
-  <img id="target" src="" onerror="this.style.display='none'" >
+<div class="row">
+    <div class="column">
+      <img id="target" src="" onerror="this.style.display='none'" style="width:100%">
+    </div>
+    <div class="column" sty>
+      <img id="heatmap" src="" onerror="this.style.display='none'" style="width:100%; height:500px;">
+    </div>
 </div>
-
 <!-- Comment out if want to use the button only solution -->
 <form method='post' id ='submit'>
     {% csrf_token %}
@@ -51,6 +70,7 @@
         <option value="2">2</option>
         <option value="4">4</option>
         <option value="8">8</option>
+        <option value="16">16</option>
       </select>
     </p>
     <p>
@@ -62,6 +82,8 @@
         <option value="2">2</option>
         <option value="3">3</option>
         <option value="4">4</option>
+        <option value="8">8</option>
+        <option value="16">16</option>
       </select>
     </p>
     <p>
@@ -85,8 +107,6 @@
       imageDisplay.onload = function (e) {
           $('#target')
               .attr('src', e.target.result)
-              // .width(224)
-              // .height(224);
       };
 
       imageDisplay.readAsDataURL(input.files[0]);
@@ -100,6 +120,8 @@
         onChange:   showCoords,
         onSelect:   showCoords,
         onRelease:  clearCoords,
+        boxWidth: 700,
+        boxHeight: 500,
       },function(){
         jcrop_api = this;
       });
@@ -120,6 +142,8 @@
           onChange:   showCoords,
           onSelect:   showCoords,
           onRelease:  clearCoords,
+          boxWidth: 700,
+          boxHeight: 500,
         },function(){
           jcrop_api = this;
 
@@ -127,6 +151,19 @@
       });
 
     });
+
+    // jQuery(function($){
+    //
+    //   var jcrop_api;
+    //   $('#heatmap').Jcrop({
+    //     onChange:   showCoords,
+    //     onSelect:   showCoords,
+    //     onRelease:  clearCoords,
+    //   },function(){
+    //     jcrop_api = this;
+    //   });
+    //
+    // });
 
     function showCoords(c)
     {
@@ -160,7 +197,7 @@
             var eStride = document.getElementById("stride").value;
             var eModel = document.getElementById("model").value;
             var fd = new FormData(document.getElementById("coords"));
-            fd.append('image', image);
+            fd.append('file', image);
             fd.append('patchSize', ePatch);
             fd.append('strideSize', eStride);
             fd.append('model', eModel);
@@ -174,8 +211,9 @@
                  contentType: false,
                  data: fd,
                  success: function(message){
-                   console.log(message); // log the returned json to the console
                    console.log("success");
+                   $('#heatmap').attr('src', "/media/photos/heatmap.png")
+                   $('#heatmap').show();
                    $("#resetSelect").click();
                  },
                  error : function(xhr,errmsg,err) {

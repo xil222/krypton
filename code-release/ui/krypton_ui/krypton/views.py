@@ -1,15 +1,31 @@
 from django.http import HttpResponse
 from django.http import JsonResponse
-import json
 from django.shortcuts import render
+from django.conf import settings
+from django.core.files.storage import default_storage
 
+from .forms import *
+# from .models import Photo
+
+import json
 import sys
 import time
-sys.path.append('../core/python')
+import os
+import cv2
+from PIL import Image
 
-from commons import inc_inference, adaptive_drilldown, show_heatmap
+#sys.path.append('/krypton/code-release/ui/krypton_ui/krypton')
+sys.path.append('/krypton/code-release/core/python')
+#/krypton/code-release/core/python
+
+import matplotlib
+matplotlib.use('Agg')
+import matplotlib.pyplot as plt
+
+from commons import inc_inference, show_heatmap
 from imagenet_classes import class_names
 from vgg16 import VGG16
+
 
 def index(request):
 	# print("Index request detected!")
@@ -18,33 +34,73 @@ def index(request):
 # input is a request, output is a image
 def selectedRegion(request):
 	message = request.POST
-	#print("SelectedRegion request detected!")
-	#print(str(message))
-	#print(request.FILES)
-	
-	input_image = request.FILES.image
+	print("SelectedRegion request detected!")
 
-	patch_size = (int)message.patchSize
-	stride_size = (int)message.strideSize
-	model = message.model
 
-	if model == "VGG":
-		model = "VGG16"
+	#
+	# input_image = request.FILES
+	#
+	# for line in input_image:
+	# 	save_path = os.path.join(settings.MEDIA_ROOT, 'uploads', line)
+	# 	print save_path
+	# 	path = default_storage.save(save_path, line)
+	# 	print path
 
-	x1 = (int)message.x1
-	x2 = (int)message.x2
-	y1 = (int)message.y1
-	y2 = (int)message.y2
+	form = PhotoForm(request.POST,request.FILES)
+	if form.is_valid():
+		photo = form.save()
+		print photo.file.url
+		# data = {'is_valid': True, 'name': photo.file.name, 'url': photo.file.url}
+		data = {'is_valid': True}
+		#image_file_path = '../../ui/krypton_ui/media/photos/animals.jpg'
+		
+	else:
+		data = {'is_valid': False}
+		print ("photo is not valid" );
 
-	begin_time = time.time()
-	
-	#image_file_path --> may need to edit to --> inputImage
-	heatmap, prob, label = inc_inference(model, inputImage, patch_size=patch_size, stride=stride_size, beta=1.0, gpu=True, c=0.0)
-	
-	end_time = time.time()
-	
-	output_image = show_heatmap(inputImage, heatmap, label=class_names[label], prob=prob, width=224)
-	time_elapsed = end_time - begin_time
+	#return JsonResponse(data)
 
+	patch_size = (int)(float(message['patchSize']))
+	stride_size = (int)(float(message['strideSize']))
+
+	x1 = (int)(float(message['x1']))
+	x2 = (int)(float(message['x2']))
+	y1 = (int)(float(message['y1']))
+	y2 = (int)(float(message['y2']))
+
+	h = (int)(float(message['h']))
+	w = (int)(float(message['w']))
+
+	prev_path = '/krypton/code-release/ui/krypton_ui/'
+	curr_path = prev_path + photo.file.url
+	print(curr_path)
+
+	model_class = message['model']
+	if model_class == "VGG":
+		model_class = VGG16
 	
-	#return JsonResponse({'message': message})
+	print ("ready for model")
+
+
+	#version 1 --> the entire image
+	#heatmap, prob, label = inc_inference(model_class, curr_path, patch_size=patch_size, stride=stride_size, beta=1.0, gpu=True, c=0.0)
+	
+	#version --> cropping image
+	heatmap, prob, label = inc_inference(model_class, curr_path, patch_size=patch_size, stride=stride_size, beta=1.0, x0=x1, y0=y1, x_size=w, y_size=h, gpu=True, c=0.0)
+
+	print ("inference done")
+	
+	plt.imshow(heatmap)
+	plt.savefig("./media/photos/heatmap.png")
+
+	response = HttpResponse(content_type="image/png")
+	img = Image.open('./media/photos/heatmap.png')
+	img.save(response,'png')
+	print label
+	return response
+	# plt.imshow(heatmap)
+	# plt.savefig("heatmap.png")
+	#
+	# response = HttpResponse(mimetype="image/png")
+	# img = Image.open("heatmap.png")
+	# img.save(response,'png')
