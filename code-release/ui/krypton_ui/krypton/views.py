@@ -78,10 +78,12 @@ def selectedRegion(request):
 
 	print ("ready for model")
 
-	#our_model = model_class(beta=1.0, gpu=True, n_labels=1000).eval()
+	our_model = model_class(beta=1.0, gpu=True, n_labels=1000).eval()
 	#configure a time requirement for executing on a specific GPU
-	#print("model created");
+	print("model created");
+	
 
+	
 	begin_time1 = time.time()
 	_, _, _ = inc_inference(model_class, curr_path, patch_size=patch_size, stride=stride_size, beta=1.0, x0=0, y0=0, x_size=224, y_size=224, gpu=True, c=0.0)
 	end_time1 = time.time()
@@ -105,14 +107,22 @@ def selectedRegion(request):
 
 	estimated_time = slope * (w - patch_size) * (h - patch_size) / stride_size / stride_size + intercept
 	print ('estimated_time ' + str(estimated_time))
+	
 	#slope, intercept = auto_configure(our_model, curr_patch, beta=1.0, gpu=True, c=0.0)
-
 	#estimate_time = time_estimate(slope, intercept, stride_size, patch_size)  	
 	
 	heatmap, prob, label = inc_inference(model_class, curr_path, patch_size=patch_size, stride=stride_size, beta=1.0, x0=x1, y0=y1, x_size=w, y_size=h, gpu=True, c=0.0)
+	'''	
+	slope, intercept = auto_configure(our_model, curr_patch, stride_size, patch_size)
+	print('slope ' + str(slope))
+	print('intercept ' + str(intercept))
 
+	estimate_time = time_estimate(slope, intercept, stride_size, patch_size, w, h)
+	print('time estimated ' + str(estimate_time))
+  	
+	heatmap, prob, label = inc_inference_with_model(our_model, curr_path, patch_size=patch_size, stride=stride_size, beta=1.0, x0=x1, y0=y1, x_size=w, y_size=h, gpu=True, c=0.0)
 	print ("inference done")
-	
+	'''
 	plt.imshow(heatmap)
 	plt.savefig("./media/photos/heatmap.png")
 
@@ -136,16 +146,20 @@ estimate time according to linear function, alpha * (x_size - patch) * (y_size -
 
 '''
 def auto_configure(model, image_file_path, stride, patch):
+	print('start configuration')
+
 	begin_time1 = time.time()
 	_, _, _ = inc_inference_with_model(model, image_file_path, patch_size=patch, stride=stride, beta=1.0, x0=0, y0=0, x_size=224, y_size=224, gpu=True, c=0.0)
 	end_time1 = time.time()
 	
 	y1 = end_time1 - begin_time1
 	x1 = (224 - patch) * (224 - patch) * 1.0 / stride / stride
+	print('1 done')
 
 	begin_time2 = time.time()
 	_, _, _ = inc_inference_with_model(model, image_file_path, patch_size=patch, stride=stride, beta=1.0, x0=0, y0=0, x_size=100, y_size=100, gpu=True, c=0.0)
 	end_time2 = time.time()
+	print('2 done')	
 
 	y2 = end_time2 - begin_time2
 	x2 = (100 - patch) * (100 - patch) * 1.0 / stride / stride
@@ -157,5 +171,5 @@ def auto_configure(model, image_file_path, stride, patch):
  
 def time_estimate(slope, intercept, stride, patch, width, height):
 	return slope * (width - patch) * (height - patch) / stride / stride + intercept
-'''
 
+'''
