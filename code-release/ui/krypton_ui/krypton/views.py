@@ -41,10 +41,12 @@ def selectedRegion(request):
 	# 	path = default_storage.save(save_path, line)
 	# 	print path
 
+	start_time = time.time()
+
 	form = PhotoForm(request.POST,request.FILES)
 	if form.is_valid():
 		photo = form.save()
-		print photo.file.url
+		# print photo.file.url
 		# data = {'is_valid': True, 'name': photo.file.name, 'url': photo.file.url}
 		data = {'is_valid': True}
 		#image_file_path = '../../ui/krypton_ui/media/photos/animals.jpg'
@@ -68,12 +70,7 @@ def selectedRegion(request):
 	curr_path = prev_path + photo.file.url
 	#print(curr_path)
 
-	print(curr_path)
 	im = Image.open(curr_path)
-
-	print("image opened")
-	print(im)	
-
 	width, height = im.size
 
 	print('width ' + str(width))
@@ -87,11 +84,8 @@ def selectedRegion(request):
 	elif model_class == 'Inception':
 		model_class = Inception3
 
-	print ("ready for model")
-
 	#our_model = model_class(beta=1.0, gpu=True, n_labels=1000).eval()
 	#configure a time requirement for executing on a specific GPU
-	print("model created");
 	
 	begin_time1 = time.time()
 	_, _, _ = inc_inference(model_class, curr_path, patch_size=patch_size, stride=stride_size, beta=1.0, x0=0, y0=0, x_size=224, y_size=224, gpu=True, c=0.0)
@@ -100,8 +94,6 @@ def selectedRegion(request):
 	t1 = end_time1 - begin_time1
 	s1 = (224 - patch_size) * (224 - patch_size) * 1.0 / stride_size / stride_size
 	
-	print("part1 calculated")
-
 	begin_time2 = time.time()
 	_, _, _ = inc_inference(model_class, curr_path, patch_size=patch_size, stride=stride_size, beta=1.0, x0=0, y0=0, x_size=100, y_size=100, gpu=True, c=0.0)
 	end_time2 = time.time()
@@ -116,18 +108,9 @@ def selectedRegion(request):
 
 	estimated_time = slope * (w - patch_size) * (h - patch_size) / stride_size / stride_size + intercept
 	print ('estimated_time ' + str(estimated_time))
-	
-	'''
-	slope, intercept = auto_configure(our_model, curr_path, stride_size, patch_size)
-	print ('slope ' + str(slope))
-	print ('intercept ' + str(intercept))
 
-	estimate_time = time_estimate(slope, intercept, stride_size, patch_size, w, h)  	
-	print ('estimated_time ' + str(estimated_time))
-	'''
 	calibrated_x1 = (int)(x1 * 224 / width) 
 	calibrated_y1 = (int)(x2 * 224 / height)
-	#x1 = (int)(float(message['x1']))
 	
 	calibrated_w = (int)(w * 224 / width)
 	calibrated_h = (int)(h * 224 / height)
@@ -135,7 +118,7 @@ def selectedRegion(request):
 	heatmap, prob, label = inc_inference(model_class, curr_path, patch_size=patch_size, stride=stride_size, beta=1.0, x0=calibrated_x1, y0=calibrated_y1, x_size=calibrated_w, y_size=calibrated_h, gpu=True)
 	
 	'''	
-	slope, intercept = auto_configure(our_model, curr_patch, stride_size, patch_size)
+	slope, intercept = auto_configure(our_model, curr_path, stride_size, patch_size)
 	print('slope ' + str(slope))
 	print('intercept ' + str(intercept))
 
@@ -144,7 +127,9 @@ def selectedRegion(request):
   	
 	heatmap, prob, label = inc_inference_with_model(our_model, curr_path, patch_size=patch_size, stride=stride_size, beta=1.0, x0=x1, y0=y1, x_size=w, y_size=h, gpu=True, c=0.0)
 	'''
-
+	
+	end_time = time.time()
+	print ("actual time " + str(end_time - start_time))
 	print ("inference done")
 	
 	plt.imshow(heatmap)
