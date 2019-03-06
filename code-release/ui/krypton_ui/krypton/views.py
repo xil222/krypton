@@ -110,7 +110,7 @@ def selectedRegion(request):
 	print ('estimated_time ' + str(estimated_time))
 
 	calibrated_x1 = (int)(x1 * 224 / width) 
-	calibrated_y1 = (int)(x2 * 224 / height)
+	calibrated_y1 = (int)(y1 * 224 / height)
 	
 	calibrated_w = (int)(w * 224 / width)
 	calibrated_h = (int)(h * 224 / height)
@@ -152,6 +152,7 @@ def selectedRegion(request):
 '''
 estimate time according to linear function, alpha * (x_size - patch) * (y_size - patch) / (stride^2) + b = time
 '''
+
 '''
 
 def auto_configure(model, image_file_path, stride, patch):
