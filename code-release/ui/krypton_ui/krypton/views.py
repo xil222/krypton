@@ -41,8 +41,6 @@ def selectedRegion(request):
 	# 	path = default_storage.save(save_path, line)
 	# 	print path
 
-	start_time = time.time()
-
 	form = PhotoForm(request.POST,request.FILES)
 	if form.is_valid():
 		photo = form.save()
@@ -54,6 +52,29 @@ def selectedRegion(request):
 	else:
 		data = {'is_valid': False}
 		print ("photo is not valid" );
+	
+	#print("start loading")
+	file_path = '/krypton/code-release/ui/krypton_ui/krypton/time-estimation.txt'
+	
+	with open(file_path) as f:
+		print("loading")
+		parameters = json.load(f)
+
+	print("successfully loaded json")
+
+	model_class = message['model']
+
+	#do infernece with model with save much more time especially in the first try
+	if model_class == "VGG":
+		model_class = VGG16
+		intercept, slope = parameters['vgg16'][0]['intercept'], parameters['vgg16'][0]['slope']
+	elif model_class == 'ResNet':
+		model_class = ResNet18
+		intercept, slope = parameters['resnet18'][0]['intercept'], parameters['resnet18'][0]['slope'] 
+	elif model_class == 'Inception':
+		model_class = Inception3
+
+	print("start experiment")
 
 	patch_size = (int)(float(message['patchSize']))
 	stride_size = (int)(float(message['strideSize']))
@@ -66,9 +87,14 @@ def selectedRegion(request):
 	h = (int)(float(message['h']))
 	w = (int)(float(message['w']))
 
+	print ('slope ' + str(slope))
+	print ('intercept ' + str(intercept))
+	
+	estimated_time = slope * (w - patch_size) * (h - patch_size) / stride_size / stride_size + intercept
+	print ('estimated_time ' + str(estimated_time))
+
 	prev_path = '/krypton/code-release/ui/krypton_ui'
 	curr_path = prev_path + photo.file.url
-	#print(curr_path)
 
 	im = Image.open(curr_path)
 	width, height = im.size
@@ -76,17 +102,12 @@ def selectedRegion(request):
 	print('width ' + str(width))
 	print('height ' + str(height))
 
-	model_class = message['model']
-	if model_class == "VGG":
-		model_class = VGG16
-	elif model_class == 'ResNet':
-		model_class = ResNet18
-	elif model_class == 'Inception':
-		model_class = Inception3
-
 	#our_model = model_class(beta=1.0, gpu=True, n_labels=1000).eval()
 	#configure a time requirement for executing on a specific GPU
-	
+
+	start_time = time.time()
+
+	'''	
 	begin_time1 = time.time()
 	_, _, _ = inc_inference(model_class, curr_path, patch_size=patch_size, stride=stride_size, beta=1.0, x0=0, y0=0, x_size=224, y_size=224, gpu=True, c=0.0)
 	end_time1 = time.time()
@@ -103,12 +124,7 @@ def selectedRegion(request):
 
 	slope = (t2 - t1) / (s2 - s1)
 	intercept = t1 - slope * s1
-	print ('slope ' + str(slope))
-	print ('intercept ' + str(intercept))
-
-	estimated_time = slope * (w - patch_size) * (h - patch_size) / stride_size / stride_size + intercept
-	print ('estimated_time ' + str(estimated_time))
-
+	'''
 	calibrated_x1 = (int)(x1 * 224 / width) 
 	calibrated_y1 = (int)(y1 * 224 / height)
 	
@@ -140,6 +156,7 @@ def selectedRegion(request):
 	img.save(response,'png')
 	print label
 	return response
+
 	# plt.imshow(heatmap)
 	# plt.savefig("heatmap.png")
 	#
@@ -147,19 +164,16 @@ def selectedRegion(request):
 	# img = Image.open("heatmap.png")
 	# img.save(response,'png')
 
-
-
 '''
 estimate time according to linear function, alpha * (x_size - patch) * (y_size - patch) / (stride^2) + b = time
 '''
 
 '''
-
 def auto_configure(model, image_file_path, stride, patch):
 	print('start configuration')
 
 	begin_time1 = time.time()
-	a, b, c = inc_inference_with_model(model, image_file_path, patch_size=patch, stride=stride, beta=1.0, x0=0, y0=0, x_size=224, y_size=224, gpu=True, c=0.0)
+	_, _, _ = inc_inference_with_model(model, image_file_path, patch_size=patch, stride=stride, beta=1.0, x0=0, y0=0, x_size=224, y_size=224, gpu=True, c=0.0)
 	end_time1 = time.time()
 	
 	print('cc')
