@@ -60,7 +60,7 @@ def selectedRegion(request):
 		print("loading")
 		parameters = json.load(f)
 
-	print("successfully loaded json")
+	#print("successfully loaded json")
 
 	model_class = message['model']
 
@@ -73,8 +73,11 @@ def selectedRegion(request):
 		intercept, slope = parameters['resnet18'][0]['intercept'], parameters['resnet18'][0]['slope'] 
 	elif model_class == 'Inception':
 		model_class = Inception3
+		intercept, slope = parameters['inception'][0]['intercept'], parameters['inception'][0]['slope']
 
-	print("start experiment")
+	#print("start experiment")
+	
+	model = model_class(beta=1.0, gpu=True, n_labels=1000).eval()
 
 	patch_size = (int)(float(message['patchSize']))
 	stride_size = (int)(float(message['strideSize']))
@@ -105,6 +108,12 @@ def selectedRegion(request):
 	#our_model = model_class(beta=1.0, gpu=True, n_labels=1000).eval()
 	#configure a time requirement for executing on a specific GPU
 
+	calibrated_x1 = (int)(x1 * 224 / width) 
+	calibrated_y1 = (int)(y1 * 224 / height)
+	
+	calibrated_w = (int)(w * 224 / width)
+	calibrated_h = (int)(h * 224 / height)	
+
 	start_time = time.time()
 
 	'''	
@@ -125,13 +134,11 @@ def selectedRegion(request):
 	slope = (t2 - t1) / (s2 - s1)
 	intercept = t1 - slope * s1
 	'''
-	calibrated_x1 = (int)(x1 * 224 / width) 
-	calibrated_y1 = (int)(y1 * 224 / height)
-	
-	calibrated_w = (int)(w * 224 / width)
-	calibrated_h = (int)(h * 224 / height)
 
-	heatmap, prob, label = inc_inference(model_class, curr_path, patch_size=patch_size, stride=stride_size, beta=1.0, x0=calibrated_x1, y0=calibrated_y1, x_size=calibrated_w, y_size=calibrated_h, gpu=True)
+	#print('curr_path ' + str(curr_path))
+	#print(model)
+
+	#heatmap, prob, label = inc_inference_with_model(model, curr_path, patch_size=patch_size, stride=stride_size, x0=calibrated_x1, y0=calibrated_y1, x_size=calibrated_w, y_size=calibrated_h, gpu=True)
 	
 	'''	
 	slope, intercept = auto_configure(our_model, curr_path, stride_size, patch_size)
@@ -140,11 +147,11 @@ def selectedRegion(request):
 
 	estimate_time = time_estimate(slope, intercept, stride_size, patch_size, w, h)
 	print('time estimated ' + str(estimate_time))
-  	
-	heatmap, prob, label = inc_inference_with_model(our_model, curr_path, patch_size=patch_size, stride=stride_size, beta=1.0, x0=x1, y0=y1, x_size=w, y_size=h, gpu=True, c=0.0)
-	'''
+  	'''
+	heatmap, prob, label = inc_inference_with_model(model, curr_path, patch_size=patch_size, stride=stride_size, x0=calibrated_x1, y0=calibrated_y1, x_size=calibrated_w, y_size=calibrated_h, gpu=True, c=0.0)
 	
 	end_time = time.time()
+	
 	print ("actual time " + str(end_time - start_time))
 	print ("inference done")
 	
