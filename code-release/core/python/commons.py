@@ -9,7 +9,7 @@ import gc
 import cv2
 import h5py
 import matplotlib
-matplotlib.use('TkAgg')
+matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import numpy as np
 import torch
@@ -21,7 +21,8 @@ from torchvision import transforms
 from matplotlib.figure import Figure
 
 #sys.path.append('../')
-#from core.cuda._ext import inc_conv_lib
+sys.path.append('/krypton/code-release')
+from core.cuda._ext import inc_conv_lib
 
 
 def inc_convolution(premat_tensor, in_tensor, weights, biases, out_tensor, locations, padding_y, padding_x, stride_y,
