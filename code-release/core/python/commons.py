@@ -153,6 +153,68 @@ def inc_inference_with_model(inc_model, file_path, patch_size, stride, batch_siz
     gc.collect()
 
     return logit_values, prob, logit_index
+ 
+
+def full_inference_e2e_with_model(full_model, file_path, patch_size, stride, batch_size=256, gpu=True, version='v1', image_size=224, x_size=224, y_size=224, n_labels=1000, weights_data=None, loader=None, c=0.0, g=None):
+    if loader == None:
+        loader = transforms.Compose([transforms.Resize([image_size, image_size]), transforms.ToTensor()])
+    orig_image = Image.open(file_path).convert('RGB')
+    orig_image = Variable(loader(orig_image).unsqueeze(0))
+     
+    if gpu:
+        orig_image = orig_image.cuda()
+    
+    if gpu:
+        full_model = full_model.cuda()
+    full_model.eval()
+
+    temp = full_model(orig_image).cpu().data.numpy()[0,:]
+    logit_index = np.argmax(temp)
+    prob = np.max(temp)
+    
+    output_width = int(math.ceil((x_size*1.0 - patch_size) / stride))
+    
+    if g is None:
+        total_number = output_width * output_width
+    else:
+        total_number = g
+        
+    #print(output_width, total_number)
+
+    logit_values = []
+    image_patch = torch.FloatTensor(3, patch_size, patch_size).fill_(c)
+    if gpu:
+        image_patch = image_patch.cuda()
+
+    for i in range(0, int(math.ceil(total_number * 1.0 / batch_size))):
+        start = i * batch_size
+        end = min(i * batch_size + batch_size, total_number)
+
+        images_batch = orig_image.repeat(end - start, 1, 1, 1)
+
+        for idx, j in enumerate(range(start, end)):
+            x = (j // output_width)*stride
+            y = (j % output_width)*stride
+            x,y=int(x),int(y)
+            images_batch[idx, :, x:x + patch_size, y:y + patch_size] = image_patch
+
+        if version == 'v1':
+            x = full_model.forward_fused(images_batch)
+        else:
+            x = full_model.forward_pytorch(images_batch)
+            
+        logit_values.extend(x.cpu().data.numpy()[:, logit_index].flatten().tolist())
+
+    x = np.array(logit_values).reshape(output_width, output_width)
+    
+    return x, prob, logit_index
+
+
+def full_inference_e2e(model_class, file_path, patch_size, stride, batch_size=256, gpu=True, version='v1', image_size=224, x_size=224, y_size=224, n_labels=1000, weights_data=None, loader=None, c=0.0):
+    
+    full_model = model_class(gpu=gpu, n_labels=n_labels, weights_data=weights_data).eval()
+    
+    return full_inference_e2e_with_model(full_model, file_path, patch_size, stride, batch_size=batch_size, gpu=gpu, version=version, image_size=image_size, x_size=x_size, y_size=y_size, n_labels=n_labels, weights_data=weights_data, loader=loader, c=c)
 
 
 def show_heatmap(image_file_path, x, label="", width=224, alpha=1.0, prob=1.0):
