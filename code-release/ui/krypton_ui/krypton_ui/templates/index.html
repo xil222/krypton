@@ -20,18 +20,25 @@
       clear: both;
       display: table;
     }
+    body{
+
+      background-color: #142952;
+    }
   </style>
 
 </head>
-<body>
+<body color>
 <div id="response"></div>
 <input type="file" accept=".jpg" id="imageSelection" onchange="imageDisplay(this);"></input>
 <div class="row">
     <div class="column">
       <img id="target" src="" onerror="this.style.display='none'" style="width:100%">
+      <img id="backup" src="" onerror="this.style.display='none'" style="width:100%">
     </div>
-    <div class="column" sty>
-      <img id="heatmap" src="" onerror="this.style.display='none'" style="width:100%; height:500px;">
+    <div class="column" style="position:relative">
+      <img id="heatmap" src="" onerror="this.style.display='none'" style="position: absolute; width:700px; height:500px;">
+      <img id="original" src="" onerror="this.style.display='none'" style="position: absolute; width:700px; height:500px; opacity:0.2">
+
     </div>
 </div>
 <!-- Comment out if want to use the button only solution -->
@@ -214,6 +221,8 @@
                    console.log("success");
                    $('#heatmap').attr('src', "/media/photos/heatmap.png")
                    $('#heatmap').show();
+                   $('#original').attr('src', "/media/photos/animals.jpg");
+                   $('#original').show();
                    $("#resetSelect").click();
                  },
                  error : function(xhr,errmsg,err) {
