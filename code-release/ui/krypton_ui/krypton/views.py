@@ -22,6 +22,8 @@ matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 
 from commons import inc_inference, inc_inference_with_model, show_heatmap
+#from commons import full_infern
+
 from imagenet_classes import class_names
 from vgg16 import VGG16
 from resnet18 import ResNet18
