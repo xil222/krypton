@@ -104,6 +104,12 @@
     </p>
 </section>
 
+<form action="">
+  <input type="radio" name="mode" value="exact"> Krypton Exact<br>
+  <input type="radio" name="mode" value="approximate"> Krypton Approximate<br>
+  <input type="radio" name="mode" value="naive"> Naiive
+</form>
+
 
   <script type="text/javascript">
   function imageDisplay(input){
@@ -204,10 +210,12 @@
             var eStride = document.getElementById("stride").value;
             var eModel = document.getElementById("model").value;
             var fd = new FormData(document.getElementById("coords"));
+            var mode = document.querySelector('input[name="mode"]:checked').value;
             fd.append('file', image);
             fd.append('patchSize', ePatch);
             fd.append('strideSize', eStride);
             fd.append('model', eModel);
+            fd.append('mode', mode);
             $.ajax({
                  type:"POST",
                  url:"/selectedRegion/",
