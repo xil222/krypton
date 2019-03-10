@@ -184,48 +184,86 @@
   },
   {
    "cell_type": "code",
-   "execution_count": null,
+   "execution_count": 11,
    "metadata": {},
-   "outputs": [],
-   "source": []
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "slope 0.0008626577254934978 intercept 1.5259596772652921\n"
+     ]
+    }
+   ],
+   "source": [
+    "print('slope ' + str(X_vgg[0][0]) + ' intercept ' + str(X_vgg[1][0]))"
+   ]
   },
   {
    "cell_type": "code",
-   "execution_count": 10,
+   "execution_count": 16,
    "metadata": {},
    "outputs": [],
    "source": [
     "def abline(slope, intercept, para, time):\n",
     "    \"\"\"Plot a line from slope and intercept\"\"\"\n",
+    "    fig = plt.figure()\n",
+    "    \n",
     "    axes = plt.gca()\n",
     "    x_vals = np.arange(1,20000,1)\n",
     "    y_vals = intercept + slope * x_vals\n",
-    "    plt.plot(x_vals, y_vals, '--')\n",
-    "    plt.plot(para, time, 'ro')"
+    "    ax = fig.add_axes(axes)\n",
+    "    ax.plot(x_vals, y_vals, '--')\n",
+    "    ax.plot(para, time, 'ro')\n",
+    "    \n",
+    "    return fig"
    ]
   },
   {
    "cell_type": "code",
-   "execution_count": null,
+   "execution_count": 17,
    "metadata": {},
-   "outputs": [],
+   "outputs": [
+    {
+     "data": {
+      "image/png": "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\n",
+      "text/plain": [
+       "<Figure size 432x288 with 1 Axes>"
+      ]
+     },
+     "metadata": {
+      "needs_background": "light"
+     },
+     "output_type": "display_data"
+    }
+   ],
    "source": [
-    "X—"
+    "fig = abline(X_vgg[0][0], X_vgg[1][0], vgg_paralist, vgg_timelist)"
    ]
   },
   {
    "cell_type": "code",
-   "execution_count": null,
+   "execution_count": 19,
    "metadata": {},
-   "outputs": [],
-   "source": []
-  },
-  {
-   "cell_type": "code",
-   "execution_count": null,
-   "metadata": {},
-   "outputs": [],
-   "source": []
+   "outputs": [
+    {
+     "ename": "ValueError",
+     "evalue": "Format 'fig' is not supported (supported formats: eps, jpeg, jpg, pdf, pgf, png, ps, raw, rgba, svg, svgz, tif, tiff)",
+     "output_type": "error",
+     "traceback": [
+      "\u001b[0;31m---------------------------------------------------------------------------\u001b[0m",
+      "\u001b[0;31mValueError\u001b[0m                                Traceback (most recent call last)",
+      "\u001b[0;32m<ipython-input-19-e7340e927e86>\u001b[0m in \u001b[0;36m<module>\u001b[0;34m()\u001b[0m\n\u001b[0;32m----> 1\u001b[0;31m \u001b[0mfig\u001b[0m\u001b[0;34m.\u001b[0m\u001b[0msavefig\u001b[0m\u001b[0;34m(\u001b[0m\u001b[0;34m\"time approx.fig\"\u001b[0m\u001b[0;34m)\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n\u001b[0m",
+      "\u001b[0;32m/usr/local/lib/python2.7/dist-packages/matplotlib/figure.pyc\u001b[0m in \u001b[0;36msavefig\u001b[0;34m(self, fname, **kwargs)\u001b[0m\n\u001b[1;32m   2060\u001b[0m             \u001b[0mself\u001b[0m\u001b[0;34m.\u001b[0m\u001b[0mset_frameon\u001b[0m\u001b[0;34m(\u001b[0m\u001b[0mframeon\u001b[0m\u001b[0;34m)\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n\u001b[1;32m   2061\u001b[0m \u001b[0;34m\u001b[0m\u001b[0m\n\u001b[0;32m-> 2062\u001b[0;31m         \u001b[0mself\u001b[0m\u001b[0;34m.\u001b[0m\u001b[0mcanvas\u001b[0m\u001b[0;34m.\u001b[0m\u001b[0mprint_figure\u001b[0m\u001b[0;34m(\u001b[0m\u001b[0mfname\u001b[0m\u001b[0;34m,\u001b[0m \u001b[0;34m**\u001b[0m\u001b[0mkwargs\u001b[0m\u001b[0;34m)\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n\u001b[0m\u001b[1;32m   2063\u001b[0m \u001b[0;34m\u001b[0m\u001b[0m\n\u001b[1;32m   2064\u001b[0m         \u001b[0;32mif\u001b[0m \u001b[0mframeon\u001b[0m\u001b[0;34m:\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n",
+      "\u001b[0;32m/usr/local/lib/python2.7/dist-packages/matplotlib/backend_bases.pyc\u001b[0m in \u001b[0;36mprint_figure\u001b[0;34m(self, filename, dpi, facecolor, edgecolor, orientation, format, **kwargs)\u001b[0m\n\u001b[1;32m   2171\u001b[0m \u001b[0;34m\u001b[0m\u001b[0m\n\u001b[1;32m   2172\u001b[0m         \u001b[0;31m# get canvas object and print method for format\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n\u001b[0;32m-> 2173\u001b[0;31m         \u001b[0mcanvas\u001b[0m \u001b[0;34m=\u001b[0m \u001b[0mself\u001b[0m\u001b[0;34m.\u001b[0m\u001b[0m_get_output_canvas\u001b[0m\u001b[0;34m(\u001b[0m\u001b[0mformat\u001b[0m\u001b[0;34m)\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n\u001b[0m\u001b[1;32m   2174\u001b[0m         \u001b[0mprint_method\u001b[0m \u001b[0;34m=\u001b[0m \u001b[0mgetattr\u001b[0m\u001b[0;34m(\u001b[0m\u001b[0mcanvas\u001b[0m\u001b[0;34m,\u001b[0m \u001b[0;34m'print_%s'\u001b[0m \u001b[0;34m%\u001b[0m \u001b[0mformat\u001b[0m\u001b[0;34m)\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n\u001b[1;32m   2175\u001b[0m \u001b[0;34m\u001b[0m\u001b[0m\n",
+      "\u001b[0;32m/usr/local/lib/python2.7/dist-packages/matplotlib/backend_bases.pyc\u001b[0m in \u001b[0;36m_get_output_canvas\u001b[0;34m(self, fmt)\u001b[0m\n\u001b[1;32m   2103\u001b[0m         raise ValueError(\n\u001b[1;32m   2104\u001b[0m             \u001b[0;34m\"Format {!r} is not supported (supported formats: {})\"\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n\u001b[0;32m-> 2105\u001b[0;31m             .format(fmt, \", \".join(sorted(self.get_supported_filetypes()))))\n\u001b[0m\u001b[1;32m   2106\u001b[0m \u001b[0;34m\u001b[0m\u001b[0m\n\u001b[1;32m   2107\u001b[0m     def print_figure(self, filename, dpi=None, facecolor=None, edgecolor=None,\n",
+      "\u001b[0;31mValueError\u001b[0m: Format 'fig' is not supported (supported formats: eps, jpeg, jpg, pdf, pgf, png, ps, raw, rgba, svg, svgz, tif, tiff)"
+     ]
+    }
+   ],
+   "source": [
+    "fig.savefig(\"time approx.fig\")"
+   ]
   },
   {
    "cell_type": "code",
