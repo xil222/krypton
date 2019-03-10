@@ -152,7 +152,7 @@ def selectedRegion(request):
 
 	response = HttpResponse(content_type="image/png")
 	img = Image.open('./media/photos/heatmap.png')
-	img = img.resize((900,675), Image.ANTIALIAS)
+	img = img.resize((width,height), Image.ANTIALIAS)
 	img.save('./media/photos/heatmap.png')
 	img = Image.open('./media/photos/heatmap.png')
 	print(img.size)
