@@ -53,26 +53,27 @@ def selectedRegion(request):
 		print ("photo is not valid" );
 
 	#print("start loading")
-	file_path = '/krypton/code-release/ui/krypton_ui/krypton/time-estimation.txt'
+	file_path = '/krypton/code-release/ui/krypton_ui/krypton/updated-time-estimation.txt'
 
 	with open(file_path) as f:
 		print("loading")
 		parameters = json.load(f)
 
-
 	model_class = message['model']
 
 	#do infernece with model with save much more time especially in the first try
 	if model_class == "VGG":
-		model = VGG16(beta=1.0, gpu=True, n_labels=1000).eval()
+		#model = VGG16(beta=1.0, gpu=True, n_labels=1000).eval()
+		model_class = VGG16
 		intercept, slope = parameters['vgg16'][0]['intercept'], parameters['vgg16'][0]['slope']
 	elif model_class == 'ResNet':
-		model = ResNet18(beta=1.0, gpu=True, n_labels=1000).eval()
+		#model = ResNet18(beta=1.0, gpu=True, n_labels=1000).eval()
+		model_class = ResNet18
 		intercept, slope = parameters['resnet18'][0]['intercept'], parameters['resnet18'][0]['slope']
 	elif model_class == 'Inception':
-		model = Inception3(beta=1.0, gpu=True, n_labels=1000).eval()
+		#model = Inception3(beta=1.0, gpu=True, n_labels=1000).eval()
+		model_class = Inception3
 		intercept, slope = parameters['inception'][0]['intercept'], parameters['inception'][0]['slope']
-
 
 	patch_size = (int)(float(message['patchSize']))
 	stride_size = (int)(float(message['strideSize']))
@@ -85,13 +86,37 @@ def selectedRegion(request):
 	h = (int)(float(message['h']))
 	w = (int)(float(message['w']))
 
-	print ('slope ' + str(slope))
-	print ('intercept ' + str(intercept))
+	#print ('slope ' + str(slope))
+	#print ('intercept ' + str(intercept))
 
-	#estimated_time = slope * (w - patch_size) * (h - patch_size) / stride_size / stride_size + intercept
 	estimated_time = time_estimate(slope, intercept, stride_size, patch_size, w, h)
-
-	print ('estimated_time ' + str(estimated_time))
+	coeff = 0.0
+	
+	if model_class == VGG16:
+		if stride_size == 16:
+			coeff = 1.0
+		elif stride_size == 8:
+			coeff = 1.0
+		elif stride_size == 4:
+			coeff = 2.0
+		elif stride_size == 2:
+			coeff = 3.0
+		else:
+			coeff = 3.0
+	elif model_class == ResNet18:
+		if stride_size == 16:
+			coeff = 1.0
+		elif stride_size == 8:
+			coeff = 2.0
+		elif stride_size == 4:
+			coeff = 3.0
+		elif stride_size == 2:
+			coeff = 4.0
+		else:
+			coeff = 5.0
+	print ('time ' + str(estimated_time))
+	print ('coeff ' + str(coeff))
+	print ('estimated_time ' + str(estimated_time / coeff))
 
 	prev_path = '/krypton/code-release/ui/krypton_ui'
 	curr_path = prev_path + photo.file.url
@@ -101,7 +126,6 @@ def selectedRegion(request):
 
 	print('width ' + str(width))
 	print('height ' + str(height))
-
 
 	calibrated_x1 = (int)(x1 * 224 / width)
 	calibrated_y1 = (int)(y1 * 224 / height)
@@ -129,7 +153,7 @@ def selectedRegion(request):
 	slope = (t2 - t1) / (s2 - s1)
 	intercept = t1 - slope * s1
 	'''
-	heatmap, prob, label = inc_inference_with_model(model, curr_path, patch_size=patch_size, stride=stride_size, x0=calibrated_x1, y0=calibrated_y1, x_size=calibrated_w, y_size=calibrated_h, gpu=True)
+	#heatmap, prob, label = inc_inference_with_model(model, curr_path, patch_size=patch_size, stride=stride_size, x0=calibrated_x1, y0=calibrated_y1, x_size=calibrated_w, y_size=calibrated_h, gpu=True)
 
 	'''
 	slope, intercept = auto_configure(our_model, curr_path, stride_size, patch_size)
@@ -139,7 +163,7 @@ def selectedRegion(request):
 	estimate_time = time_estimate(slope, intercept, stride_size, patch_size, w, h)
 	print('time estimated ' + str(estimate_time))
   	'''
-	#heatmap, prob, label = inc_inference_with_model(our_model, curr_path, patch_size=patch_size, stride=stride_size, x0=calibrated_x1, y0=calibrated_y1, x_size=calibrated_w, y_size=calibrated_h, gpu=True, c=0.0)
+	heatmap, prob, label = inc_inference(model_class, curr_path, patch_size=patch_size, stride=stride_size, x0=calibrated_x1, y0=calibrated_y1, x_size=calibrated_w, y_size=calibrated_h, gpu=True, c=0.0)
 
 	end_time = time.time()
 
