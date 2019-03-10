@@ -44,10 +44,7 @@ def selectedRegion(request):
 	form = PhotoForm(request.POST,request.FILES)
 	if form.is_valid():
 		photo = form.save()
-		# print photo.file.url
-		# data = {'is_valid': True, 'name': photo.file.name, 'url': photo.file.url}
 		data = {'is_valid': True}
-		#image_file_path = '../../ui/krypton_ui/media/photos/animals.jpg'
 
 	else:
 		data = {'is_valid': False}
