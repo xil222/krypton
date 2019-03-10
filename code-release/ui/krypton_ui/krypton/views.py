@@ -22,7 +22,7 @@ matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 
 from commons import inc_inference, inc_inference_with_model, show_heatmap
-#from commons import full_infern
+from commons import full_inference_e2e 
 
 from imagenet_classes import class_names
 from vgg16 import VGG16
@@ -60,6 +60,9 @@ def selectedRegion(request):
 		parameters = json.load(f)
 
 	model_class = message['model']
+	
+	mode = message['mode']
+	#exact, approximate, naive
 
 	#do infernece with model with save much more time especially in the first try
 	if model_class == "VGG":
@@ -114,8 +117,8 @@ def selectedRegion(request):
 			coeff = 4.0
 		else:
 			coeff = 5.0
-	print ('time ' + str(estimated_time))
-	print ('coeff ' + str(coeff))
+	#print ('time ' + str(estimated_time))
+	#print ('coeff ' + str(coeff))
 	print ('estimated_time ' + str(estimated_time / coeff))
 
 	prev_path = '/krypton/code-release/ui/krypton_ui'
@@ -124,8 +127,8 @@ def selectedRegion(request):
 	im = Image.open(curr_path)
 	width, height = im.size
 
-	print('width ' + str(width))
-	print('height ' + str(height))
+	#print('width ' + str(width))
+	#print('height ' + str(height))
 
 	calibrated_x1 = (int)(x1 * 224 / width)
 	calibrated_y1 = (int)(y1 * 224 / height)
@@ -134,36 +137,14 @@ def selectedRegion(request):
 	calibrated_h = (int)(h * 224 / height)
 
 	start_time = time.time()
-
-	'''
-	begin_time1 = time.time()
-	_, _, _ = inc_inference(model_class, curr_path, patch_size=patch_size, stride=stride_size, beta=1.0, x0=0, y0=0, x_size=224, y_size=224, gpu=True, c=0.0)
-	end_time1 = time.time()
-
-	t1 = end_time1 - begin_time1
-	s1 = (224 - patch_size) * (224 - patch_size) * 1.0 / stride_size / stride_size
-
-	begin_time2 = time.time()
-	_, _, _ = inc_inference(model_class, curr_path, patch_size=patch_size, stride=stride_size, beta=1.0, x0=0, y0=0, x_size=100, y_size=100, gpu=True, c=0.0)
-	end_time2 = time.time()
-
-	t2 = end_time2 - begin_time2
-	s2 = (100 - patch_size) * (100 - patch_size) * 1.0 / stride_size / stride_size
-
-	slope = (t2 - t1) / (s2 - s1)
-	intercept = t1 - slope * s1
-	'''
-	#heatmap, prob, label = inc_inference_with_model(model, curr_path, patch_size=patch_size, stride=stride_size, x0=calibrated_x1, y0=calibrated_y1, x_size=calibrated_w, y_size=calibrated_h, gpu=True)
-
-	'''
-	slope, intercept = auto_configure(our_model, curr_path, stride_size, patch_size)
-	print('slope ' + str(slope))
-	print('intercept ' + str(intercept))
-
-	estimate_time = time_estimate(slope, intercept, stride_size, patch_size, w, h)
-	print('time estimated ' + str(estimate_time))
-  	'''
-	heatmap, prob, label = inc_inference(model_class, curr_path, patch_size=patch_size, stride=stride_size, x0=calibrated_x1, y0=calibrated_y1, x_size=calibrated_w, y_size=calibrated_h, gpu=True, c=0.0)
+	
+	if mode == "exact":
+		heatmap, prob, label = inc_inference(model_class, curr_path, patch_size=patch_size, stride=stride_size, beta=1.0, x0=calibrated_x1, y0=calibrated_y1, x_size=calibrated_w, y_size=calibrated_h, gpu=True)
+	elif mode == "approximate":
+		heatmap, prob, label = inc_inference(model_class, curr_path, patch_size=patch_size, stride=stride_size, beta=0.5, x0=calibrated_x1, y0=calibrated_y1, x_size=calibrated_w, y_size=calibrated_h, gpu=True)
+	else:
+		#why this doesn't have specific starting location??? assume to run the entire?
+		heatmap, prob, label = full_inference_e2e(model_class, curr_path, patch_size=patch_size, stride=stride_size, batch_size=128, x_size=calibrated_w, y_size=calibrated_h, gpu=True)
 
 	end_time = time.time()
 
@@ -183,34 +164,6 @@ def selectedRegion(request):
 	print label
 	return response
 
-'''
-estimate time according to linear function, alpha * (x_size - patch) * (y_size - patch) / (stride^2) + b = time
-'''
-'''
-def auto_configure(model, image_file_path, stride, patch):
-	print('start configuration')
-
-	begin_time1 = time.time()
-	_, _, _ = inc_inference_with_model(model, image_file_path, patch_size=patch, stride=stride, beta=1.0, x0=0, y0=0, x_size=224, y_size=224, gpu=True, c=0.0)
-	end_time1 = time.time()
-
-	print('cc')
-	y1 = end_time1 - begin_time1
-	x1 = (224 - patch) * (224 - patch) * 1.0 / stride / stride
-	print('1 done')
-
-	begin_time2 = time.time()
-	_, _, _ = inc_inference_with_model(model, image_file_path, patch_size=patch, stride=stride, beta=1.0, x0=0, y0=0, x_size=100, y_size=100, gpu=True, c=0.0)
-	end_time2 = time.time()
-	print('2 done')
-
-	y2 = end_time2 - begin_time2
-	x2 = (100 - patch) * (100 - patch) * 1.0 / stride / stride
-
-	alpha = (y2 - y1) / (x2 - x1)
-	beta = y1 - alpha * x1
-	return alpha, beta
-'''
 
 def time_estimate(slope, intercept, stride, patch, width, height):
 	return slope * (width - patch) * (height - patch) / stride / stride + intercept
