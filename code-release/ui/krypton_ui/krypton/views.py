@@ -89,9 +89,10 @@ def selectedRegion(request):
 	h = (int)(float(message['h']))
 	w = (int)(float(message['w']))
 
-	#print ('slope ' + str(slope))
-	#print ('intercept ' + str(intercept))
-
+	#naive mode only allows the entire
+	if mode == "naive":
+		w,h = 224, 224		
+	
 	estimated_time = time_estimate(slope, intercept, stride_size, patch_size, w, h)
 	coeff = 1.0
 	
@@ -118,18 +119,22 @@ def selectedRegion(request):
 		else:
 			coeff = 5.0
 
-	#print ('time ' + str(estimated_time))
-	#print ('coeff ' + str(coeff))
-	print ('estimated_time ' + str(estimated_time / coeff))
+	real_estimate = estimated_time / coeff
+
+	'''
+	we only display the estimated tiem for krypton exact
+	when running krypton exact, we are verifying the accuracy of prediction
+	when running naive, we can see how krypton improves from naive cnn
+	when running approximation, we can see how approximation improves time cost
+	'''
+
+	print ('krypton exact estimated_time ' + str(real_estimate))
 
 	prev_path = '/krypton/code-release/ui/krypton_ui'
 	curr_path = prev_path + photo.file.url
 
 	im = Image.open(curr_path)
 	width, height = im.size
-
-	#print('width ' + str(width))
-	#print('height ' + str(height))
 
 	calibrated_x1 = (int)(x1 * 224 / width)
 	calibrated_y1 = (int)(y1 * 224 / height)
@@ -144,7 +149,7 @@ def selectedRegion(request):
 	elif mode == "approximate":
 		heatmap, prob, label = inc_inference(model_class, curr_path, patch_size=patch_size, stride=stride_size, beta=0.5, x0=0, y0=0, x_size=0, y_size=0, gpu=True)
 	else:
-		heatmap, prob, label = full_inference_e2e(model_class, curr_path, patch_size=patch_size, stride=stride_size, batch_size=128, gpu=True)
+		heatmap, prob, label = full_inference_e2e(model_class, curr_path, patch_size=patch_size, stride=stride_size, batch_size=64, gpu=True)
 
 	end_time = time.time()
 
