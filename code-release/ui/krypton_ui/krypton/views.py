@@ -66,15 +66,12 @@ def selectedRegion(request):
 
 	#do infernece with model with save much more time especially in the first try
 	if model_class == "VGG":
-		#model = VGG16(beta=1.0, gpu=True, n_labels=1000).eval()
 		model_class = VGG16
 		intercept, slope = parameters['vgg16'][0]['intercept'], parameters['vgg16'][0]['slope']
 	elif model_class == 'ResNet':
-		#model = ResNet18(beta=1.0, gpu=True, n_labels=1000).eval()
 		model_class = ResNet18
 		intercept, slope = parameters['resnet18'][0]['intercept'], parameters['resnet18'][0]['slope']
 	elif model_class == 'Inception':
-		#model = Inception3(beta=1.0, gpu=True, n_labels=1000).eval()
 		model_class = Inception3
 		intercept, slope = parameters['inception'][0]['intercept'], parameters['inception'][0]['slope']
 
@@ -135,21 +132,32 @@ def selectedRegion(request):
 
 	im = Image.open(curr_path)
 	width, height = im.size
+	
+	if model_class != Inception3:
+		calibrated_x1 = (int)(x1 * 224 / width)
+		calibrated_y1 = (int)(y1 * 224 / height)
 
-	calibrated_x1 = (int)(x1 * 224 / width)
-	calibrated_y1 = (int)(y1 * 224 / height)
+		calibrated_w = (int)(w * 224 / width)
+		calibrated_h = (int)(h * 224 / height)
+		image_size = 224
+	else:
+		calibrated_x1 = (int)(x1 * 299 / width)
+		calibrated_y1 = (int)(y1 * 299 / height)
 
-	calibrated_w = (int)(w * 224 / width)
-	calibrated_h = (int)(h * 224 / height)
+		calibrated_w = 299
+		calibrated_h = 299
+		image_size = 299
+
+
 
 	start_time = time.time()
 	
 	if mode == "exact":
 		heatmap, prob, label = inc_inference(model_class, curr_path, patch_size=patch_size, stride=stride_size, beta=1.0, x0=calibrated_x1, y0=calibrated_y1, x_size=calibrated_w, y_size=calibrated_h, gpu=True)
 	elif mode == "approximate":
-		heatmap, prob, label = inc_inference(model_class, curr_path, patch_size=patch_size, stride=stride_size, beta=0.5, x0=0, y0=0, x_size=0, y_size=0, gpu=True)
+		heatmap, prob, label = inc_inference(model_class, curr_path, patch_size=patch_size, stride=stride_size, beta=0.5, x0=calibrated_x1, y0=calibrated_y1, x_size=calibrated_w, y_size=calibrated_h, gpu=True)
 	else:
-		heatmap, prob, label = full_inference_e2e(model_class, curr_path, patch_size=patch_size, stride=stride_size, batch_size=64, gpu=True)
+		heatmap, prob, label = full_inference_e2e(model_class, curr_path, patch_size=patch_size, stride=stride_size, batch_size=64, gpu=True, image_size=299, x_size=299, y_size=299)
 
 	end_time = time.time()
 
