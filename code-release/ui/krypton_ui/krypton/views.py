@@ -93,7 +93,7 @@ def selectedRegion(request):
 	#print ('intercept ' + str(intercept))
 
 	estimated_time = time_estimate(slope, intercept, stride_size, patch_size, w, h)
-	coeff = 0.0
+	coeff = 1.0
 	
 	if model_class == VGG16:
 		if stride_size == 16:
@@ -117,6 +117,7 @@ def selectedRegion(request):
 			coeff = 4.0
 		else:
 			coeff = 5.0
+
 	#print ('time ' + str(estimated_time))
 	#print ('coeff ' + str(coeff))
 	print ('estimated_time ' + str(estimated_time / coeff))
@@ -141,10 +142,9 @@ def selectedRegion(request):
 	if mode == "exact":
 		heatmap, prob, label = inc_inference(model_class, curr_path, patch_size=patch_size, stride=stride_size, beta=1.0, x0=calibrated_x1, y0=calibrated_y1, x_size=calibrated_w, y_size=calibrated_h, gpu=True)
 	elif mode == "approximate":
-		heatmap, prob, label = inc_inference(model_class, curr_path, patch_size=patch_size, stride=stride_size, beta=0.5, x0=calibrated_x1, y0=calibrated_y1, x_size=calibrated_w, y_size=calibrated_h, gpu=True)
+		heatmap, prob, label = inc_inference(model_class, curr_path, patch_size=patch_size, stride=stride_size, beta=0.5, x0=0, y0=0, x_size=0, y_size=0, gpu=True)
 	else:
-		#why this doesn't have specific starting location??? assume to run the entire?
-		heatmap, prob, label = full_inference_e2e(model_class, curr_path, patch_size=patch_size, stride=stride_size, batch_size=128, x_size=calibrated_w, y_size=calibrated_h, gpu=True)
+		heatmap, prob, label = full_inference_e2e(model_class, curr_path, patch_size=patch_size, stride=stride_size, batch_size=128, gpu=True)
 
 	end_time = time.time()
 
