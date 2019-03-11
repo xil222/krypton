@@ -73,7 +73,6 @@ def selectedRegion(request):
 		model = Inception3
 		intercept, slope = parameters['inception'][0]['intercept'], parameters['inception'][0]['slope']
 
-
 	patch_size = (int)(float(message['patchSize']))
 	stride_size = (int)(float(message['strideSize']))
 
