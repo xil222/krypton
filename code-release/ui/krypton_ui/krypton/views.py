@@ -13,8 +13,8 @@ import os
 import cv2
 from PIL import Image, ImageOps
 
-#sys.path.append('/krypton/code-release/ui/krypton_ui/krypton')
-sys.path.append('/Users/allenord/Documents/CSE291/project/krypton/code-release/core/python')
+sys.path.append('/krypton/code-release/core/python')
+
 
 import matplotlib
 matplotlib.use('Agg')
@@ -44,19 +44,18 @@ def selectedRegion(request):
 		print ("photo is not valid" );
 
 
-	#file_path_time = '/krypton/code-release/ui/krypton_ui/krypton/updated-time-estimation.txt'
-	file_path_time = '/Users/allenord/Documents/CSE291/project/krypton/code-release/ui/krypton_ui/krypton/updated-time-estimation.txt'
-	prev_path = '/Users/allenord/Documents/CSE291/project/krypton/code-release/ui/krypton_ui'
+	file_path_time = '/krypton/code-release/ui/krypton_ui/krypton/updated-time-estimation.txt'
+	prev_path = '/krypton/code-release/ui/krypton_ui'
 
 
-	with open(file_path) as f:
+	with open(file_path_time) as f:
 		parameters = json.load(f)
 
 
 	url = photo.file.url
 	curr_path = prev_path + url
 
-	im = Image.open(photo_path)
+	im = Image.open(curr_path)
 	width, height = im.size
 
 	model_class = message['model']
@@ -64,13 +63,13 @@ def selectedRegion(request):
 
 	#do infernece with model with save much more time especially in the first try
 	if model_class == "VGG":
-		model = VGG16
+		model_class = VGG16
 		intercept, slope = parameters['vgg16'][0]['intercept'], parameters['vgg16'][0]['slope']
 	elif model_class == 'ResNet':
-		model = ResNet18
+		model_class = ResNet18
 		intercept, slope = parameters['resnet18'][0]['intercept'], parameters['resnet18'][0]['slope']
 	elif model_class == 'Inception':
-		model = Inception3
+		model_class = Inception3
 		intercept, slope = parameters['inception'][0]['intercept'], parameters['inception'][0]['slope']
 
 	patch_size = (int)(float(message['patchSize']))
@@ -153,6 +152,7 @@ def selectedRegion(request):
 
 
 	else:
+		print model_class
 		if mode == "exact":
 			heatmap, prob, label = inc_inference(model_class, curr_path, patch_size=patch_size, stride=stride_size, beta=1.0, x0=calibrated_y1, y0=calibrated_x1, x_size=calibrated_h, y_size=calibrated_w, gpu=True)
 		elif mode == "approximate":
@@ -174,7 +174,7 @@ def selectedRegion(request):
 	new_img.save('./media/photos/heatmap.png')
 
 	actTime = int(end_time - start_time)
-	estTime = real_estimate
+	estTime = int(real_estimate)
 
 
 	return JsonResponse({'url':url, 'heatmap_url': '/media/photos/heatmap.png', 'prediction': class_names[label], 'estimate_time': estTime, 'actual_time': actTime})
