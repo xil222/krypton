@@ -74,12 +74,15 @@ def selectedRegion(request):
 
 	patch_size = (int)(float(message['patchSize']))
 	stride_size = (int)(float(message['strideSize']))
+	
+	calibrated_h = 224
+	calibrated_w = 224	
 
 	if message['x1'] == "":
 		x1 = 0
 		x2 = width
 		y1 = 0
-		y2 = height
+		y2 = 224
 		h = height
 		w = width
 		completeImage = True
@@ -109,36 +112,7 @@ def selectedRegion(request):
 			image_size = 299
 
 
-
-	estimated_time = time_estimate(slope, intercept, stride_size, patch_size, w, h)
-	coeff = 1.0
-
-	if model_class == VGG16:
-		if stride_size == 16:
-			coeff = 1.0
-		elif stride_size == 8:
-			coeff = 1.0
-		elif stride_size == 4:
-			coeff = 2.0
-		elif stride_size == 2:
-			coeff = 3.0
-		else:
-			coeff = 3.0
-
-	elif model_class == ResNet18:
-		if stride_size == 16:
-			coeff = 1.0
-		elif stride_size == 8:
-			coeff = 2.0
-		elif stride_size == 4:
-			coeff = 3.0
-		elif stride_size == 2:
-			coeff = 4.0
-		else:
-			coeff = 5.0
-
-	real_estimate = estimated_time / coeff
-
+	real_estimate = time_estimate(slope, intercept, stride_size, patch_size, calibrated_w, calibrated_h)
 
 	start_time = time.time()
 
@@ -157,6 +131,9 @@ def selectedRegion(request):
 			heatmap, prob, label = inc_inference(model_class, curr_path, patch_size=patch_size, stride=stride_size, beta=1.0, x0=calibrated_y1, y0=calibrated_x1, x_size=calibrated_h, y_size=calibrated_w, gpu=True)
 		elif mode == "approximate":
 			heatmap, prob, label = inc_inference(model_class, curr_path, patch_size=patch_size, stride=stride_size, beta=0.5, x0=calibrated_y1, y0=calibrated_x1, x_size=calibrated_h, y_size=calibrated_w, gpu=True)
+		else:
+			heatmap, prob, label = full_inference_e2e(model_class, curr_path, patch_size=patch_size, stride=stride_size, batch_size=64, gpu=True)
+
 
 	end_time = time.time()
 
@@ -173,11 +150,10 @@ def selectedRegion(request):
 	new_img = ImageOps.expand(img, padding)
 	new_img.save('./media/photos/heatmap.png')
 
-	actTime = int(end_time - start_time)
-	estTime = int(real_estimate)
+	actTime = round(end_time - start_time, 2)
+	estTime = round(real_estimate, 2)
 
-
-	return JsonResponse({'url':url, 'heatmap_url': '/media/photos/heatmap.png', 'prediction': class_names[label], 'estimate_time': estTime, 'actual_time': actTime})
+	return JsonResponse({'url':url, 'heatmap_url': '/media/photos/heatmap.png', 'prediction': class_names[label], 'estimate_time by Krypton Exact': estTime, 'actual_time': actTime})
 
 
 def time_estimate(slope, intercept, stride, patch, width, height):
