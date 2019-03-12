@@ -13,8 +13,8 @@ import os
 import cv2
 from PIL import Image, ImageOps
 
-sys.path.append('/krypton/code-release/core/python')
-
+#sys.path.append('/krypton/code-release/ui/krypton_ui/krypton')
+sys.path.append('/Users/allenord/Documents/CSE291/project/krypton/code-release/core/python')
 
 import matplotlib
 matplotlib.use('Agg')
@@ -44,8 +44,9 @@ def selectedRegion(request):
 		print ("photo is not valid" );
 
 
-	file_path_time = '/krypton/code-release/ui/krypton_ui/krypton/updated-time-estimation.txt'
-	prev_path = '/krypton/code-release/ui/krypton_ui'
+	#file_path_time = '/krypton/code-release/ui/krypton_ui/krypton/updated-time-estimation.txt'
+	file_path_time = '/Users/allenord/Documents/CSE291/project/krypton/code-release/ui/krypton_ui/krypton/updated-time-estimation.txt'
+	prev_path = '/Users/allenord/Documents/CSE291/project/krypton/code-release/ui/krypton_ui'
 
 
 	with open(file_path_time) as f:
@@ -144,19 +145,19 @@ def selectedRegion(request):
 
 	if completeImage:
 		if mode == "exact":
-			heatmap, prob, label = inc_inference(model_class, curr_path, patch_size=patch_size, stride=stride_size, beta=1.0, gpu=True)
+			heatmap, prob, label = inc_inference(model_class, curr_path, patch_size=patch_size, stride=stride_size, beta=1.0, gpu=False)
 		elif mode == "approximate":
-			heatmap, prob, label = inc_inference(model_class, curr_path, patch_size=patch_size, stride=stride_size, beta=0.5, gpu=True)
+			heatmap, prob, label = inc_inference(model_class, curr_path, patch_size=patch_size, stride=stride_size, beta=0.5, gpu=False)
 		else:
-			heatmap, prob, label = full_inference_e2e(model_class, curr_path, patch_size=patch_size, stride=stride_size, batch_size=64, gpu=True)
+			heatmap, prob, label = full_inference_e2e(model_class, curr_path, patch_size=patch_size, stride=stride_size, batch_size=64, gpu=False)
 
 
 	else:
 		print model_class
 		if mode == "exact":
-			heatmap, prob, label = inc_inference(model_class, curr_path, patch_size=patch_size, stride=stride_size, beta=1.0, x0=calibrated_y1, y0=calibrated_x1, x_size=calibrated_h, y_size=calibrated_w, gpu=True)
+			heatmap, prob, label = inc_inference(model_class, curr_path, patch_size=patch_size, stride=stride_size, beta=1.0, x0=calibrated_y1, y0=calibrated_x1, x_size=calibrated_h, y_size=calibrated_w, gpu=False)
 		elif mode == "approximate":
-			heatmap, prob, label = inc_inference(model_class, curr_path, patch_size=patch_size, stride=stride_size, beta=0.5, x0=calibrated_y1, y0=calibrated_x1, x_size=calibrated_h, y_size=calibrated_w, gpu=True)
+			heatmap, prob, label = inc_inference(model_class, curr_path, patch_size=patch_size, stride=stride_size, beta=0.5, x0=calibrated_y1, y0=calibrated_x1, x_size=calibrated_h, y_size=calibrated_w, gpu=False)
 
 	end_time = time.time()
 
