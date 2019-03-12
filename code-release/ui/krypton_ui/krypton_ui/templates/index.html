@@ -364,35 +364,36 @@
             var eModel = document.getElementById("model").value;
             var fd = new FormData(document.getElementById("coords"));
             var mode = document.querySelector('input[name="mode"]:checked').value;
+            var xCheck = document.getElementById("x1").value
 
-            if (fd['x1'] === ""){
+            if (xCheck == ""){
 
               if (mode == "naive"){
 
-                text = "23 s"
+                text = "23.20 s"
               }
               else if(mode == "exact") {
 
-                text = "5.6 s"
+                text = "4.81 s"
               }
               else {
 
-                text = "4.2 s"
+                text = "3.60 s"
               }
             }
             else {
 
               if (mode == "naive"){
 
-                text = "19 s"
+                text = "19.31 s"
               }
               else if(mode == "exact") {
 
-                text = "3.8 s"
+                text = "3.85 s"
               }
               else {
 
-                text = "3.2 s"
+                text = "3.23 s"
               }
             }
 
