@@ -16,12 +16,11 @@
 #Steps for development on kubectl pod
 
 1. apt-get update
-2. Install git, django, wget, opencv
+2. clone git
    apt-get install git
-   apt-get install python-django
-   apt-get install wget
-   apt-get install python-opencv
-3. git clone https://github.com/scnakandala/krypton.git
+   git clone https://github.com/scnakandala/krypton.git
+3. install all the dependecies 
+   cd /krypton/code-release/ui run ./dependency.sh
 4. cd /krypton/code-release/core make
 5. cd /krypton/code-release  run ./download_cnn_weights.sh
 
