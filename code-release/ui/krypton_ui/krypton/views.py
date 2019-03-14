@@ -140,7 +140,7 @@ def selectedRegion(request):
 
 	end_time = time.time()
 
-	plt.imsave("./media/photos/heatmap.png", heatmap)
+	plt.imsave("./media/photos/heatmap.png", heatmap, cmap=plt.cm.jet_r)
 
 	img = Image.open('./media/photos/heatmap.png')
  	img = img.resize((w,h), Image.ANTIALIAS)
