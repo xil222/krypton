@@ -1,6 +1,8 @@
 \documentclass{vldb}
 \usepackage{graphicx}
 \usepackage[hyphens]{url}
+\usepackage{bold-extra}
+% \usepackage{etoolbox,listings,subcaption}
 \usepackage{balance}  % for  \balance command ON LAST PAGE  (only there!)
 
 
@@ -8,7 +10,7 @@
 \newcommand{\red}{\textcolor{red}}
 \newcommand{\system}{\textsc{Krypton}}
 
-\vldbTitle{Demonstration of Krypton: Incremental and Approximate Inference for Faster Occlusion-based Deep CNN Explanations}
+\vldbTitle{Demonstration of Krypton: Optimized CNN Inference for Occlusion-based Deep CNN Explanations}
 \vldbAuthors{Allen Ordookhanians et. al.}
 \vldbDOI{https://doi.org/10.14778/xxxxxxx.xxxxxxx}
 \vldbVolume{12}
@@ -17,7 +19,7 @@
 
 \begin{document}
 
-\title{Demonstration of Krypton: Faster CNN Inference for Occlusion-based Deep CNN Explanations}
+\title{Demonstration of Krypton: Optimized CNN Inference for Occlusion-based Deep CNN Explanations}
 
 
 \numberofauthors{1}
@@ -33,19 +35,19 @@
 \maketitle
 
 \begin{abstract}
-In this demonstration we present \system, a system for accelerating occlusion based deep convolution neural network (CNN) explainability workloads.
-Driven by the success of CNNs in image understanding tasks, there is growing adoption of CNN technology in various domains including high stake applications such as radiology.
+In this demonstration, we present \system, a system for accelerating occlusion-based deep convolution neural network (CNN) explanation workloads.
+Driven by the success of CNNs in image understanding tasks, there is growing adoption of CNNs in various domains, including high stakes applications such as radiology.
 However, users of such applications often seek an ``explanation'' for why a CNN predicted a certain label.
-One of the widely used approaches for explaining the CNN predictions is the occlusion based explainability (OBE) method.
+One of the most widely used approaches for explaining CNN predictions is the occlusion-based explanation (OBE) method.
 This approach is computationally expensive due to the large number of re-inference requests produced.
-In this demonstration we present \system, a system that reduces the runtime of OBE by up to 35x by enabling incremental and approximate inference optimizations.
-We allow the audience to interactively diagnose CNN predictions from several use cases including radiology and natural images.
-A short video of our demonstration can be found at \url{https://youtu.be/1OWddbd4n6Y}
+\system~reduces the runtime of OBE by up to 35x by enabling incremental and approximate inference optimizations that are inspired by classical database query optimization techniques.
+We allow the audience to interactively diagnose CNN predictions from several use cases, including radiology and natural images.
+A short video of our demonstration can be found here: \url{https://youtu.be/1OWddbd4n6Y}
 \end{abstract}
 
 
 \section{Introduction}\label{introduction}
-Deep Convolution Neural Networks (CNNs) are now the state of the art method for many image prediction tasks. Thus, there is growing interest in adopting deep CNNs in various application domains, including high stake applications such as healthcare~\cite{kermany2018identifying,fdaretinopathy}.
+Deep Convolution Neural Networks (CNNs) are now the state of the art method for many image prediction tasks. Thus, there is growing interest in adopting deep CNNs in various application domains, including high stakes applications such as healthcare~\cite{fdaretinopathy,kermany2018identifying}.
 Despite their successes, a key criticism of CNNs is that their internal workings are unintuitive to non-technical users. Thus, users often seek an ``explanation'' for why a CNN predicted a certain label. Explanations can help users trust CNNs~\cite{ribeiro2016should} and are a legal requirement for machine learning applications in some countries~\cite{gdpr}. How to explain a CNN prediction is still an active research question, but in the practical literature, an already popular mechanism for CNN explanations is a simple procedure called \textit{occlusion-based explanations}~\cite{zeiler2014visualizing}, or OBE for short.
 
 OBE works as follows. Place a small square patch (usually black) on the image to occlude those pixels and rerun CNN inference on the occluded image. The probability of the predicted class will change. Repeat this process by moving the patch across the image to obtain a sensitivity \textit{heatmap} of probability changes, as shown in Figure~\ref{img:ui}. This heatmap highlights regions of the image that were highly ``responsible'' for the prediction (red/orange color regions). Such localization of the regions of interest allows users to gain intuition on what ``mattered'' for the prediction.
@@ -55,29 +57,29 @@ Alas, OBE is highly expensive computationally. Deep CNN inference is already exp
 
 
 \begin{figure*}[t]\label{img:ui}
-\includegraphics[width=\textwidth]{images/ui_actual.pdf}
-\caption{\system~ user interface. Users can load an input image, select a CNN model and interactively diagnose the prediction by occluding parts of the full image or part of the image using the cropping tool. \system~ generates a sensitivity heatmap (right image) and iteratively refines it as the user progresses.}
+\includegraphics[width=\textwidth]{images/ui_actual_compressed.pdf}
+\caption{\system~user interface. Users can load an input image, select a CNN model, and interactively diagnose the prediction by occluding parts of the full image or part of the image using the cropping tool. \system~generates a sensitivity heatmap (right image) and iteratively refines it as the user progresses. NB: This figure is best viewed in color, as is standard in the visual computing literature.}
 \vspace{-2mm}
 \end{figure*}
 
 In this work we use a database-inspired lens to formalize, optimize, and accelerate OBE. We start with a simple but crucial observation: \textit{the occluded images are not disjoint but share most of their pixels; so, most of CNN re-inference computations are redundant.} This observation leads us to connect OBE with two classical data management concerns: \textit{incremental view maintenance} (IVM) \cite{chirkova2012materialized} and \textit{multi-query optimization} (MQO) \cite{sellis1988multiple}. Instead of treating a CNN as a ``blackbox,'' we open it up and formalize \textit{CNN layers} as ``queries.'' Just like how a relational query converts relations to other relations, a CNN layer converts \textit{tensors} (multidimensional arrays) to other tensors. So, we reimagine OBE as \textit{a set of tensor transformation queries} with incrementally updated inputs. With this fresh database-inspired view, we introduce several \textit{novel CNN-specific query optimization techniques} to accelerate OBE.
 
 We prototype our ideas in the popular deep learning framework PyTorch to create a tool we call \system. It works on both CPU and GPU and currently supports a few popular deep CNNs (VGG16, ResNet18, and InceptionV3).
-\system ~yields up to $35$X speedups over the current dominant practice of running re-inference with just batching for producing high-quality approximate heatmaps and up to $5$X speedups for producing exact heatmaps.
-In this demonstration we allow the audience to use \system~ and interactively diagnose CNN predictions from three real-world image datasets from recent radiology and computer vision literature.
-A short video of our demonstration can be found at \url{https://youtu.be/1OWddbd4n6Y}
+\system ~yields up to $35$x speedups over the current dominant practice of running re-inference with just batching for producing high-quality approximate heatmaps and up to $5$x speedups for producing exact heatmaps.
+In this demonstration, we allow the audience to use \system~and interactively diagnose CNN predictions from three real-world image datasets from recent radiology and computer vision literature.
+A short video of our demonstration can be found here: \url{https://youtu.be/1OWddbd4n6Y}
 
-\section{Technical Novelty}
+\section{Technical Contributions}
 The novelty of our system comes from the optimization techniques that it uses for accelerating the OBE workload.
-In this section we briefly explain our \textit{incremental CNN inference} and \textit{approximate inference} optimizations.
-More details on \system~ optimizations can be found in our Technical Report \cite{krypton}.
-In addition to the above optimizations, in this demonstration we showcase \system~ as an end to end system for interactive diagnosis of CNN predictions.
-Users can now select only the important regions of the image to run OBE using a cropping tool.
+In this section, we briefly explain our \textit{incremental CNN inference} and \textit{approximate inference} optimizations.
+More details on \system's optimizations can be found in our technical report \cite{krypton}.
+In addition to the above optimizations, in this demonstration we showcase \system~as an end-to-end system for interactive diagnosis of CNN predictions.
+Users can now select a subset of the image to run OBE using a cropping tool to exploit their intuitions about what regions might be more important.
 We also provide runtime estimations for the OBE workload. 
 
 
 \subsection{Incremental Inference}
-With the incremental CNN inference optimization we \textit{materialize} all tensors produced by the CNN's layers on the given image. For every re-inference request in OBE, instead of rerunning CNN inference from scratch, we treat it as an incremental view maintenance (IVM) query, with the ``views'' being the tensors. We rewrite such queries to \textit{reuse} as much of the materialized views as possible and recompute only what is needed, thus \textit{avoiding computational redundancy}. Such rewrites are non-trivial because they are closely tied to the complex geometric dataflows of CNN layers. We have formalized such dataflows to create an \textit{algebraic framework} of CNN query rewrites. Going further, we batch all re-inference requests in OBE to reuse the \textit{same} materialized views. This is a form of multi-query optimization (MQO), albeit interwoven with our IVM, leading to a novel \textit{batched incremental CNN inference} procedure. To the best of our knowledge, this is the first instance of IVM being fused with MQO in query optimization, at least for CNN inference.
+For the incremental CNN inference optimization, we \textit{materialize} all tensors produced by the CNN's layers on the given image. For every re-inference request in OBE, instead of rerunning CNN inference from scratch, we treat it as an incremental view maintenance (IVM) query \cite{chirkova2012materialized}, with the ``views'' being the tensors. We rewrite such queries to \textit{reuse} as much of the materialized views as possible and recompute only what is needed, thus \textit{avoiding computational redundancy}. Such rewrites are non-trivial because they are closely tied to the complex geometric dataflows of CNN layers. We have formalized such dataflows to create an \textit{algebraic framework} of CNN query rewrites. Going further, we batch all re-inference requests in OBE to reuse the \textit{same} materialized views. This is a form of multi-query optimization (MQO) \cite{sellis1988multiple}, albeit interwoven with our IVM, leading to a novel \textit{batched incremental CNN inference} procedure. To the best of our knowledge, this is the first instance of IVM being fused with MQO in query optimization, at least for CNN inference.
 
 \begin{figure}
 \includegraphics[width=\columnwidth]{images/redundancy_ratio.pdf}
@@ -86,26 +88,26 @@ With the incremental CNN inference optimization we \textit{materialize} all tens
 \vspace{-2mm}
 \end{figure}
 
-We calculate the max attainable theoretical speedup--in terms of the number computations saved for performing IVM based incremental inference for popular CNN architectures with different occlusion patch sizes.
+We calculate the highest attainable theoretical speedup in terms of the amount of computations saved for performing IVM-based incremental inference for popular CNN architectures with different occlusion patch sizes.
 The results are shown in Figure \ref{fig:theoretical_speedups}.
-VGG-16 has the highest theoretical speedups, while DenseNet-121 has the lowest. Most CNNs fall in the 2X-3X range.
-The differences arise due to the specifics of the CNNs’ architectures: VGG-16 has small Convolution filter kernels and strides, which means full inference incurs a high computational cost (15 GFLOPs). In turn, incremental inference is most beneficial for VGG-16.
+VGG-16 has the highest theoretical speedups, while DenseNet-121 has the lowest. Most CNNs fall in the 2x-3x range.
+The differences arise due to the specifics of the CNN's architecture: VGG-16 has small convolution filter kernels and strides, which means full inference incurs a high computational cost (15 GFLOPs). In turn, incremental inference is most beneficial for VGG-16.
 Note that we assumed an image size of 224$\times$224 for this plot; if the image is larger, the theoretical speedups will be higher.
 
-While one might be tempted to think that speedups of 2X-3X may not be ``that significant'' in practice, we find that they indeed are significant for at least two reasons.
+While one might be tempted to think that speedups of 2x-3x may not be ``that significant'' in practice, we find that they indeed are significant for at least two reasons.
 First, users often wait in the loop for OBE workloads for performing interactive diagnoses and analyses.
 Thus, even such speedups can improve their productivity, e.g., reducing the time taken on a CPU from about 6min to just 2min, or on a GPU from
 1min to just 20s.
 Second, and equally importantly, incremental inference is the foundation for our approximate inference optimizations, which amplify the speedups we achieve for OBE.
 
 \subsection{Approximate Inference}
-The \textit{approximate inference} optimization in \system~ allows users to tolerate some degradation in visual quality of the heatmaps produced to reduce runtimes further in a tunable manner.
-We draws from the concept of \textit{projective field} from neuroscience and exploits the internal semantics of how CNNs work to reduce runtimes.
+The \textit{approximate inference} optimization in \system~allows users to tolerate some degradation in visual quality of the heatmaps produced to reduce runtimes further in a tunable manner.
+We draw from the concept of \textit{projective field} from neuroscience and exploit the internal semantics of how CNNs work to reduce runtimes.
 The projective field of a CNN neuron is the slice of the output tensor that is connected to it~\cite{basiccnnoperations}.
 This notion essentially captures the \textit{growth of the size} of the modified patches through the layers of a CNN.
 Due to the overlapping nature of how convolution filter kernels operate, the projective field of a modified patch in the input image will grow at every layer.
-It can be shown that in the projective field the change in the pixels which are radially further aways from the center of the patch will be marginal.
-To exploit this property we introduce the concept of \textit{projective field thresholding} which essentially truncates the growth of the projective field and save computations.
+It can be shown that in the projective field, the change in the pixels that are radially further away from the center of the patch will be marginal.
+To exploit this property we introduce the concept of \textit{projective field thresholding}, which essentially truncates the growth of the projective field and saves computations.
 
 % \begin{figure}[t]
 % \includegraphics[width=\columnwidth]{images/pf_truncate}
@@ -116,13 +118,13 @@ To exploit this property we introduce the concept of \textit{projective field th
 % To provide intuition on why the above happens, consider histograms on the side of Figures~\ref{fig:pf_truncate}(a,b) that list the number of unique ``paths'' from the updated element to each element in the last layer. It resembles a Gaussian distribution, with the maximum paths concentrated on the middle element. Thus, for most of the output patch updates, truncation will only discard a few values at the ``fringes'' that contribute to an output element. Of course, we do not consider the weights on these ``paths,'' which is dependent on the given trained CNN. Since the weights can be arbitrary, a tight formal analysis is unwieldy. But under some assumptions on the weights values (similar to the assumptions in~\cite{luo2016understanding} for understanding the ``receptive field'' in CNNs), it can be shown that this distribution does indeed converge to a Gaussian \cite{krypton}. Thus, while this idea is a heuristic, it is grounded in a common behavior of real CNNs.
 
 \subsection{OBE Runtime Estimation}
-To make the \system~ interface more user friendly we provide runtime estimations for the OBE workload based on the configurations selected by the user.
+To make the \system's interface more user friendly, we provide runtime estimations for the OBE workload based on the configurations selected by the user.
+Showing the estimated runtime for the OBE workload will enable the user to make an informed decision when picking the OBE configurations to trade-off the quality of the heatmap and the available time budget.
 The runtime of a single OBE workload depends on the width and height of the selected image region, the stride value, occlusion patch size, selected CNN model, and the execution mode (i.e. exact vs approximate).
-When we control for the occlusion patch size, CNN model, and the execution mode the runtime of the workload is directly proportional to the number of different occlusion patch positions.
-We ran several experiments with different configurations and recorded the runtime.
-These runtimes are then used to fit a linear regression cost model for each patch size, CNN model, and execution model combination and are then used to predict the runtime for new configuration instances.
+When we control for the occlusion patch size, CNN model, and the execution mode, the runtime of the workload is directly proportional to the number of different occlusion patch positions.
+We ran several offline experiments with different configurations and recorded the runtimes.
+These runtimes are then used to fit a linear regression cost model for each patch size, CNN model, and execution mode combination and are then used to predict the runtime for new configuration instances.
 Figure \ref{fig:runtime_estimation} shows the cost models generated for ResNet18 and VGG16 for a patch size of 16 with the exact execution mode.
-Showing the estimated runtime for the OBE workload will enable the user to make an informed decision when picking the OBE configurations for trading-off the quality of the heatmap and the available time budget.
 
 \begin{figure}
 \includegraphics[width=\columnwidth]{images/runtime_estimation.pdf}
@@ -135,17 +137,16 @@ Showing the estimated runtime for the OBE workload will enable the user to make 
 \section{Demonstration}\label{demonstration}
 \subsection{Datasets and CNN models}
 We will present a demonstration of \system ~with three real-world image datasets: 1) identifying diabetic retinopathy from retinal images, 2) identifying pneumonia from chest X-ray images, and 3) identifying objects from natural images in the ImageNet dataset.
-\system~ currently supports three popular CNN architectures, VGG16, ResNet18, and Inception3 models. Altogether, each participant will be able to interact with the system on nine different settings.
+\system~currently supports three popular CNN architectures: VGG16, ResNet18, and Inception3. Altogether, the audience will be able to interact with our system on nine different settings.
 
 \subsection{Walkthrough}
-Each participant will be first made familiar with CNN models and OBE method in general.
-This will be done using a supporting slide deck.
+Each participant will be first made familiar with CNN models and OBE method in general using a supporting slide deck.
 We will briefly cover important aspects such as different operators inside a CNN, the dataflow inside a CNN, and also the OBE approach for explaining CNN predictions.
-This brief introduction will give the participants the necessary background to understand the \system~ system and appreciate its optimizations.
-After the introduction participants will be demonstrated four scenarios of using \system.
+This brief introduction will give the participants the necessary background to understand the \system~system and appreciate its optimizations.
+After the introduction, participants will be demonstrated four scenarios of using \system.
 
 \vspace{2mm}
-\noindent \textbf{Scenario: Naive OBE.} In the first scenario we will demonstrate performing OBE using the naive approach of performing CNN re-inference for each occlusion patch position.
+\noindent \textbf{Scenario: Naive OBE.} In the first scenario, we will demonstrate performing OBE using the naive approach of performing CNN re-inference for each occlusion patch position.
 Let's say we want to demonstrate the use of OBE to explain a prediction of an image from the ImageNet dataset from VGG16 model using a patch of size 8$\times$8 and a stride of 2.
 We first load an image by clicking the file picker shown in Figure \ref{img:ui}.
 After picking an image file, the image will be then displayed on the left hand side panel of the interface.
@@ -154,48 +155,48 @@ Selecting of the patch size, stride, and the CNN model can be done using the cor
 We allow the user to pick from 4 different patch sizes (4$\times$4, 8$\times$8, 16$\times$16, 32$\times$32) and 4 different stride values (2, 4, 8, 16).
 Currently we support three different CNN model (VGG16, ResNet18, Inception3).
 
-After picking the above configuration values we can then initiate the OBE workload by clicking the submit button.
+After picking the above configuration values, the user can then initiate the OBE workload by clicking the ``Submit'' button.
 The system will also display an estimate for the runtime of the workload.
-After the workload is completed the system will overlay the sensitivity heatmap on the original image and display it on the right hand side panel.
+After the workload is completed, the system will overlay the sensitivity heatmap on the original image and display it on the right hand side panel.
 We also show the predicted class label (e.g., lion) and the actual workload execution time.
-On the heatmap red color regions correspond to low predicted probabilities for the selected label (e.g., lion) and the blue color regions correspond to high predicted probabilities for the selected label. So the red color regions are the most sensitive regions for the predicted class label.
+On the heatmap, red color regions correspond to low predicted probabilities for the selected label (e.g., lion) and the blue color regions correspond to high predicted probabilities for the selected label. So the red color regions are the most sensitive regions for the predicted class label.
 The color bar for the heatmap is also shown in the interface.
 
 \vspace{2mm}
-\noindent \textbf{Scenario: \system~Exact.} After demonstrating the OBE workload using the naive approach we then demonstrate the utility of \system's incremental inference optimizations. We call this \system~Exact execution.
+\noindent \textbf{Scenario: \system~Exact.} After demonstrating the OBE workload using the naive approach, we then demonstrate the utility of \system's incremental inference optimizations. We call this \system~Exact execution.
 Recall that incremental inference optimizations produce the exact same heatmap produced by the naive approach but at a reduced computational cost.
 \system~Exact scenario is same as the previous scenario but with the exception of picking the \system~Exact option from the radio button options instead of Naive option.
 The estimated and actual runtimes for \system~Exact will be much smaller than Naive OBE.
 
 \vspace{2mm}
-\noindent \textbf{Scenario: \system~Approximate.} Next we will demonstrate the utility of \system's approximate inference optimizations which we call \system~Approximate execution.
-Approximate inference optimization trade-offs the accuracy of generated heatmap with respect to the original heatmap in favor of faster runtimes.
+\noindent \textbf{Scenario: \system~Approximate.} Next we will demonstrate the utility of \system's approximate inference optimizations, which we call \system~Approximate execution.
+Approximate inference optimization trades off the accuracy of the generated heatmap with respect to the original heatmap in favor of faster runtimes.
 \system~Approximate scenario is also same as the previous scenarios but with the exception of picking the \system~Approximate option.
 The estimated and actual runtimes for \system~Approximate will be even smaller than \system~Exact.
 Though there will be minor differences between the generated heatmaps with \system~Exact and \system~Approximate, participants will be able see that the overall visual perception of both methods are very much the same.
 
 \vspace{2mm}
-\noindent \textbf{Scenario: Interactive Image Cropping.} So far in all of the above three cases we considered occlusion patch positions over the entire image.
+\noindent \textbf{Scenario: Interactive Image Cropping.} In all of the above three cases, we considered occlusion patch positions over the entire image.
 However, this can be wasteful if the significant objects in an image are localized into a small region.
 For example consider the image shown in Figure \ref{img:ui}.
 It contains an image of a lion on a wilderness background.
-Clearly the main object in this image is the lion which occupies only a small region of the entire image.
-A user who wants to diagnose the prediction for this image can start the diagnosis by selecting a smaller region which contains only the face and the body of the lion by cropping that region which will execute quicker than the complete image.
-If the user is not satisfied with the produced heatmap she can iteratively refine the selected region.
-The cropping of an image can be done simply by dragging on the image in the interface which selects a rectangular selection area.
+Clearly, the main object in this image is the lion which occupies only a small region of the entire image.
+A user who wants to diagnose the prediction for this image can start the diagnosis by selecting a smaller region which contains only the face and the body of the lion by cropping that region.
+This will execute faster than the full image.
+If the user is not satisfied with the produced heatmap, she can iteratively refine the selected region.
+The cropping of an image can be done simply by dragging on the image in the interface to select a rectangular selection area.
 Cropping operation is supported with all of the above three scenarios.
 
 \vspace{2mm}
-After going through the above four scenarios, participants will then be given the opportunity to use the system by them selves.
+After going through the above four scenarios, participants will then be given the opportunity to use the system by themselves.
 They will be able to select images from three different datasets: OCT images, Chest X-Ray images, and natural images from ImageNet dataset and will have the opportunity to \textit{interactively diagnose CNN predictions}.
-
 
 \section{Related Work}
 
 \noindent \textbf{CNN Explanations.} Perturbation-based and gradient-based are the two main kinds of CNN explanation methods. Perturbation-based methods observe the output of the CNN by modifying regions of the input image~\cite{zeiler2014visualizing}. OBE belongs to this category.
 Gradient-based methods generate a sensitivity heatmap by computing the partial derivatives of model outputs with respect to every input pixel~\cite{simonyan2013deep}.
 In practice, however, OBE is usually the method of choice for domain scientific users, especially in radiology~\cite{jung2017deep,miller2017explanation}, since it is easy to understand for non-technical users and typically produces high-quality and well-localized heatmaps.
-Also to the best of our knowledge ours is the first to address the CNN explainability problem from an end-to-end systems point of view.
+Also to the best of our knowledge, ours is the first work to address the CNN explainability problem from an end-to-end systems standpoint.
 
 \vspace{2mm}
 \noindent \textbf{Faster CNN Inference.} There are several approaches proposed in the literature for accelerating CNN inference.
