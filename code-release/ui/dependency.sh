@@ -1,8 +1,6 @@
-apt-get install vim
-
-apt-get install python-opencv
-apt-get install wget 
-apt-get install python-django
-apt-get install python-matplotlib
-
+apt-get install -y vim
+apt-get install -y python-opencv
+apt-get install -y wget 
+apt-get install -y python-django
+apt-get install -y python-matplotlib
 pip install jupyterlab
