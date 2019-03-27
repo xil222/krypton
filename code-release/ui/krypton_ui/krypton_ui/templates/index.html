@@ -161,8 +161,8 @@
         <img id="target" src="" onerror="this.style.display='none'" style="">
       </div>
       <div class="column" style="position:relative">
-        <img id="heatmap" src="https://via.placeholder.com/700x472.png?text=Heatmap+will+be+displayed+here" onerror="this.style.display='none'" style="position: absolute; width:700px; height:472px;">
-        <img id="original" src="" onerror="this.style.display='none'" style="position: absolute; width:700px; height:472px; opacity:0.4">
+        <img id="heatmap" src="https://via.placeholder.com/700x472.png?text=Heatmap+will+be+displayed+here" onerror="this.style.display='none'" style="position: absolute; width:500px; height:500px;">
+        <img id="original" src="" onerror="this.style.display='none'" style="position: absolute; width:500px; height:500px; opacity:0.4">
 
       </div>
   </div>
@@ -281,7 +281,8 @@
               .attr('src', e.target.result)
       };
 
-      imageDisplay.readAsDataURL(input.files[0]);
+      var img = input.files[0];
+      imageDisplay.readAsDataURL(img);
       $('#elementsAfterImage').show()
       $('#firstTitle').invisible()
     }
@@ -298,8 +299,8 @@
         onChange:   showCoords,
         onSelect:   showCoords,
         onRelease:  clearCoords,
-        boxWidth: 700,
-        boxHeight: 525,
+        boxWidth: 500,
+        boxHeight: 500,
       },function(){
         jcrop_api = this;
       });
@@ -313,15 +314,14 @@
       });
 
       $('#resetSelect').on('click',function(e){
-
         jcrop_api.destroy();
         clearCoords();
         $('#target').Jcrop({
           onChange:   showCoords,
           onSelect:   showCoords,
           onRelease:  clearCoords,
-          boxWidth: 700,
-          boxHeight: 525,
+          boxWidth: 500,
+          boxHeight: 500,
         },function(){
           jcrop_api = this;
 

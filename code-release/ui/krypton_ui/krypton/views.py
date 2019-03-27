@@ -13,7 +13,8 @@ import os
 import cv2
 from PIL import Image, ImageOps
 
-sys.path.append('/krypton/code-release/core/python')
+# sys.path.append('/krypton/code-release/core/python')
+sys.path.append('../../../code-release/core/python')
 
 import matplotlib
 matplotlib.use('Agg')
@@ -43,8 +44,8 @@ def selectedRegion(request):
 		print ("photo is not valid" );
 
 
-	file_path_time = '/krypton/code-release/ui/krypton_ui/krypton/updated-time-estimation.txt'
-	prev_path = '/krypton/code-release/ui/krypton_ui'
+	file_path_time = '../../../code-release/ui/krypton_ui/krypton/updated-time-estimation.txt'
+	prev_path = '../../../code-release/ui/krypton_ui'
 
 
 	with open(file_path_time) as f:
