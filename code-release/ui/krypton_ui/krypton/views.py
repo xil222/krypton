@@ -6,6 +6,8 @@ from django.core.files.storage import default_storage
 
 from .forms import *
 
+import string
+import random
 import json
 import sys
 import time
@@ -120,7 +122,7 @@ def selectedRegion(request):
 		real_estimate = 3.6081
 
 	start_time = time.time()
-
+    
 	if completeImage:
 		if mode == "exact":
 			heatmap, prob, label = inc_inference(model_class, curr_path, patch_size=patch_size, stride=stride_size, beta=1.0, gpu=True)
@@ -131,26 +133,29 @@ def selectedRegion(request):
 
 	else:
 		if mode == "exact":
+			print(calibrated_y1,calibrated_x1,calibrated_h,calibrated_w)
 			heatmap, prob, label = inc_inference(model_class, curr_path, patch_size=patch_size, stride=stride_size, beta=1.0, x0=calibrated_y1, y0=calibrated_x1, x_size=calibrated_h, y_size=calibrated_w, gpu=True)
 		elif mode == "approximate":
 			heatmap, prob, label = inc_inference(model_class, curr_path, patch_size=patch_size, stride=stride_size, beta=0.5, x0=calibrated_y1, y0=calibrated_x1, x_size=calibrated_h, y_size=calibrated_w, gpu=True)
 
 	end_time = time.time()
 
-	plt.imsave("./media/photos/heatmap.png", heatmap, cmap=plt.cm.jet_r)
+	heatmap_path = './media/photos/heatmap_' + ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(20)) + '.png'
+    
+	plt.imsave(heatmap_path, heatmap, cmap=plt.cm.jet_r)
 
-	img = Image.open('./media/photos/heatmap.png')
- 	img = img.resize((w,h), Image.ANTIALIAS)
-	img.save('./media/photos/heatmap.png')
-	img = Image.open('./media/photos/heatmap.png')
+	img = Image.open(heatmap_path)
+ 	img = img.resize((w,h))
+	img.save(heatmap_path)
+	img = Image.open(heatmap_path)
 	padding = (x1, y1, (width - x2), (height - y2))
 	new_img = ImageOps.expand(img, padding)
-	new_img.save('./media/photos/heatmap.png')
+	new_img.save(heatmap_path)
 
 	actTime = round(end_time - start_time, 2)
 
 	estTime = round(real_estimate, 2)
-	return JsonResponse({'url':url, 'heatmap_url': '/media/photos/heatmap.png', 'prediction': class_names[label], 'estimate_time': estTime, 'actual_time': actTime})
+	return JsonResponse({'url':url, 'heatmap_url': heatmap_path[1:], 'prediction': class_names[label], 'estimate_time': estTime, 'actual_time': actTime})
 
 
 def time_estimate(slope, intercept, stride, patch, width, height):
