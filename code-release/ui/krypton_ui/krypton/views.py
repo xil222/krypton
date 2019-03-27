@@ -72,8 +72,10 @@ def selectedRegion(request):
 		intercept, slope = parameters['resnet18'][0]['intercept'], parameters['resnet18'][0]['slope']
 	elif model_class == "Inception":
 		model_class = Inception3
-		intercept, slope = parameters['inception'][0]['intercept'], parameters['inception'][0]['slope']
+		#FIXME change resnet18 to inception3
+		intercept, slope = parameters['resnet18'][0]['intercept'], parameters['resnet18'][0]['slope']
 
+	dataset = message['dataset']
 	patch_size = (int)(float(message['patchSize']))
 	stride_size = (int)(float(message['strideSize']))
 
@@ -125,18 +127,32 @@ def selectedRegion(request):
     
 	if completeImage:
 		if mode == "exact":
-			heatmap, prob, label = inc_inference(model_class, curr_path, patch_size=patch_size, stride=stride_size, beta=1.0, gpu=True)
+			if model_class != Inception3:
+				heatmap, prob, label = inc_inference(model_class, curr_path, patch_size=patch_size, stride=stride_size, beta=1.0, x_size=224, y_size=224, image_size=224, gpu=True)
+			else:
+				heatmap, prob, label = inc_inference(model_class, curr_path, patch_size=patch_size, stride=stride_size, beta=1.0, x_size=299, y_size=299, image_size=299, gpu=True)
 		elif mode == "approximate":
-			heatmap, prob, label = inc_inference(model_class, curr_path, patch_size=patch_size, stride=stride_size, beta=0.5, gpu=True)
+			if model_class != Inception3:
+				heatmap, prob, label = inc_inference(model_class, curr_path, patch_size=patch_size, stride=stride_size, beta=0.55, x_size=224, y_size=224, image_size=224, gpu=True)
+			else:
+				heatmap, prob, label = inc_inference(model_class, curr_path, patch_size=patch_size, stride=stride_size, beta=0.55, x_size=299, y_size=299, image_size=299, gpu=True)
 		else:
-			heatmap, prob, label = full_inference_e2e(model_class, curr_path, patch_size=patch_size, stride=stride_size, batch_size=64, gpu=True)
-
+			if model_class != Inception3:            
+				heatmap, prob, label = full_inference_e2e(model_class, curr_path, patch_size=patch_size, stride=stride_size, batch_size=64, image_size=224, gpu=True)
+			else:
+				heatmap, prob, label = full_inference_e2e(model_class, curr_path, patch_size=patch_size, stride=stride_size, batch_size=64, image_size=299, gpu=True)
 	else:
 		if mode == "exact":
-			print(calibrated_y1,calibrated_x1,calibrated_h,calibrated_w)
-			heatmap, prob, label = inc_inference(model_class, curr_path, patch_size=patch_size, stride=stride_size, beta=1.0, x0=calibrated_y1, y0=calibrated_x1, x_size=calibrated_h, y_size=calibrated_w, gpu=True)
+			if model_class != Inception3: 
+				heatmap, prob, label = inc_inference(model_class, curr_path, patch_size=patch_size, stride=stride_size, beta=1.0, x0=calibrated_y1, y0=calibrated_x1, x_size=calibrated_h, y_size=calibrated_w, image_size=224, gpu=True)
+			else:
+				heatmap, prob, label = inc_inference(model_class, curr_path, patch_size=patch_size, stride=stride_size, beta=1.0, x0=calibrated_y1, y0=calibrated_x1, x_size=calibrated_h, y_size=calibrated_w, image_size=299, gpu=True)
 		elif mode == "approximate":
-			heatmap, prob, label = inc_inference(model_class, curr_path, patch_size=patch_size, stride=stride_size, beta=0.5, x0=calibrated_y1, y0=calibrated_x1, x_size=calibrated_h, y_size=calibrated_w, gpu=True)
+			if model_class != Inception3:            
+				heatmap, prob, label = inc_inference(model_class, curr_path, patch_size=patch_size, stride=stride_size, beta=0.55, x0=calibrated_y1, y0=calibrated_x1, x_size=calibrated_h, y_size=calibrated_w, image_size=224, gpu=True)
+			else:
+				heatmap, prob, label = inc_inference(model_class, curr_path, patch_size=patch_size, stride=stride_size, beta=0.55, x0=calibrated_y1, y0=calibrated_x1, x_size=calibrated_h, y_size=calibrated_w, image_size=299, gpu=True)
+                
 
 	end_time = time.time()
 
