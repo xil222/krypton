@@ -183,7 +183,7 @@
   </div>
   <div class="row">
       <div class="column">
-        <img id="target" src="" onerror="this.style.display='none'" style="">
+        <img id="target" class="target" src="" onerror="this.style.display='none'" style="">
       </div>
       <div class="column" style="position:relative">
         <img id="heatmap" src="https://via.placeholder.com/700x472.png?text=Heatmap+will+be+displayed+here" onerror="this.style.display='none'" style="position: absolute; width:500px; height:500px;">
@@ -221,7 +221,7 @@
       </div>
     </div> -->
     <input type="radio" name="mode" value="naive" style="margin-left:9rem;" checked> Naive
-    <input type="radio" name="mode" value="exact" style="margin-left:15.2rem;"> Krypton Exact
+    <input type="radio" name="mode" value="exact" style="margin-left:15.2rem;" checked="checked"> Krypton Exact
     <input type="radio" name="mode" value="approximate" style="margin-left:14.3rem;"> Krypton Approximate
 
   </div><br>
@@ -314,65 +314,83 @@
         ajaxStop: function() { $body.removeClass("loading"); }    
     });
 
+  var jcrop_api;
+  
+  $('input:radio[name="mode"]').change(
+    function(){
+        if (this.checked && this.value == 'naive') {
+            if(typeof jcrop_api !== 'undefined'){
+                jcrop_api.destroy()
+            }
+        }else{
+            initJCrop();          
+        }
+    });
       
   function imageDisplay(input){
     if (input.files && input.files[0]){
       var imageDisplay = new FileReader();
 
-
       imageDisplay.onload = function (e) {
           $('#target')
               .attr('src', e.target.result)
+          $('#resetSelect').click()
+          $('#heatmap').attr('src', "https://via.placeholder.com/700x472.png?text=Heatmap+will+be+displayed+here")
+          $('#heatmap').show();
+          $('#original').attr('src', '')
+          $('#original').show();
       };
 
       var img = input.files[0];
       imageDisplay.readAsDataURL(img);
       $('#elementsAfterImage').show()
       $('#firstTitle').invisible()
+      $('#prediction').text("")
     }
   }
 
   jQuery.fn.invisible = function() {
     return this.css('visibility', 'hidden');
   };
-
-    jQuery(function($){
-
-      var jcrop_api;
+      
+  function initJCrop(){
       $('#target').Jcrop({
-        onChange:   showCoords,
-        onSelect:   showCoords,
-        onRelease:  clearCoords,
-        boxWidth: 500,
-        boxHeight: 500,
-      },function(){
-        jcrop_api = this;
-      });
+            onChange:   showCoords,
+            onSelect:   showCoords,
+            onRelease:  clearCoords,
+            boxWidth: 500,
+            boxHeight: 500,
+          },function(){
+            jcrop_api = this;
+          });
+  }
+  initJCrop();
+      
+      
+  $('#resetSelect').on('click',function(e){
+        if(typeof jcrop_api !== 'undefined'){
+            jcrop_api.destroy();
+            clearCoords();
+            $('#target').Jcrop({
+              onChange:   showCoords,
+              onSelect:   showCoords,
+              onRelease:  clearCoords,
+              boxWidth: 500,
+              boxHeight: 500,
+            },function(){
+              jcrop_api = this;
 
-      $('#coords').on('change','input',function(e){
+            });
+        }
+      });
+      
+   $('#coords').on('change','input',function(e){
         var x1 = $('#x1').val(),
             x2 = $('#x2').val(),
             y1 = $('#y1').val(),
             y2 = $('#y2').val();
         jcrop_api.setSelect([x1,y1,x2,y2]);
       });
-
-      $('#resetSelect').on('click',function(e){
-        jcrop_api.destroy();
-        clearCoords();
-        $('#target').Jcrop({
-          onChange:   showCoords,
-          onSelect:   showCoords,
-          onRelease:  clearCoords,
-          boxWidth: 500,
-          boxHeight: 500,
-        },function(){
-          jcrop_api = this;
-
-        });
-      });
-
-    });
 
     function showCoords(c)
     {
@@ -466,7 +484,7 @@
                    $('#prediction').text("Prediction: " + message['prediction']);
                    // $('#estimate_time').text("Estimated time: " + message['estimate_time'] + " s");
                    $('#actual_time').text("Actual time: " + message['actual_time'] + " s");
-                   $("#resetSelect").click();
+                   //$("#resetSelect").click();
                  },
                  error : function(xhr,errmsg,err) {
                    console.log(xhr.status + ": " + xhr.responseText);
