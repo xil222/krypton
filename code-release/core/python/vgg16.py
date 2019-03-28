@@ -14,7 +14,7 @@ from commons import load_dict_from_hdf5
 
 class VGG16(nn.Module):
 
-    def __init__(self, beta=1.0, gpu=True, n_labels=1000, weights_data=None):
+    def __init__(self, dataset, beta=1.0, gpu=True, n_labels=1000, weights_data=None):
         super(VGG16, self).__init__()
         self.initialized = False
         self.tensor_cache = {}
@@ -64,10 +64,11 @@ class VGG16(nn.Module):
             nn.Softmax(dim=1)
         )
 
-        self.weights_data = weights_data
-        self.__initialize_weights(gpu)
+        self.dataset = dataset
         self.gpu = gpu
         self.beta = beta
+        self.weights_data = weights_data
+        self.__initialize_weights(gpu)        
 
         # used for pytorch based impl.
         self.cache = {}
@@ -472,9 +473,14 @@ class VGG16(nn.Module):
         self.classifier[2].weight.data = weights_data['fc7_W:0']
         self.classifier[2].bias.data = weights_data['fc7_b:0']
 
-        self.classifier[4].weight.data = weights_data['fc8_W:0']
-        self.classifier[4].bias.data = weights_data['fc8_b:0']
-
+        if self.dataset == 'imagenet':
+            self.classifier[4].weight.data = weights_data['fc8_W:0']
+            self.classifier[4].bias.data = weights_data['fc8_b:0']
+        elif self.dataset == 'oct':
+            weights_data = load_dict_from_hdf5(dir_path + "/oct_vgg16_ptch.h5", gpu)
+            self.classifier[4].weight.data = weights_data['fc8_W:0']
+            self.classifier[4].bias.data = weights_data['fc8_b:0']
+            
     def __get_tensor(self, name, batch_size, channels, p_height, p_width, k_size, stride, in_size, out_size,
                      truncate=True):
         if name in self.tensor_cache:

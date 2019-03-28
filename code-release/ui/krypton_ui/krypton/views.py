@@ -128,30 +128,30 @@ def selectedRegion(request):
 	if completeImage:
 		if mode == "exact":
 			if model_class != Inception3:
-				heatmap, prob, label = inc_inference(model_class, curr_path, patch_size=patch_size, stride=stride_size, beta=1.0, x_size=224, y_size=224, image_size=224, gpu=True)
+				heatmap, prob, label = inc_inference(dataset, model_class, curr_path, patch_size=patch_size, stride=stride_size, beta=1.0, x_size=224, y_size=224, image_size=224, gpu=True)
 			else:
-				heatmap, prob, label = inc_inference(model_class, curr_path, patch_size=patch_size, stride=stride_size, beta=1.0, x_size=299, y_size=299, image_size=299, gpu=True)
+				heatmap, prob, label = inc_inference(dataset, model_class, curr_path, patch_size=patch_size, stride=stride_size, beta=1.0, x_size=299, y_size=299, image_size=299, gpu=True)
 		elif mode == "approximate":
 			if model_class != Inception3:
-				heatmap, prob, label = inc_inference(model_class, curr_path, patch_size=patch_size, stride=stride_size, beta=0.55, x_size=224, y_size=224, image_size=224, gpu=True)
+				heatmap, prob, label = inc_inference(dataset, model_class, curr_path, patch_size=patch_size, stride=stride_size, beta=0.55, x_size=224, y_size=224, image_size=224, gpu=True)
 			else:
-				heatmap, prob, label = inc_inference(model_class, curr_path, patch_size=patch_size, stride=stride_size, beta=0.55, x_size=299, y_size=299, image_size=299, gpu=True)
+				heatmap, prob, label = inc_inference(dataset, model_class, curr_path, patch_size=patch_size, stride=stride_size, beta=0.55, x_size=299, y_size=299, image_size=299, gpu=True)
 		else:
 			if model_class != Inception3:            
-				heatmap, prob, label = full_inference_e2e(model_class, curr_path, patch_size=patch_size, stride=stride_size, batch_size=64, image_size=224, gpu=True)
+				heatmap, prob, label = full_inference_e2e(dataset, model_class, curr_path, patch_size=patch_size, stride=stride_size, batch_size=64, image_size=224, gpu=True)
 			else:
-				heatmap, prob, label = full_inference_e2e(model_class, curr_path, patch_size=patch_size, stride=stride_size, batch_size=64, image_size=299, gpu=True)
+				heatmap, prob, label = full_inference_e2e(dataset, model_class, curr_path, patch_size=patch_size, stride=stride_size, batch_size=64, image_size=299, gpu=True)
 	else:
 		if mode == "exact":
 			if model_class != Inception3: 
-				heatmap, prob, label = inc_inference(model_class, curr_path, patch_size=patch_size, stride=stride_size, beta=1.0, x0=calibrated_y1, y0=calibrated_x1, x_size=calibrated_h, y_size=calibrated_w, image_size=224, gpu=True)
+				heatmap, prob, label = inc_inference(dataset, model_class, curr_path, patch_size=patch_size, stride=stride_size, beta=1.0, x0=calibrated_y1, y0=calibrated_x1, x_size=calibrated_h, y_size=calibrated_w, image_size=224, gpu=True)
 			else:
-				heatmap, prob, label = inc_inference(model_class, curr_path, patch_size=patch_size, stride=stride_size, beta=1.0, x0=calibrated_y1, y0=calibrated_x1, x_size=calibrated_h, y_size=calibrated_w, image_size=299, gpu=True)
+				heatmap, prob, label = inc_inference(dataset, model_class, curr_path, patch_size=patch_size, stride=stride_size, beta=1.0, x0=calibrated_y1, y0=calibrated_x1, x_size=calibrated_h, y_size=calibrated_w, image_size=299, gpu=True)
 		elif mode == "approximate":
 			if model_class != Inception3:            
-				heatmap, prob, label = inc_inference(model_class, curr_path, patch_size=patch_size, stride=stride_size, beta=0.55, x0=calibrated_y1, y0=calibrated_x1, x_size=calibrated_h, y_size=calibrated_w, image_size=224, gpu=True)
+				heatmap, prob, label = inc_inference(dataset, model_class, curr_path, patch_size=patch_size, stride=stride_size, beta=0.55, x0=calibrated_y1, y0=calibrated_x1, x_size=calibrated_h, y_size=calibrated_w, image_size=224, gpu=True)
 			else:
-				heatmap, prob, label = inc_inference(model_class, curr_path, patch_size=patch_size, stride=stride_size, beta=0.55, x0=calibrated_y1, y0=calibrated_x1, x_size=calibrated_h, y_size=calibrated_w, image_size=299, gpu=True)
+				heatmap, prob, label = inc_inference(dataset, model_class, curr_path, patch_size=patch_size, stride=stride_size, beta=0.55, x0=calibrated_y1, y0=calibrated_x1, x_size=calibrated_h, y_size=calibrated_w, image_size=299, gpu=True)
                 
 
 	end_time = time.time()
@@ -171,6 +171,10 @@ def selectedRegion(request):
 	actTime = round(end_time - start_time, 2)
 
 	estTime = round(real_estimate, 2)
+    
+	if dataset != 'imagenet':
+		class_names = ['Positive', 'Negative']
+    
 	return JsonResponse({'url':url, 'heatmap_url': heatmap_path[1:], 'prediction': class_names[label], 'estimate_time': estTime, 'actual_time': actTime})
 
 
