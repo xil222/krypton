@@ -480,6 +480,10 @@ class VGG16(nn.Module):
             weights_data = load_dict_from_hdf5(dir_path + "/oct_vgg16_ptch.h5", gpu)
             self.classifier[4].weight.data = weights_data['fc8_W:0']
             self.classifier[4].bias.data = weights_data['fc8_b:0']
+        elif self.dataset == 'chest':
+            weights_data = load_dict_from_hdf5(dir_path + "/chest_vgg16_ptch.h5", gpu)
+            self.classifier[4].weight.data = weights_data['fc8_W:0']
+            self.classifier[4].bias.data = weights_data['fc8_b:0']            
             
     def __get_tensor(self, name, batch_size, channels, p_height, p_width, k_size, stride, in_size, out_size,
                      truncate=True):
