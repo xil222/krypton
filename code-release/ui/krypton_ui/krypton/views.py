@@ -22,6 +22,7 @@ import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 
+import torch, gc
 from commons import inc_inference, show_heatmap, full_inference_e2e
 from imagenet_classes import class_names
 from vgg16 import VGG16
@@ -33,6 +34,10 @@ def index(request):
 	return render(request, 'index.html')
 
 def selectedRegion(request):
+    
+	gc.collect()
+	torch.cuda.empty_cache()
+    
 	message = request.POST
 	completeImage = False
 
