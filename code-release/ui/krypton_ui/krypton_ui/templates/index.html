@@ -376,7 +376,6 @@
             onChange:   showCoords,
             onSelect:   showCoords,
             onRelease:  clearCoords,
-            aspectRatio: 5/3,
             boxWidth: 500,
             boxHeight: 500,
           },function(){
@@ -390,7 +389,7 @@
         if(typeof jcrop_api !== 'undefined'){
             jcrop_api.destroy();
             clearCoords();
-            $('#target').Jcrop({
+            setTimeout($('#target').Jcrop({
               onChange:   showCoords,
               onSelect:   showCoords,
               onRelease:  clearCoords,
@@ -399,7 +398,7 @@
             },function(){
               jcrop_api = this;
 
-            });
+            }), 25);
         }
       });
       
