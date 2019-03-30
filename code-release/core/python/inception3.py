@@ -585,6 +585,10 @@ class Inception3(nn.Module):
             weights_data = load_dict_from_hdf5(dir_path + "/oct_inception3_ptch.h5", gpu)
             self.fc.weight.data = weights_data['482.fc.weight']
             self.fc.bias.data = weights_data['483.fc.bias']
+        if self.dataset == 'chest':
+            weights_data = load_dict_from_hdf5(dir_path + "/chest_inception3_ptch.h5", gpu)
+            self.fc.weight.data = weights_data['482.fc.weight']
+            self.fc.bias.data = weights_data['483.fc.bias']            
         
     
     def __get_tensor(self, name, batch_size, channels, p_height, p_width, k_size, stride, in_size, out_size, truncate=True):

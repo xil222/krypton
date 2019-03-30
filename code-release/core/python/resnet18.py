@@ -894,6 +894,10 @@ class ResNet18(nn.Module):
             weights_data = load_dict_from_hdf5(dir_path + "/oct_resnet18_ptch.h5", gpu)
             self.fc.weight.data = weights_data['fc:w']
             self.fc.bias.data = weights_data['fc:b']
+        elif self.dataset == 'chest':
+            weights_data = load_dict_from_hdf5(dir_path + "/chest_resnet18_ptch.h5", gpu)
+            self.fc.weight.data = weights_data['fc:w']
+            self.fc.bias.data = weights_data['fc:b']            
                 
                 
 if __name__ == '__main__':

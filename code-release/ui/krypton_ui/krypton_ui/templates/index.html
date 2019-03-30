@@ -20,9 +20,12 @@
       float: left;
       width: 49%;
       padding: 5px;
+      display: flex;
+      align-items: center;
+      justify-content: center;        
     }
 
-  /* Clear floats after image containers */
+   /* Clear floats after image containers */
     .row::after {
       content: "";
       clear: both;
@@ -153,9 +156,8 @@
 
 </head>
 <body color>
-<div id="response"></div>
     
-<div class="input-group mb-3" style="padding-right:30%;">
+<div class="input-group mb-3" style="padding-right:10%;"> 
   <div class="input-group-prepend">
     <span class="btn btn-outline-primary" id="inputGroupFileAddon01">Upload</span>
   </div>
@@ -163,22 +165,23 @@
     <input type="file" class="custom-file-input btn-primary" id="imageSelection" aria-describedby="inputGroupFileAddon01" onchange="imageDisplay(this);">
     <label class="custom-file-label" for="imageSelection">Choose file</label>
   </div>
-  <div class="group">
-    <span class="btn" id="prediction" style="fontsize:30px;"></span>
-  </div>
 </div>
+<div class="input-group mb-3">
+    Download &nbsp;<a href="http://supun.ucsd.edu/krypton/images.zip">sample images</a>
+</div>  
 
 <!-- Comment out if want to use the button only solution -->
 <div id="elementsAfterImage" style="display:none;">
-  <div class="bar">
-  <h5 style="font-weight: lighter;">Probability legend</h5>
+
+  <div id="prediction_bar" class="bar" style="visibility:hidden">
+  <h5 id="prediction" style="font-weight: lighter;">Predicted Class:</h5>
     <div class="legend-gradient"></div>
     <div class="legend">
-      <div class="legend__item">0.0</div>
-      <div class="legend__item">0.2</div>
-      <div class="legend__item">0.5</div>
-      <div class="legend__item">0.8</div>
-      <div class="legend__item">1.0</div>
+      <div id="low_prob" class="legend__item"></div>
+      <div class="legend__item"></div>
+      <div class="legend__item"></div>
+      <div class="legend__item"></div>
+      <div id="high_prob" class="legend__item"></div>
     </div>
   </div>
   <div class="row">
@@ -206,7 +209,7 @@
     </div>
   </section>
   <br><br>
-  <div class="container" style="border-style: dashed; border-width: thin; margin-left:190px;">
+  <div class="container" style="border-style: dashed; border-width: thin;display:flex;align-items: center;justify-content: center;">
     <!-- <div class="row" style="text-align: center;">
       <div class="btn-group-toggle" data-toggle="buttons">
         <label class="btn btn-success custom">
@@ -228,7 +231,7 @@
     <form id="coords"
       class="coords"
       onsubmit="return false;"
-      action="http://example.com/post.php" style="display:none;">
+      action="" style="display:none;">
 
       <div class="inline-labels">
       <label>X1 <input type="text" size="4" id="x1" name="x1" /></label>
@@ -240,7 +243,7 @@
       </div>
     </form>
 
-    <section>
+    <section style="display:flex;align-items: center;justify-content: center;">
       <div class="form-inline">
         <div class="input-group" style="margin-left:; padding-bottom:1rem;">
           <form method='post' id ='submit'>
@@ -252,7 +255,7 @@
           <!-- <button id="submit">Submit</button> -->
           <button class="btn btn-danger btn-sm" id="resetSelect">reset</button>
         </div>
-        <div class="input-group mb-3" style="margin-left:10rem;">
+        <div class="input-group mb-2" style="margin-left:5rem;">
           <div class="input-group-prepend">
             <label class="input-group-text" for="patch" style="background-color:#00b33c;">Dataset</label>
           </div>
@@ -263,7 +266,7 @@
             <option value="chest">Chest X-Ray</option>
           </select>
         </div>          
-        <div class="input-group mb-3" style="margin-left:10rem;">
+        <div class="input-group mb-2" style="margin-left:5rem;">
           <div class="input-group-prepend">
             <label class="input-group-text" for="patch" style="background-color:#00b33c;">Patch size</label>
           </div>
@@ -276,7 +279,7 @@
             <option value="16">Sixteen</option>
           </select>
         </div>
-        <div class="input-group mb-3" style="margin-left:8.5rem;">
+        <div class="input-group mb-2" style="margin-left:5rem;">
           <div class="input-group-prepend">
             <label class="input-group-text" for="stride" style="background-color:#00b33c;">Stride size</label>
           </div>
@@ -289,7 +292,7 @@
             <option value="16">Sixteen</option>
           </select>
         </div>
-        <div class="input-group mb-3" style="margin-left:9.7rem;">
+        <div class="input-group mb-2" style="margin-left:5rem;">
           <div class="input-group-prepend">
             <label class="input-group-text" for="model" style="background-color:#00b33c;">CNN Model</label>
           </div>
@@ -300,6 +303,17 @@
             <option value="Inception">Inception3</option>
           </select>
         </div>
+        <div class="input-group mb-2" style="margin-left:5rem;">
+          <div class="input-group-prepend">
+            <label class="input-group-text" for="color" style="background-color:#00b33c;">Patch Color</label>
+          </div>
+          <select class="custom-select" id="color">
+            <option selected>Choose...</option>
+            <option value="0.4" selected="selected">Gray</option>
+            <option value="0.0">Black</option>
+            <option value="1.0">White</option>
+          </select>
+        </div>  
       </div>
     </section>
 
@@ -335,6 +349,7 @@
           $('#target')
               .attr('src', e.target.result)
           $('#resetSelect').click()
+          $('#actual_time').text("");        
           $('#heatmap').attr('src', "https://via.placeholder.com/700x472.png?text=Heatmap+will+be+displayed+here")
           $('#heatmap').show();
           $('#original').attr('src', '')
@@ -346,6 +361,7 @@
       $('#elementsAfterImage').show()
       $('#firstTitle').invisible()
       $('#prediction').text("")
+      $("#prediction_bar").invisible()
     }
   }
 
@@ -421,6 +437,7 @@
             var csrf_token = $('#submit [name="csrfmiddlewaretoken"]').val();
             var image = document.getElementById("imageSelection").files[0];
             var dataset = document.getElementById("dataset").value;
+            var color = document.getElementById("color").value;
             var ePatch = document.getElementById("patch").value;
             var eStride = document.getElementById("stride").value;
             var eModel = document.getElementById("model").value;
@@ -466,6 +483,7 @@
             fd.append('strideSize', eStride);
             fd.append('model', eModel);
             fd.append('mode', mode);
+            fd.append('color', color);
             $.ajax({
                  type:"POST",
                  url:"/selectedRegion/",
@@ -481,10 +499,13 @@
                    $('#heatmap').show();
                    $('#original').attr('src', message['url']);
                    $('#original').show();
-                   $('#prediction').text("Prediction: " + message['prediction']);
+                   $('#prediction').text("Predicted Class: " + message['prediction']);
                    // $('#estimate_time').text("Estimated time: " + message['estimate_time'] + " s");
                    $('#actual_time').text("Actual time: " + message['actual_time'] + " s");
                    //$("#resetSelect").click();
+                   $('#low_prob').text(message['low_prob']);
+                   $('#high_prob').text(message['high_prob']); 
+                   $("#prediction_bar").css("visibility", "visible");
                  },
                  error : function(xhr,errmsg,err) {
                    console.log(xhr.status + ": " + xhr.responseText);

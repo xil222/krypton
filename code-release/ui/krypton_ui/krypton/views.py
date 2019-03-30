@@ -21,7 +21,7 @@ sys.path.append('../../../code-release/core/python')
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
-
+import numpy as np
 import torch, gc
 from commons import inc_inference, show_heatmap, full_inference_e2e
 from imagenet_classes import class_names
@@ -139,9 +139,9 @@ def selectedRegion(request):
 				heatmap, prob, label = inc_inference(dataset, model_class, curr_path, patch_size=patch_size, stride=stride_size, beta=1.0, x_size=299, y_size=299, image_size=299, gpu=True, c=c)
 		elif mode == "approximate":
 			if model_class != Inception3:
-				heatmap, prob, label = inc_inference(dataset, model_class, curr_path, patch_size=patch_size, stride=stride_size, beta=0.55, x_size=224, y_size=224, image_size=224, gpu=True, c=c)
+				heatmap, prob, label = inc_inference(dataset, model_class, curr_path, patch_size=patch_size, stride=stride_size, beta=0.5, x_size=224, y_size=224, image_size=224, gpu=True, c=c)
 			else:
-				heatmap, prob, label = inc_inference(dataset, model_class, curr_path, patch_size=patch_size, stride=stride_size, beta=0.55, x_size=299, y_size=299, image_size=299, gpu=True, c=c)
+				heatmap, prob, label = inc_inference(dataset, model_class, curr_path, patch_size=patch_size, stride=stride_size, beta=0.7, x_size=299, y_size=299, image_size=299, gpu=True, c=c)
 		else:
 			if model_class != Inception3:            
 				heatmap, prob, label = full_inference_e2e(dataset, model_class, curr_path, patch_size=patch_size, stride=stride_size, batch_size=64, image_size=224, gpu=True, c=c)
@@ -155,14 +155,16 @@ def selectedRegion(request):
 				heatmap, prob, label = inc_inference(dataset, model_class, curr_path, patch_size=patch_size, stride=stride_size, beta=1.0, x0=calibrated_y1, y0=calibrated_x1, x_size=calibrated_h, y_size=calibrated_w, image_size=299, gpu=True, c=c)
 		elif mode == "approximate":
 			if model_class != Inception3:            
-				heatmap, prob, label = inc_inference(dataset, model_class, curr_path, patch_size=patch_size, stride=stride_size, beta=0.55, x0=calibrated_y1, y0=calibrated_x1, x_size=calibrated_h, y_size=calibrated_w, image_size=224, gpu=True, c=c)
+				heatmap, prob, label = inc_inference(dataset, model_class, curr_path, patch_size=patch_size, stride=stride_size, beta=0.5, x0=calibrated_y1, y0=calibrated_x1, x_size=calibrated_h, y_size=calibrated_w, image_size=224, gpu=True, c=c)
 			else:
-				heatmap, prob, label = inc_inference(dataset, model_class, curr_path, patch_size=patch_size, stride=stride_size, beta=0.55, x0=calibrated_y1, y0=calibrated_x1, x_size=calibrated_h, y_size=calibrated_w, image_size=299, gpu=True, c=c)
+				heatmap, prob, label = inc_inference(dataset, model_class, curr_path, patch_size=patch_size, stride=stride_size, beta=0.7, x0=calibrated_y1, y0=calibrated_x1, x_size=calibrated_h, y_size=calibrated_w, image_size=299, gpu=True, c=c)
                 
 
 	end_time = time.time()
 
 	heatmap_path = './media/photos/heatmap_' + ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(20)) + '.png'
+	low_prob = np.min(heatmap)
+	high_prob = np.max(heatmap)
     
 	plt.imsave(heatmap_path, heatmap, cmap=plt.cm.jet_r)
 	img = Image.open(heatmap_path)
@@ -182,7 +184,7 @@ def selectedRegion(request):
 	else:
 		class_names = imagenet_class_names
     
-	return JsonResponse({'url':url, 'heatmap_url': heatmap_path[1:], 'prediction': class_names[label], 'estimate_time': estTime, 'actual_time': actTime})
+	return JsonResponse({'url':url, 'heatmap_url': heatmap_path[1:], 'prediction': class_names[label], 'estimate_time': estTime, 'actual_time': actTime, 'low_prob':str(low_prob), 'high_prob':str(high_prob)})
 
 
 def time_estimate(slope, intercept, stride, patch, width, height):
