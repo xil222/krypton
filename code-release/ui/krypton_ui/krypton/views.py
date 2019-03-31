@@ -50,8 +50,9 @@ def selectedRegion(request):
 		data = {'is_valid': False}
 		print ("photo is not valid" );
 
+	file_path_time = '../../../code-release/ui/krypton_ui/krypton/PreTimeEstimation.txt'
 
-	file_path_time = '../../../code-release/ui/krypton_ui/krypton/updated-time-estimation.txt'
+	#file_path_time = '../../../code-release/ui/krypton_ui/krypton/updated-time-estimation.txt'
 	prev_path = '../../../code-release/ui/krypton_ui'
 
 
@@ -72,15 +73,29 @@ def selectedRegion(request):
 	#do infernece with model with save much more time especially in the first try
 	if model_class == "VGG":
 		model_class = VGG16
-		intercept, slope = parameters['vgg16'][0]['intercept'], parameters['vgg16'][0]['slope']
+		if mode == "approximate":
+			intercept, slope = parameters['vgg16']['approx']['gpu'][0]['intercept'], parameters['vgg16']['approx']['gpu'][0]['slope']
+		elif mode == "exact":
+			intercept, slope = parameters['vgg16']['exact']['gpu'][0]['intercept'], parameters['vgg16']['exact']['gpu'][0]['slope']
+		else:
+			intercept, slope = parameters['vgg16']['naive']['gpu'][0]['intercept'], parameters['vgg16']['naive']['gpu'][0]['slope']
 	elif model_class == "ResNet":
 		model_class = ResNet18
-		intercept, slope = parameters['resnet18'][0]['intercept'], parameters['resnet18'][0]['slope']
+		if mode == "approximate":
+			intercept, slope = parameters['resnet18']['approx']['gpu'][0]['intercept'], parameters['resnet18']['approx']['gpu'][0]['slope']
+		elif mode == "exact":
+			intercept, slope = parameters['resnet18']['exact']['gpu'][0]['intercept'], parameters['resnet18']['exact']['gpu'][0]['slope']
+		else:
+			intercept, slope = parameters['resnet18']['naive']['gpu'][0]['intercept'], parameters['resnet18']['naive']['gpu'][0]['slope']
 	elif model_class == "Inception":
 		model_class = Inception3       
-		#FIXME change resnet18 to inception3
-		intercept, slope = parameters['resnet18'][0]['intercept'], parameters['resnet18'][0]['slope']
-
+		if mode == "approximate":
+			intercept, slope = parameters['inception']['approx']['gpu'][0]['intercept'], parameters['inception']['approx']['gpu'][0]['slope']
+		elif mode == "exact":
+			intercept, slope = parameters['inception']['exact']['gpu'][0]['intercept'], parameters['inception']['exact']['gpu'][0]['slope']
+		else:
+			intercept, slope = parameters['inception']['naive']['gpu'][0]['intercept'], parameters['inception']['naive']['gpu'][0]['slope']
+	
 	dataset = message['dataset']
 	patch_size = (int)(float(message['patchSize']))
 	stride_size = (int)(float(message['strideSize']))
@@ -123,11 +138,6 @@ def selectedRegion(request):
 
 
 	real_estimate = time_estimate(slope, intercept, stride_size, patch_size, calibrated_w, calibrated_h)
-
-	if mode == "naive":
-		real_estimate = 16.3488
-	elif mode == "approximate":
-		real_estimate = 3.6081
 
 	start_time = time.time()
     
