@@ -35,8 +35,8 @@ def index(request):
 
 def selectedRegion(request):
     
-	gc.collect()
-	torch.cuda.empty_cache()
+	#gc.collect()
+	#torch.cuda.empty_cache()
     
 	message = request.POST
 	completeImage = False

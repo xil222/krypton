@@ -340,6 +340,7 @@
             initJCrop();          
         }
     });
+
       
   function imageDisplay(input){
     if (input.files && input.files[0]){
@@ -348,6 +349,7 @@
       imageDisplay.onload = function (e) {
           $('#target')
               .attr('src', e.target.result)
+          $('#target').attr('style', 'width:500px;height:500px')
           $('#resetSelect').click()
           $('#actual_time').text("");        
           $('#heatmap').attr('src', "https://via.placeholder.com/700x472.png?text=Heatmap+will+be+displayed+here")
@@ -370,7 +372,7 @@
   };
       
   function initJCrop(){
-      $('#target').Jcrop({
+      setTimeout($('#target').Jcrop({
             onChange:   showCoords,
             onSelect:   showCoords,
             onRelease:  clearCoords,
@@ -378,7 +380,7 @@
             boxHeight: 500,
           },function(){
             jcrop_api = this;
-          });
+          }), 25);
   }
   initJCrop();
       
@@ -387,7 +389,7 @@
         if(typeof jcrop_api !== 'undefined'){
             jcrop_api.destroy();
             clearCoords();
-            $('#target').Jcrop({
+            setTimeout($('#target').Jcrop({
               onChange:   showCoords,
               onSelect:   showCoords,
               onRelease:  clearCoords,
@@ -396,7 +398,7 @@
             },function(){
               jcrop_api = this;
 
-            });
+            }), 25);
         }
       });
       
