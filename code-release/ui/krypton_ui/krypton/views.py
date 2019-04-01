@@ -13,13 +13,14 @@ import os
 import cv2
 from PIL import Image, ImageOps
 
-sys.path.append('/krypton/code-release/core/python')
+#sys.path.append('/krypton/code-release/ui/krypton_ui/krypton')
+sys.path.append('/Users/allenord/Documents/CSE291/project/krypton/code-release/core/python')
 
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 
-from commons import inc_inference, show_heatmap, full_inference_e2e
+from commons import inc_inference, inc_inference_with_model, show_heatmap, full_inference_e2e
 from imagenet_classes import class_names
 from vgg16 import VGG16
 from resnet18 import ResNet18
@@ -43,8 +44,9 @@ def selectedRegion(request):
 		print ("photo is not valid" );
 
 
-	file_path_time = '/krypton/code-release/ui/krypton_ui/krypton/updated-time-estimation.txt'
-	prev_path = '/krypton/code-release/ui/krypton_ui'
+	#file_path_time = '/krypton/code-release/ui/krypton_ui/krypton/updated-time-estimation.txt'
+	file_path_time = '/Users/allenord/Documents/CSE291/project/krypton/code-release/ui/krypton_ui/krypton/updated-time-estimation.txt'
+	prev_path = '/Users/allenord/Documents/CSE291/project/krypton/code-release/ui/krypton_ui'
 
 
 	with open(file_path_time) as f:
@@ -64,18 +66,15 @@ def selectedRegion(request):
 	if model_class == "VGG":
 		model_class = VGG16
 		intercept, slope = parameters['vgg16'][0]['intercept'], parameters['vgg16'][0]['slope']
-	elif model_class == "ResNet":
+	elif model_class == 'ResNet':
 		model_class = ResNet18
 		intercept, slope = parameters['resnet18'][0]['intercept'], parameters['resnet18'][0]['slope']
-	elif model_class == "Inception":
+	elif model_class == 'Inception':
 		model_class = Inception3
 		intercept, slope = parameters['inception'][0]['intercept'], parameters['inception'][0]['slope']
 
 	patch_size = (int)(float(message['patchSize']))
 	stride_size = (int)(float(message['strideSize']))
-
-	calibrated_h = 224
-	calibrated_w = 224
 
 	if message['x1'] == "":
 		x1 = 0
@@ -111,34 +110,59 @@ def selectedRegion(request):
 			image_size = 299
 
 
-	real_estimate = time_estimate(slope, intercept, stride_size, patch_size, calibrated_w, calibrated_h)
 
-	if mode == "naive":
-		real_estimate = 16.3488
-	elif mode == "approximate":
-		real_estimate = 3.6081
+	estimated_time = time_estimate(slope, intercept, stride_size, patch_size, w, h)
+	coeff = 1.0
+
+	if model_class == VGG16:
+		if stride_size == 16:
+			coeff = 1.0
+		elif stride_size == 8:
+			coeff = 1.0
+		elif stride_size == 4:
+			coeff = 2.0
+		elif stride_size == 2:
+			coeff = 3.0
+		else:
+			coeff = 3.0
+
+	elif model_class == ResNet18:
+		if stride_size == 16:
+			coeff = 1.0
+		elif stride_size == 8:
+			coeff = 2.0
+		elif stride_size == 4:
+			coeff = 3.0
+		elif stride_size == 2:
+			coeff = 4.0
+		else:
+			coeff = 5.0
+
+	real_estimate = estimated_time / coeff
+
 
 	start_time = time.time()
 
 	if completeImage:
 		if mode == "exact":
-			heatmap, prob, label = inc_inference(model_class, curr_path, patch_size=patch_size, stride=stride_size, beta=1.0, gpu=True)
+			heatmap, prob, label = inc_inference(model_class, curr_path, patch_size=patch_size, stride=stride_size, beta=1.0, gpu=False)
 		elif mode == "approximate":
-			heatmap, prob, label = inc_inference(model_class, curr_path, patch_size=patch_size, stride=stride_size, beta=0.5, gpu=True)
+			heatmap, prob, label = inc_inference(model_class, curr_path, patch_size=patch_size, stride=stride_size, beta=0.5, gpu=False)
 		else:
-			heatmap, prob, label = full_inference_e2e(model_class, curr_path, patch_size=patch_size, stride=stride_size, batch_size=64, gpu=True)
+			heatmap, prob, label = full_inference_e2e(model_class, curr_path, patch_size=patch_size, stride=stride_size, batch_size=64, gpu=False)
+
 
 	else:
+		print model_class
 		if mode == "exact":
-			heatmap, prob, label = inc_inference(model_class, curr_path, patch_size=patch_size, stride=stride_size, beta=1.0, x0=calibrated_y1, y0=calibrated_x1, x_size=calibrated_h, y_size=calibrated_w, gpu=True)
+			heatmap, prob, label = inc_inference(model_class, curr_path, patch_size=patch_size, stride=stride_size, beta=1.0, x0=calibrated_y1, y0=calibrated_x1, x_size=calibrated_h, y_size=calibrated_w, gpu=False)
 		elif mode == "approximate":
-			heatmap, prob, label = inc_inference(model_class, curr_path, patch_size=patch_size, stride=stride_size, beta=0.5, x0=calibrated_y1, y0=calibrated_x1, x_size=calibrated_h, y_size=calibrated_w, gpu=True)
+			heatmap, prob, label = inc_inference(model_class, curr_path, patch_size=patch_size, stride=stride_size, beta=0.5, x0=calibrated_y1, y0=calibrated_x1, x_size=calibrated_h, y_size=calibrated_w, gpu=False)
 
 	end_time = time.time()
 
 
 
-	end_time = time.time()
 
 	plt.imsave("./media/photos/heatmap.png", heatmap, cmap=plt.cm.jet_r)
 
@@ -150,9 +174,10 @@ def selectedRegion(request):
 	new_img = ImageOps.expand(img, padding)
 	new_img.save('./media/photos/heatmap.png')
 
-	actTime = round(end_time - start_time, 2)
+	actTime = int(end_time - start_time)
+	estTime = int(real_estimate)
 
-	estTime = round(real_estimate, 2)
+
 	return JsonResponse({'url':url, 'heatmap_url': '/media/photos/heatmap.png', 'prediction': class_names[label], 'estimate_time': estTime, 'actual_time': actTime})
 
 
