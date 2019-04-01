@@ -18,6 +18,7 @@ from PIL import Image, ImageOps
 # sys.path.append('/krypton/code-release/core/python')
 sys.path.append('../../../code-release/core/python')
 
+
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
@@ -35,9 +36,6 @@ def index(request):
 
 def selectedRegion(request):
 
-	#gc.collect()
-	#torch.cuda.empty_cache()
-
 	message = request.POST
 	completeImage = False
 
@@ -50,15 +48,7 @@ def selectedRegion(request):
 		data = {'is_valid': False}
 		print ("photo is not valid" );
 
-	file_path_time = '../../../code-release/ui/krypton_ui/krypton/PreTimeEstimation.txt'
-
-	#file_path_time = '../../../code-release/ui/krypton_ui/krypton/updated-time-estimation.txt'
 	prev_path = '../../../code-release/ui/krypton_ui'
-
-
-	with open(file_path_time) as f:
-		parameters = json.load(f)
-
 
 	url = photo.file.url
 	curr_path = prev_path + url
@@ -69,32 +59,6 @@ def selectedRegion(request):
 	model_class = message['model']
 	mode = message['mode']
 	c = float(message['color'])
-
-	#do infernece with model with save much more time especially in the first try
-	if model_class == "VGG":
-		model_class = VGG16
-		if mode == "approximate":
-			intercept, slope = parameters['vgg16']['approx']['gpu'][0]['intercept'], parameters['vgg16']['approx']['gpu'][0]['slope']
-		elif mode == "exact":
-			intercept, slope = parameters['vgg16']['exact']['gpu'][0]['intercept'], parameters['vgg16']['exact']['gpu'][0]['slope']
-		else:
-			intercept, slope = parameters['vgg16']['naive']['gpu'][0]['intercept'], parameters['vgg16']['naive']['gpu'][0]['slope']
-	elif model_class == "ResNet":
-		model_class = ResNet18
-		if mode == "approximate":
-			intercept, slope = parameters['resnet18']['approx']['gpu'][0]['intercept'], parameters['resnet18']['approx']['gpu'][0]['slope']
-		elif mode == "exact":
-			intercept, slope = parameters['resnet18']['exact']['gpu'][0]['intercept'], parameters['resnet18']['exact']['gpu'][0]['slope']
-		else:
-			intercept, slope = parameters['resnet18']['naive']['gpu'][0]['intercept'], parameters['resnet18']['naive']['gpu'][0]['slope']
-	elif model_class == "Inception":
-		model_class = Inception3
-		if mode == "approximate":
-			intercept, slope = parameters['inception']['approx']['gpu'][0]['intercept'], parameters['inception']['approx']['gpu'][0]['slope']
-		elif mode == "exact":
-			intercept, slope = parameters['inception']['exact']['gpu'][0]['intercept'], parameters['inception']['exact']['gpu'][0]['slope']
-		else:
-			intercept, slope = parameters['inception']['naive']['gpu'][0]['intercept'], parameters['inception']['naive']['gpu'][0]['slope']
 
 	dataset = message['dataset']
 	patch_size = (int)(float(message['patchSize']))
@@ -136,8 +100,6 @@ def selectedRegion(request):
 			calibrated_h = (int)(h * 299 / height)
 			image_size = 299
 
-
-	real_estimate = time_estimate(slope, intercept, stride_size, patch_size, calibrated_w, calibrated_h)
 
 	start_time = time.time()
 
@@ -187,15 +149,97 @@ def selectedRegion(request):
 
 	actTime = round(end_time - start_time, 2)
 
-	estTime = round(real_estimate, 2)
 
 	if dataset != 'imagenet':
 		class_names = ['Positive', 'Negative']
 	else:
 		class_names = imagenet_class_names
 
-	return JsonResponse({'url':url, 'heatmap_url': heatmap_path[1:], 'prediction': class_names[label], 'estimate_time': estTime, 'actual_time': actTime, 'low_prob':str(low_prob), 'high_prob':str(high_prob)})
+	return JsonResponse({'url':url, 'heatmap_url': heatmap_path[1:], 'prediction': class_names[label], 'actual_time': actTime, 'low_prob':str(low_prob), 'high_prob':str(high_prob)})
 
+
+def getTimeEstimate(request):
+
+	file_path_time = '../../../code-release/ui/krypton_ui/krypton/PreTimeEstimation.txt'
+
+	message = request.POST
+	model_class = message['model']
+	mode = message['mode']
+	width = (int)(float(message['width']))
+	height = (int)(float(message['height']))
+	print "height: " + str(height)
+
+	with open(file_path_time) as f:
+		parameters = json.load(f)
+
+	if model_class == "VGG":
+		model_class = VGG16
+		if mode == "approximate":
+			intercept, slope = parameters['vgg16']['approx']['gpu'][0]['intercept'], parameters['vgg16']['approx']['gpu'][0]['slope']
+		elif mode == "exact":
+			intercept, slope = parameters['vgg16']['exact']['gpu'][0]['intercept'], parameters['vgg16']['exact']['gpu'][0]['slope']
+		else:
+			intercept, slope = parameters['vgg16']['naive']['gpu'][0]['intercept'], parameters['vgg16']['naive']['gpu'][0]['slope']
+	elif model_class == "ResNet":
+		model_class = ResNet18
+		if mode == "approximate":
+			intercept, slope = parameters['resnet18']['approx']['gpu'][0]['intercept'], parameters['resnet18']['approx']['gpu'][0]['slope']
+		elif mode == "exact":
+			intercept, slope = parameters['resnet18']['exact']['gpu'][0]['intercept'], parameters['resnet18']['exact']['gpu'][0]['slope']
+		else:
+			intercept, slope = parameters['resnet18']['naive']['gpu'][0]['intercept'], parameters['resnet18']['naive']['gpu'][0]['slope']
+	elif model_class == "Inception":
+		model_class = Inception3
+		if mode == "approximate":
+			intercept, slope = parameters['inception']['approx']['gpu'][0]['intercept'], parameters['inception']['approx']['gpu'][0]['slope']
+		elif mode == "exact":
+			intercept, slope = parameters['inception']['exact']['gpu'][0]['intercept'], parameters['inception']['exact']['gpu'][0]['slope']
+		else:
+			intercept, slope = parameters['inception']['naive']['gpu'][0]['intercept'], parameters['inception']['naive']['gpu'][0]['slope']
+
+	patch_size = (int)(float(message['patchSize']))
+	stride_size = (int)(float(message['strideSize']))
+
+	calibrated_h = 224
+	calibrated_w = 224
+
+	if message['x1'] == "":
+		x1 = 0
+		x2 = width
+		y1 = 0
+		y2 = height
+		h = height
+		w = width
+		completeImage = True
+
+	else:
+		x1 = (int)(float(message['x1']))
+		x2 = (int)(float(message['x2']))
+		y1 = (int)(float(message['y1']))
+		y2 = (int)(float(message['y2']))
+
+		h = (int)(float(message['h']))
+		w = (int)(float(message['w']))
+
+		if model_class != Inception3:
+			calibrated_x1 = (int)(x1 * 224 / width)
+			calibrated_y1 = (int)(y1 * 224 / height)
+
+			calibrated_w = (int)(w * 224 / width)
+			calibrated_h = (int)(h * 224 / height)
+			image_size = 224
+		else:
+			calibrated_x1 = (int)(x1 * 299 / width)
+			calibrated_y1 = (int)(y1 * 299 / height)
+
+			calibrated_w = (int)(w * 299 / width)
+			calibrated_h = (int)(h * 299 / height)
+			image_size = 299
+
+
+	real_estimate = time_estimate(slope, intercept, stride_size, patch_size, calibrated_w, calibrated_h)
+	real_estimate = round(real_estimate, 2)
+	return JsonResponse({'time_estimate':real_estimate})
 
 def time_estimate(slope, intercept, stride, patch, width, height):
 	return slope * (width - patch) * (height - patch) / stride / stride + intercept

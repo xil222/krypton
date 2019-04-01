@@ -22,7 +22,7 @@
       padding: 5px;
       display: flex;
       align-items: center;
-      justify-content: center;        
+      justify-content: center;
     }
 
    /* Clear floats after image containers */
@@ -125,7 +125,7 @@
       height: 30px;
       background: linear-gradient(to right, #850400, #FF5D00, #EAFF0C, #40FFB5, #002FFF, #01017D);
     }
-      
+
     .modal {
         display:    none;
         position:   fixed;
@@ -134,30 +134,30 @@
         left:       0;
         height:     100%;
         width:      100%;
-        background: rgba( 255, 255, 255, .8 ) 
-                    url('http://i.stack.imgur.com/FhHRx.gif') 
-                    50% 50% 
+        background: rgba( 255, 255, 255, .8 )
+                    url('http://i.stack.imgur.com/FhHRx.gif')
+                    50% 50%
                     no-repeat;
     }
 
     /* When the body has the loading class, we turn
        the scrollbar off with overflow:hidden */
     body.loading .modal {
-        overflow: hidden;   
+        overflow: hidden;
     }
 
     /* Anytime the body has the loading class, our
        modal element will be visible */
     body.loading .modal {
         display: block;
-    }          
+    }
 
   </style>
 
 </head>
 <body color>
-    
-<div class="input-group mb-3" style="padding-right:10%;"> 
+
+<div class="input-group mb-3" style="padding-right:10%;">
   <div class="input-group-prepend">
     <span class="btn btn-outline-primary" id="inputGroupFileAddon01">Upload</span>
   </div>
@@ -168,7 +168,7 @@
 </div>
 <div class="input-group mb-3">
     Download &nbsp;<a href="http://supun.ucsd.edu/krypton/images.zip">sample images</a>
-</div>  
+</div>
 
 <!-- Comment out if want to use the button only solution -->
 <div id="elementsAfterImage" style="display:none;">
@@ -186,6 +186,8 @@
   </div>
   <div class="row">
       <div class="column">
+        <p id="width" style="display: none"></p>
+        <p id="height" style="display: none"></p>
         <img id="target" class="target" src="" onerror="this.style.display='none'" style="">
       </div>
       <div class="column" style="position:relative">
@@ -265,7 +267,7 @@
             <option value="oct">OCT</option>
             <option value="chest">Chest X-Ray</option>
           </select>
-        </div>          
+        </div>
         <div class="input-group mb-2" style="margin-left:5rem;">
           <div class="input-group-prepend">
             <label class="input-group-text" for="patch" style="background-color:#00b33c;">Patch size</label>
@@ -313,7 +315,7 @@
             <option value="0.0">Black</option>
             <option value="1.0">White</option>
           </select>
-        </div>  
+        </div>
       </div>
     </section>
 
@@ -325,11 +327,11 @@
 
     $(document).on({
         ajaxStart: function() { $body.addClass("loading");    },
-        ajaxStop: function() { $body.removeClass("loading"); }    
+        ajaxStop: function() { $body.removeClass("loading"); }
     });
 
   var jcrop_api;
-  
+
   $('input:radio[name="mode"]').change(
     function(){
         if (this.checked && this.value == 'naive') {
@@ -337,11 +339,11 @@
                 jcrop_api.destroy()
             }
         }else{
-            initJCrop();          
+            initJCrop();
         }
     });
 
-      
+
   function imageDisplay(input){
     if (input.files && input.files[0]){
       var imageDisplay = new FileReader();
@@ -349,9 +351,16 @@
       imageDisplay.onload = function (e) {
           $('#target')
               .attr('src', e.target.result)
+          var image = new Image();
+          image.src = e.target.result;
+          image.onload = function() {
+            $('#width').text(this.width);
+            $('#height').text(this.height);
+          };
           $('#target').attr('style', 'width:500px;height:500px')
           $('#resetSelect').click()
-          $('#actual_time').text("");        
+          $('#actual_time').text("");
+
           $('#heatmap').attr('src', "https://via.placeholder.com/700x472.png?text=Heatmap+will+be+displayed+here")
           $('#heatmap').show();
           $('#original').attr('src', '')
@@ -370,7 +379,7 @@
   jQuery.fn.invisible = function() {
     return this.css('visibility', 'hidden');
   };
-      
+
   function initJCrop(){
       setTimeout($('#target').Jcrop({
             onChange:   showCoords,
@@ -383,8 +392,8 @@
           }), 25);
   }
   initJCrop();
-      
-      
+
+
   $('#resetSelect').on('click',function(e){
         if(typeof jcrop_api !== 'undefined'){
             jcrop_api.destroy();
@@ -401,7 +410,7 @@
             }), 25);
         }
       });
-      
+
    $('#coords').on('change','input',function(e){
         var x1 = $('#x1').val(),
             x2 = $('#x2').val(),
@@ -444,41 +453,23 @@
             var eStride = document.getElementById("stride").value;
             var eModel = document.getElementById("model").value;
             var fd = new FormData(document.getElementById("coords"));
+            var fd_time = new FormData(document.getElementById("coords"));
             var mode = document.querySelector('input[name="mode"]:checked').value;
             var xCheck = document.getElementById("x1").value
 
-            if (xCheck == ""){
-
-              if (mode == "naive"){
-
-                text = "16.50 s"
-              }
-              else if(mode == "exact") {
-
-                text = "5.17 s"
-              }
-              else {
-
-                text = "3.9 s"
-              }
-            }
-            else {
-
-              if (mode == "naive"){
-
-                text = "19.31 s"
-              }
-              else if(mode == "exact") {
-
-                text = "2.85 s"
-              }
-              else {
-
-                text = "2.79 s"
-              }
-            }
+            var url = URL.createObjectURL(document.getElementById("imageSelection").files[0]);
+            var img = new Image;
+            var height = document.getElementById("width").innerHTML;
+            var width = document.getElementById("height").innerHTML;
+            console.log("width: " + width);
             $('#actual_time').text("");
-            $('#estimate_time').text("Estimated time: " + text);
+            $('#estimate_time').text("");
+            fd_time.append('patchSize', ePatch);
+            fd_time.append('strideSize', eStride);
+            fd_time.append('model', eModel);
+            fd_time.append('mode', mode);
+            fd_time.append('width', width);
+            fd_time.append('height', height);
             fd.append('file', image);
             fd.append('dataset', dataset);
             fd.append('patchSize', ePatch);
@@ -486,6 +477,23 @@
             fd.append('model', eModel);
             fd.append('mode', mode);
             fd.append('color', color);
+            $.ajax({
+                type:"POST",
+                url:"/getTimeEstimate/",
+                headers:{
+                  "X-CSRFToken": csrf_token
+                },
+                processData: false,
+                contentType: false,
+                data: fd_time,
+                success: function(message){
+                  console.log(message);
+                  $('#estimate_time').text("Estimated time: " + message['time_estimate'] + " s");
+                },
+                error : function(xhr,errmsg,err) {
+                  console.log(xhr.status + ": " + xhr.responseText);
+               }
+            });
             $.ajax({
                  type:"POST",
                  url:"/selectedRegion/",
@@ -506,7 +514,7 @@
                    $('#actual_time').text("Actual time: " + message['actual_time'] + " s");
                    //$("#resetSelect").click();
                    $('#low_prob').text(message['low_prob']);
-                   $('#high_prob').text(message['high_prob']); 
+                   $('#high_prob').text(message['high_prob']);
                    $("#prediction_bar").css("visibility", "visible");
                  },
                  error : function(xhr,errmsg,err) {

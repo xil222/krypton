@@ -5,4 +5,5 @@ from . import views
 urlpatterns = [
     url(r'^$', views.index, name='index'),
     url(r'^selectedRegion/$', views.selectedRegion, name='selectedRegion'),
+    url(r'^getTimeEstimate/$', views.getTimeEstimate, name='getTimeEstimate')
 ]
