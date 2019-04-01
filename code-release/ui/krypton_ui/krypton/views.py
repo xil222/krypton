@@ -6,6 +6,8 @@ from django.core.files.storage import default_storage
 
 from .forms import *
 
+import string
+import random
 import json
 import sys
 import time
@@ -13,24 +15,29 @@ import os
 import cv2
 from PIL import Image, ImageOps
 
-#sys.path.append('/krypton/code-release/ui/krypton_ui/krypton')
-sys.path.append('/Users/allenord/Documents/CSE291/project/krypton/code-release/core/python')
+# sys.path.append('/krypton/code-release/core/python')
+sys.path.append('../../../code-release/core/python')
 
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
-
-from commons import inc_inference, inc_inference_with_model, show_heatmap, full_inference_e2e
+import numpy as np
+import torch, gc
+from commons import inc_inference, show_heatmap, full_inference_e2e
 from imagenet_classes import class_names
 from vgg16 import VGG16
 from resnet18 import ResNet18
 from inception3 import Inception3
-from imagenet_classes import class_names
+from imagenet_classes import class_names as imagenet_class_names
 
 def index(request):
 	return render(request, 'index.html')
 
 def selectedRegion(request):
+
+	#gc.collect()
+	#torch.cuda.empty_cache()
+
 	message = request.POST
 	completeImage = False
 
@@ -43,10 +50,10 @@ def selectedRegion(request):
 		data = {'is_valid': False}
 		print ("photo is not valid" );
 
+	file_path_time = '../../../code-release/ui/krypton_ui/krypton/PreTimeEstimation.txt'
 
-	#file_path_time = '/krypton/code-release/ui/krypton_ui/krypton/updated-time-estimation.txt'
-	file_path_time = '/Users/allenord/Documents/CSE291/project/krypton/code-release/ui/krypton_ui/krypton/updated-time-estimation.txt'
-	prev_path = '/Users/allenord/Documents/CSE291/project/krypton/code-release/ui/krypton_ui'
+	#file_path_time = '../../../code-release/ui/krypton_ui/krypton/updated-time-estimation.txt'
+	prev_path = '../../../code-release/ui/krypton_ui'
 
 
 	with open(file_path_time) as f:
@@ -61,20 +68,40 @@ def selectedRegion(request):
 
 	model_class = message['model']
 	mode = message['mode']
+	c = float(message['color'])
 
 	#do infernece with model with save much more time especially in the first try
 	if model_class == "VGG":
 		model_class = VGG16
-		intercept, slope = parameters['vgg16'][0]['intercept'], parameters['vgg16'][0]['slope']
-	elif model_class == 'ResNet':
+		if mode == "approximate":
+			intercept, slope = parameters['vgg16']['approx']['gpu'][0]['intercept'], parameters['vgg16']['approx']['gpu'][0]['slope']
+		elif mode == "exact":
+			intercept, slope = parameters['vgg16']['exact']['gpu'][0]['intercept'], parameters['vgg16']['exact']['gpu'][0]['slope']
+		else:
+			intercept, slope = parameters['vgg16']['naive']['gpu'][0]['intercept'], parameters['vgg16']['naive']['gpu'][0]['slope']
+	elif model_class == "ResNet":
 		model_class = ResNet18
-		intercept, slope = parameters['resnet18'][0]['intercept'], parameters['resnet18'][0]['slope']
-	elif model_class == 'Inception':
+		if mode == "approximate":
+			intercept, slope = parameters['resnet18']['approx']['gpu'][0]['intercept'], parameters['resnet18']['approx']['gpu'][0]['slope']
+		elif mode == "exact":
+			intercept, slope = parameters['resnet18']['exact']['gpu'][0]['intercept'], parameters['resnet18']['exact']['gpu'][0]['slope']
+		else:
+			intercept, slope = parameters['resnet18']['naive']['gpu'][0]['intercept'], parameters['resnet18']['naive']['gpu'][0]['slope']
+	elif model_class == "Inception":
 		model_class = Inception3
-		intercept, slope = parameters['inception'][0]['intercept'], parameters['inception'][0]['slope']
+		if mode == "approximate":
+			intercept, slope = parameters['inception']['approx']['gpu'][0]['intercept'], parameters['inception']['approx']['gpu'][0]['slope']
+		elif mode == "exact":
+			intercept, slope = parameters['inception']['exact']['gpu'][0]['intercept'], parameters['inception']['exact']['gpu'][0]['slope']
+		else:
+			intercept, slope = parameters['inception']['naive']['gpu'][0]['intercept'], parameters['inception']['naive']['gpu'][0]['slope']
 
+	dataset = message['dataset']
 	patch_size = (int)(float(message['patchSize']))
 	stride_size = (int)(float(message['strideSize']))
+
+	calibrated_h = 224
+	calibrated_w = 224
 
 	if message['x1'] == "":
 		x1 = 0
@@ -105,80 +132,69 @@ def selectedRegion(request):
 			calibrated_x1 = (int)(x1 * 299 / width)
 			calibrated_y1 = (int)(y1 * 299 / height)
 
-			calibrated_w = 299
-			calibrated_h = 299
+			calibrated_w = (int)(w * 299 / width)
+			calibrated_h = (int)(h * 299 / height)
 			image_size = 299
 
 
-
-	estimated_time = time_estimate(slope, intercept, stride_size, patch_size, w, h)
-	coeff = 1.0
-
-	if model_class == VGG16:
-		if stride_size == 16:
-			coeff = 1.0
-		elif stride_size == 8:
-			coeff = 1.0
-		elif stride_size == 4:
-			coeff = 2.0
-		elif stride_size == 2:
-			coeff = 3.0
-		else:
-			coeff = 3.0
-
-	elif model_class == ResNet18:
-		if stride_size == 16:
-			coeff = 1.0
-		elif stride_size == 8:
-			coeff = 2.0
-		elif stride_size == 4:
-			coeff = 3.0
-		elif stride_size == 2:
-			coeff = 4.0
-		else:
-			coeff = 5.0
-
-	real_estimate = estimated_time / coeff
-
+	real_estimate = time_estimate(slope, intercept, stride_size, patch_size, calibrated_w, calibrated_h)
 
 	start_time = time.time()
 
 	if completeImage:
 		if mode == "exact":
-			heatmap, prob, label = inc_inference(model_class, curr_path, patch_size=patch_size, stride=stride_size, beta=1.0, gpu=False)
+			if model_class != Inception3:
+				heatmap, prob, label = inc_inference(dataset, model_class, curr_path, patch_size=patch_size, stride=stride_size, beta=1.0, x_size=224, y_size=224, image_size=224, gpu=True, c=c)
+			else:
+				heatmap, prob, label = inc_inference(dataset, model_class, curr_path, patch_size=patch_size, stride=stride_size, beta=1.0, x_size=299, y_size=299, image_size=299, gpu=True, c=c)
 		elif mode == "approximate":
-			heatmap, prob, label = inc_inference(model_class, curr_path, patch_size=patch_size, stride=stride_size, beta=0.5, gpu=False)
+			if model_class != Inception3:
+				heatmap, prob, label = inc_inference(dataset, model_class, curr_path, patch_size=patch_size, stride=stride_size, beta=0.5, x_size=224, y_size=224, image_size=224, gpu=True, c=c)
+			else:
+				heatmap, prob, label = inc_inference(dataset, model_class, curr_path, patch_size=patch_size, stride=stride_size, beta=0.7, x_size=299, y_size=299, image_size=299, gpu=True, c=c)
 		else:
-			heatmap, prob, label = full_inference_e2e(model_class, curr_path, patch_size=patch_size, stride=stride_size, batch_size=64, gpu=False)
-
-
+			if model_class != Inception3:
+				heatmap, prob, label = full_inference_e2e(dataset, model_class, curr_path, patch_size=patch_size, stride=stride_size, batch_size=64, image_size=224, gpu=True, c=c)
+			else:
+				heatmap, prob, label = full_inference_e2e(dataset, model_class, curr_path, patch_size=patch_size, stride=stride_size, batch_size=64, x_size=299, y_size=299, image_size=299, gpu=True, c=c)
 	else:
-		print model_class
 		if mode == "exact":
-			heatmap, prob, label = inc_inference(model_class, curr_path, patch_size=patch_size, stride=stride_size, beta=1.0, x0=calibrated_y1, y0=calibrated_x1, x_size=calibrated_h, y_size=calibrated_w, gpu=False)
+			if model_class != Inception3:
+				heatmap, prob, label = inc_inference(dataset, model_class, curr_path, patch_size=patch_size, stride=stride_size, beta=1.0, x0=calibrated_y1, y0=calibrated_x1, x_size=calibrated_h, y_size=calibrated_w, image_size=224, gpu=True, c=c)
+			else:
+				heatmap, prob, label = inc_inference(dataset, model_class, curr_path, patch_size=patch_size, stride=stride_size, beta=1.0, x0=calibrated_y1, y0=calibrated_x1, x_size=calibrated_h, y_size=calibrated_w, image_size=299, gpu=True, c=c)
 		elif mode == "approximate":
-			heatmap, prob, label = inc_inference(model_class, curr_path, patch_size=patch_size, stride=stride_size, beta=0.5, x0=calibrated_y1, y0=calibrated_x1, x_size=calibrated_h, y_size=calibrated_w, gpu=False)
+			if model_class != Inception3:
+				heatmap, prob, label = inc_inference(dataset, model_class, curr_path, patch_size=patch_size, stride=stride_size, beta=0.5, x0=calibrated_y1, y0=calibrated_x1, x_size=calibrated_h, y_size=calibrated_w, image_size=224, gpu=True, c=c)
+			else:
+				heatmap, prob, label = inc_inference(dataset, model_class, curr_path, patch_size=patch_size, stride=stride_size, beta=0.7, x0=calibrated_y1, y0=calibrated_x1, x_size=calibrated_h, y_size=calibrated_w, image_size=299, gpu=True, c=c)
+
 
 	end_time = time.time()
 
+	heatmap_path = './media/photos/heatmap_' + ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(20)) + '.png'
+	low_prob = np.min(heatmap)
+	high_prob = np.max(heatmap)
 
-
-
-	plt.imsave("./media/photos/heatmap.png", heatmap, cmap=plt.cm.jet_r)
-
-	img = Image.open('./media/photos/heatmap.png')
- 	img = img.resize((w,h), Image.ANTIALIAS)
-	img.save('./media/photos/heatmap.png')
-	img = Image.open('./media/photos/heatmap.png')
+	plt.imsave(heatmap_path, heatmap, cmap=plt.cm.jet_r)
+	img = Image.open(heatmap_path)
+ 	img = img.resize((w,h))
+	img.save(heatmap_path)
+	img = Image.open(heatmap_path)
 	padding = (x1, y1, (width - x2), (height - y2))
 	new_img = ImageOps.expand(img, padding)
-	new_img.save('./media/photos/heatmap.png')
+	new_img.save(heatmap_path)
 
-	actTime = int(end_time - start_time)
-	estTime = int(real_estimate)
+	actTime = round(end_time - start_time, 2)
 
+	estTime = round(real_estimate, 2)
 
-	return JsonResponse({'url':url, 'heatmap_url': '/media/photos/heatmap.png', 'prediction': class_names[label], 'estimate_time': estTime, 'actual_time': actTime})
+	if dataset != 'imagenet':
+		class_names = ['Positive', 'Negative']
+	else:
+		class_names = imagenet_class_names
+
+	return JsonResponse({'url':url, 'heatmap_url': heatmap_path[1:], 'prediction': class_names[label], 'estimate_time': estTime, 'actual_time': actTime, 'low_prob':str(low_prob), 'high_prob':str(high_prob)})
 
 
 def time_estimate(slope, intercept, stride, patch, width, height):

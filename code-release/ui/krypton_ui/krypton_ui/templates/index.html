@@ -20,9 +20,12 @@
       float: left;
       width: 49%;
       padding: 5px;
+      display: flex;
+      align-items: center;
+      justify-content: center;        
     }
 
-  /* Clear floats after image containers */
+   /* Clear floats after image containers */
     .row::after {
       content: "";
       clear: both;
@@ -120,17 +123,41 @@
     .legend-gradient {
       width: 100%;
       height: 30px;
-      background: linear-gradient(to right, #e6292c, #f16b33, #fcad3a, #7e856a, #005c99);
+      background: linear-gradient(to right, #850400, #FF5D00, #EAFF0C, #40FFB5, #002FFF, #01017D);
+    }
+      
+    .modal {
+        display:    none;
+        position:   fixed;
+        z-index:    1000;
+        top:        0;
+        left:       0;
+        height:     100%;
+        width:      100%;
+        background: rgba( 255, 255, 255, .8 ) 
+                    url('http://i.stack.imgur.com/FhHRx.gif') 
+                    50% 50% 
+                    no-repeat;
     }
 
+    /* When the body has the loading class, we turn
+       the scrollbar off with overflow:hidden */
+    body.loading .modal {
+        overflow: hidden;   
+    }
+
+    /* Anytime the body has the loading class, our
+       modal element will be visible */
+    body.loading .modal {
+        display: block;
+    }          
 
   </style>
 
 </head>
 <body color>
-<div id="response"></div>
-
-<div class="input-group mb-3" style="padding-right:30%;">
+    
+<div class="input-group mb-3" style="padding-right:10%;"> 
   <div class="input-group-prepend">
     <span class="btn btn-outline-primary" id="inputGroupFileAddon01">Upload</span>
   </div>
@@ -138,31 +165,32 @@
     <input type="file" class="custom-file-input btn-primary" id="imageSelection" aria-describedby="inputGroupFileAddon01" onchange="imageDisplay(this);">
     <label class="custom-file-label" for="imageSelection">Choose file</label>
   </div>
-  <div class="group">
-    <span class="btn" id="prediction" style="fontsize:30px;"></span>
-  </div>
 </div>
+<div class="input-group mb-3">
+    Download &nbsp;<a href="http://supun.ucsd.edu/krypton/images.zip">sample images</a>
+</div>  
 
 <!-- Comment out if want to use the button only solution -->
 <div id="elementsAfterImage" style="display:none;">
-  <div class="bar">
-  <h5 style="font-weight: lighter;">Probability legend</h5>
+
+  <div id="prediction_bar" class="bar" style="visibility:hidden">
+  <h5 id="prediction" style="font-weight: lighter;">Predicted Class:</h5>
     <div class="legend-gradient"></div>
     <div class="legend">
-      <div class="legend__item">0.0</div>
-      <div class="legend__item">0.2</div>
-      <div class="legend__item">0.5</div>
-      <div class="legend__item">0.8</div>
-      <div class="legend__item">1.0</div>
+      <div id="low_prob" class="legend__item"></div>
+      <div class="legend__item"></div>
+      <div class="legend__item"></div>
+      <div class="legend__item"></div>
+      <div id="high_prob" class="legend__item"></div>
     </div>
   </div>
   <div class="row">
       <div class="column">
-        <img id="target" src="" onerror="this.style.display='none'" style="">
+        <img id="target" class="target" src="" onerror="this.style.display='none'" style="">
       </div>
       <div class="column" style="position:relative">
-        <img id="heatmap" src="https://via.placeholder.com/700x472.png?text=Heatmap+will+be+displayed+here" onerror="this.style.display='none'" style="position: absolute; width:700px; height:472px;">
-        <img id="original" src="" onerror="this.style.display='none'" style="position: absolute; width:700px; height:472px; opacity:0.4">
+        <img id="heatmap" src="https://via.placeholder.com/700x472.png?text=Heatmap+will+be+displayed+here" onerror="this.style.display='none'" style="position: absolute; width:500px; height:500px;">
+        <img id="original" src="" onerror="this.style.display='none'" style="position: absolute; width:500px; height:500px; opacity:0.4">
 
       </div>
   </div>
@@ -181,7 +209,7 @@
     </div>
   </section>
   <br><br>
-  <div class="container" style="border-style: dashed; border-width: thin; margin-left:190px;">
+  <div class="container" style="border-style: dashed; border-width: thin;display:flex;align-items: center;justify-content: center;">
     <!-- <div class="row" style="text-align: center;">
       <div class="btn-group-toggle" data-toggle="buttons">
         <label class="btn btn-success custom">
@@ -196,14 +224,14 @@
       </div>
     </div> -->
     <input type="radio" name="mode" value="naive" style="margin-left:9rem;" checked> Naive
-    <input type="radio" name="mode" value="exact" style="margin-left:15.2rem;"> Krypton Exact
+    <input type="radio" name="mode" value="exact" style="margin-left:15.2rem;" checked="checked"> Krypton Exact
     <input type="radio" name="mode" value="approximate" style="margin-left:14.3rem;"> Krypton Approximate
 
   </div><br>
     <form id="coords"
       class="coords"
       onsubmit="return false;"
-      action="http://example.com/post.php" style="display:none;">
+      action="" style="display:none;">
 
       <div class="inline-labels">
       <label>X1 <input type="text" size="4" id="x1" name="x1" /></label>
@@ -215,7 +243,7 @@
       </div>
     </form>
 
-    <section>
+    <section style="display:flex;align-items: center;justify-content: center;">
       <div class="form-inline">
         <div class="input-group" style="margin-left:; padding-bottom:1rem;">
           <form method='post' id ='submit'>
@@ -227,7 +255,18 @@
           <!-- <button id="submit">Submit</button> -->
           <button class="btn btn-danger btn-sm" id="resetSelect">reset</button>
         </div>
-        <div class="input-group mb-3" style="margin-left:10rem;">
+        <div class="input-group mb-2" style="margin-left:5rem;">
+          <div class="input-group-prepend">
+            <label class="input-group-text" for="patch" style="background-color:#00b33c;">Dataset</label>
+          </div>
+          <select class="custom-select" id="dataset">
+            <option selected>Choose...</option>
+            <option value="imagenet" selected="selected">ImageNet</option>
+            <option value="oct">OCT</option>
+            <option value="chest">Chest X-Ray</option>
+          </select>
+        </div>          
+        <div class="input-group mb-2" style="margin-left:5rem;">
           <div class="input-group-prepend">
             <label class="input-group-text" for="patch" style="background-color:#00b33c;">Patch size</label>
           </div>
@@ -235,12 +274,12 @@
             <option selected>Choose...</option>
             <option value="1">One</option>
             <option value="2">Two</option>
-            <option value="4">Four</option>
+            <option value="4" selected="selected">Four</option>
             <option value="8">Eight</option>
             <option value="16">Sixteen</option>
           </select>
         </div>
-        <div class="input-group mb-3" style="margin-left:8.5rem;">
+        <div class="input-group mb-2" style="margin-left:5rem;">
           <div class="input-group-prepend">
             <label class="input-group-text" for="stride" style="background-color:#00b33c;">Stride size</label>
           </div>
@@ -248,22 +287,33 @@
             <option selected>Choose...</option>
             <option value="1">One</option>
             <option value="2">Two</option>
-            <option value="4">Four</option>
+            <option value="4" selected="selected">Four</option>
             <option value="8">Eight</option>
             <option value="16">Sixteen</option>
           </select>
         </div>
-        <div class="input-group mb-3" style="margin-left:9.7rem;">
+        <div class="input-group mb-2" style="margin-left:5rem;">
           <div class="input-group-prepend">
             <label class="input-group-text" for="model" style="background-color:#00b33c;">CNN Model</label>
           </div>
           <select class="custom-select" id="model">
             <option selected>Choose...</option>
-            <option value="VGG">VGG</option>
-            <option value="ResNet">ResNet</option>
-            <option value="Inception">Inception</option>
+            <option value="VGG" selected="selected">VGG16</option>
+            <option value="ResNet">ResNet18</option>
+            <option value="Inception">Inception3</option>
           </select>
         </div>
+        <div class="input-group mb-2" style="margin-left:5rem;">
+          <div class="input-group-prepend">
+            <label class="input-group-text" for="color" style="background-color:#00b33c;">Patch Color</label>
+          </div>
+          <select class="custom-select" id="color">
+            <option selected>Choose...</option>
+            <option value="0.4" selected="selected">Gray</option>
+            <option value="0.0">Black</option>
+            <option value="1.0">White</option>
+          </select>
+        </div>  
       </div>
     </section>
 
@@ -271,64 +321,94 @@
 </div>
 
   <script type="text/javascript">
+    $body = $("body");
+
+    $(document).on({
+        ajaxStart: function() { $body.addClass("loading");    },
+        ajaxStop: function() { $body.removeClass("loading"); }    
+    });
+
+  var jcrop_api;
+  
+  $('input:radio[name="mode"]').change(
+    function(){
+        if (this.checked && this.value == 'naive') {
+            if(typeof jcrop_api !== 'undefined'){
+                jcrop_api.destroy()
+            }
+        }else{
+            initJCrop();          
+        }
+    });
+
+      
   function imageDisplay(input){
     if (input.files && input.files[0]){
       var imageDisplay = new FileReader();
 
-
       imageDisplay.onload = function (e) {
           $('#target')
               .attr('src', e.target.result)
+          $('#target').attr('style', 'width:500px;height:500px')
+          $('#resetSelect').click()
+          $('#actual_time').text("");        
+          $('#heatmap').attr('src', "https://via.placeholder.com/700x472.png?text=Heatmap+will+be+displayed+here")
+          $('#heatmap').show();
+          $('#original').attr('src', '')
+          $('#original').show();
       };
 
-      imageDisplay.readAsDataURL(input.files[0]);
+      var img = input.files[0];
+      imageDisplay.readAsDataURL(img);
       $('#elementsAfterImage').show()
       $('#firstTitle').invisible()
+      $('#prediction').text("")
+      $("#prediction_bar").invisible()
     }
   }
 
   jQuery.fn.invisible = function() {
     return this.css('visibility', 'hidden');
   };
+      
+  function initJCrop(){
+      setTimeout($('#target').Jcrop({
+            onChange:   showCoords,
+            onSelect:   showCoords,
+            onRelease:  clearCoords,
+            boxWidth: 500,
+            boxHeight: 500,
+          },function(){
+            jcrop_api = this;
+          }), 25);
+  }
+  initJCrop();
+      
+      
+  $('#resetSelect').on('click',function(e){
+        if(typeof jcrop_api !== 'undefined'){
+            jcrop_api.destroy();
+            clearCoords();
+            setTimeout($('#target').Jcrop({
+              onChange:   showCoords,
+              onSelect:   showCoords,
+              onRelease:  clearCoords,
+              boxWidth: 500,
+              boxHeight: 500,
+            },function(){
+              jcrop_api = this;
 
-    jQuery(function($){
-
-      var jcrop_api;
-      $('#target').Jcrop({
-        onChange:   showCoords,
-        onSelect:   showCoords,
-        onRelease:  clearCoords,
-        boxWidth: 700,
-        boxHeight: 525,
-      },function(){
-        jcrop_api = this;
+            }), 25);
+        }
       });
-
-      $('#coords').on('change','input',function(e){
+      
+   $('#coords').on('change','input',function(e){
         var x1 = $('#x1').val(),
             x2 = $('#x2').val(),
             y1 = $('#y1').val(),
             y2 = $('#y2').val();
         jcrop_api.setSelect([x1,y1,x2,y2]);
       });
-
-      $('#resetSelect').on('click',function(e){
-
-        jcrop_api.destroy();
-        clearCoords();
-        $('#target').Jcrop({
-          onChange:   showCoords,
-          onSelect:   showCoords,
-          onRelease:  clearCoords,
-          boxWidth: 700,
-          boxHeight: 525,
-        },function(){
-          jcrop_api = this;
-
-        });
-      });
-
-    });
 
     function showCoords(c)
     {
@@ -358,6 +438,8 @@
 
             var csrf_token = $('#submit [name="csrfmiddlewaretoken"]').val();
             var image = document.getElementById("imageSelection").files[0];
+            var dataset = document.getElementById("dataset").value;
+            var color = document.getElementById("color").value;
             var ePatch = document.getElementById("patch").value;
             var eStride = document.getElementById("stride").value;
             var eModel = document.getElementById("model").value;
@@ -398,10 +480,12 @@
             $('#actual_time').text("");
             $('#estimate_time').text("Estimated time: " + text);
             fd.append('file', image);
+            fd.append('dataset', dataset);
             fd.append('patchSize', ePatch);
             fd.append('strideSize', eStride);
             fd.append('model', eModel);
             fd.append('mode', mode);
+            fd.append('color', color);
             $.ajax({
                  type:"POST",
                  url:"/selectedRegion/",
@@ -417,10 +501,13 @@
                    $('#heatmap').show();
                    $('#original').attr('src', message['url']);
                    $('#original').show();
-                   $('#prediction').text("Prediction: " + message['prediction']);
+                   $('#prediction').text("Predicted Class: " + message['prediction']);
                    // $('#estimate_time').text("Estimated time: " + message['estimate_time'] + " s");
                    $('#actual_time').text("Actual time: " + message['actual_time'] + " s");
-                   $("#resetSelect").click();
+                   //$("#resetSelect").click();
+                   $('#low_prob').text(message['low_prob']);
+                   $('#high_prob').text(message['high_prob']); 
+                   $("#prediction_bar").css("visibility", "visible");
                  },
                  error : function(xhr,errmsg,err) {
                    console.log(xhr.status + ": " + xhr.responseText);
@@ -452,4 +539,5 @@
 
   </script>
 
+    <div class="modal"></div>
 </body>

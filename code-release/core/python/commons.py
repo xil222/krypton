@@ -72,10 +72,10 @@ def calc_bbox_coordinates(batch_size, loc_out_tensor, loc_tensor1, loc_tensor2):
     return loc_out_tensor
 
 
-def inc_inference(model_class, file_path, patch_size, stride, batch_size=128, beta=1.0, x0=0, y0=0, image_size=224,
+def inc_inference(dataset, model_class, file_path, patch_size, stride, batch_size=128, beta=1.0, x0=0, y0=0, image_size=224,
                       x_size=224, y_size=224, gpu=True, version='v1', n_labels=1000, weights_data=None, loader=None,
-                      c=0.0):
-    inc_model = model_class(beta=beta, gpu=gpu, n_labels=n_labels, weights_data=weights_data)
+                      c=0.4):
+    inc_model = model_class(dataset, beta=beta, gpu=gpu, n_labels=n_labels, weights_data=weights_data).eval()
 
     return inc_inference_with_model(inc_model, file_path, patch_size, stride, batch_size=batch_size, beta=beta,
                                         x0=x0, y0=y0, image_size=image_size, x_size=x_size, y_size=y_size, gpu=gpu,
@@ -86,7 +86,7 @@ def inc_inference(model_class, file_path, patch_size, stride, batch_size=128, be
 def inc_inference_with_model(inc_model, file_path, patch_size, stride, batch_size=128, beta=1.0, x0=0, y0=0,
                                  image_size=224,
                                  x_size=224, y_size=224, gpu=True, version='v1', n_labels=1000, weights_data=None,
-                                 loader=None, c=0.0, g=None):
+                                 loader=None, c=0.4, g=None):
     if loader == None:
         loader = transforms.Compose([transforms.Resize([image_size, image_size]), transforms.ToTensor()])
     orig_image = Image.open(file_path).convert('RGB')
@@ -155,7 +155,7 @@ def inc_inference_with_model(inc_model, file_path, patch_size, stride, batch_siz
     return logit_values, prob, logit_index
 
 
-def full_inference_e2e_with_model(full_model, file_path, patch_size, stride, batch_size=256, gpu=True, version='v1', image_size=224, x_size=224, y_size=224, n_labels=1000, weights_data=None, loader=None, c=0.0, g=None):
+def full_inference_e2e_with_model(full_model, file_path, patch_size, stride, batch_size=256, gpu=True, version='v1', image_size=224, x_size=224, y_size=224, n_labels=1000, weights_data=None, loader=None, c=0.4, g=None):
     if loader == None:
         loader = transforms.Compose([transforms.Resize([image_size, image_size]), transforms.ToTensor()])
     orig_image = Image.open(file_path).convert('RGB')
@@ -210,9 +210,9 @@ def full_inference_e2e_with_model(full_model, file_path, patch_size, stride, bat
     return x, prob, logit_index
 
 
-def full_inference_e2e(model_class, file_path, patch_size, stride, batch_size=256, gpu=True, version='v1', image_size=224, x_size=224, y_size=224, n_labels=1000, weights_data=None, loader=None, c=0.0):
+def full_inference_e2e(dataset, model_class, file_path, patch_size, stride, batch_size=256, gpu=True, version='v1', image_size=224, x_size=224, y_size=224, n_labels=1000, weights_data=None, loader=None, c=0.4):
 
-    full_model = model_class(gpu=gpu, n_labels=n_labels, weights_data=weights_data).eval()
+    full_model = model_class(dataset, gpu=gpu, n_labels=n_labels, weights_data=weights_data).eval()
 
     return full_inference_e2e_with_model(full_model, file_path, patch_size, stride, batch_size=batch_size, gpu=gpu, version=version, image_size=image_size, x_size=x_size, y_size=y_size, n_labels=n_labels, weights_data=weights_data, loader=loader, c=c)
 
