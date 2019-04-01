@@ -64,6 +64,13 @@ def selectedRegion(request):
 	patch_size = (int)(float(message['patchSize']))
 	stride_size = (int)(float(message['strideSize']))
 
+	if model_class == "VGG16":
+		model_class = VGG16
+	elif model_class == "ResNet18":
+		model_class = ResNet18
+	elif model_class == "Inception":
+		model_class = Inception3
+	
 	calibrated_h = 224
 	calibrated_w = 224
 
