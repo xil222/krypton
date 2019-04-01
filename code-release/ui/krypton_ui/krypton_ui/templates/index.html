@@ -337,6 +337,7 @@
         if (this.checked && this.value == 'naive') {
             if(typeof jcrop_api !== 'undefined'){
                 jcrop_api.destroy()
+		clearCoords()
             }
         }else{
             initJCrop();
