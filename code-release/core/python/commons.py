@@ -22,7 +22,7 @@ from matplotlib.figure import Figure
 
 sys.path.append('../')
 sys.path.append('/krypton/code-release')
-# from core.cuda._ext import inc_conv_lib
+from core.cuda._ext import inc_conv_lib
 
 
 def inc_convolution(premat_tensor, in_tensor, weights, biases, out_tensor, locations, padding_y, padding_x, stride_y,
