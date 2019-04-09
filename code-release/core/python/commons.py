@@ -20,7 +20,7 @@ from torchvision import transforms
 
 from matplotlib.figure import Figure
 
-#sys.path.append('../')
+sys.path.append('../')
 sys.path.append('/krypton/code-release')
 from core.cuda._ext import inc_conv_lib
 
@@ -72,10 +72,10 @@ def calc_bbox_coordinates(batch_size, loc_out_tensor, loc_tensor1, loc_tensor2):
     return loc_out_tensor
 
 
-def inc_inference(model_class, file_path, patch_size, stride, batch_size=128, beta=1.0, x0=0, y0=0, image_size=224,
+def inc_inference(dataset, model_class, file_path, patch_size, stride, batch_size=128, beta=1.0, x0=0, y0=0, image_size=224,
                       x_size=224, y_size=224, gpu=True, version='v1', n_labels=1000, weights_data=None, loader=None,
-                      c=0.0):
-    inc_model = model_class(beta=beta, gpu=gpu, n_labels=n_labels, weights_data=weights_data).eval()
+                      c=0.4):
+    inc_model = model_class(dataset, beta=beta, gpu=gpu, n_labels=n_labels, weights_data=weights_data).eval()
 
     return inc_inference_with_model(inc_model, file_path, patch_size, stride, batch_size=batch_size, beta=beta,
                                         x0=x0, y0=y0, image_size=image_size, x_size=x_size, y_size=y_size, gpu=gpu,
@@ -86,7 +86,7 @@ def inc_inference(model_class, file_path, patch_size, stride, batch_size=128, be
 def inc_inference_with_model(inc_model, file_path, patch_size, stride, batch_size=128, beta=1.0, x0=0, y0=0,
                                  image_size=224,
                                  x_size=224, y_size=224, gpu=True, version='v1', n_labels=1000, weights_data=None,
-                                 loader=None, c=0.0, g=None):
+                                 loader=None, c=0.4, g=None):
     if loader == None:
         loader = transforms.Compose([transforms.Resize([image_size, image_size]), transforms.ToTensor()])
     orig_image = Image.open(file_path).convert('RGB')
@@ -153,17 +153,17 @@ def inc_inference_with_model(inc_model, file_path, patch_size, stride, batch_siz
     gc.collect()
 
     return logit_values, prob, logit_index
- 
 
-def full_inference_e2e_with_model(full_model, file_path, patch_size, stride, batch_size=256, gpu=True, version='v1', image_size=224, x_size=224, y_size=224, n_labels=1000, weights_data=None, loader=None, c=0.0, g=None):
+
+def full_inference_e2e_with_model(full_model, file_path, patch_size, stride, batch_size=256, gpu=True, version='v1', image_size=224, x_size=224, y_size=224, n_labels=1000, weights_data=None, loader=None, c=0.4, g=None):
     if loader == None:
         loader = transforms.Compose([transforms.Resize([image_size, image_size]), transforms.ToTensor()])
     orig_image = Image.open(file_path).convert('RGB')
     orig_image = Variable(loader(orig_image).unsqueeze(0))
-     
+
     if gpu:
         orig_image = orig_image.cuda()
-    
+
     if gpu:
         full_model = full_model.cuda()
     full_model.eval()
@@ -171,14 +171,14 @@ def full_inference_e2e_with_model(full_model, file_path, patch_size, stride, bat
     temp = full_model(orig_image).cpu().data.numpy()[0,:]
     logit_index = np.argmax(temp)
     prob = np.max(temp)
-    
+
     output_width = int(math.ceil((x_size*1.0 - patch_size) / stride))
-    
+
     if g is None:
         total_number = output_width * output_width
     else:
         total_number = g
-        
+
     #print(output_width, total_number)
 
     logit_values = []
@@ -202,18 +202,18 @@ def full_inference_e2e_with_model(full_model, file_path, patch_size, stride, bat
             x = full_model.forward_fused(images_batch)
         else:
             x = full_model.forward_pytorch(images_batch)
-            
+
         logit_values.extend(x.cpu().data.numpy()[:, logit_index].flatten().tolist())
 
     x = np.array(logit_values).reshape(output_width, output_width)
-    
+
     return x, prob, logit_index
 
 
-def full_inference_e2e(model_class, file_path, patch_size, stride, batch_size=256, gpu=True, version='v1', image_size=224, x_size=224, y_size=224, n_labels=1000, weights_data=None, loader=None, c=0.0):
-    
-    full_model = model_class(gpu=gpu, n_labels=n_labels, weights_data=weights_data).eval()
-    
+def full_inference_e2e(dataset, model_class, file_path, patch_size, stride, batch_size=256, gpu=True, version='v1', image_size=224, x_size=224, y_size=224, n_labels=1000, weights_data=None, loader=None, c=0.4):
+
+    full_model = model_class(dataset, gpu=gpu, n_labels=n_labels, weights_data=weights_data).eval()
+
     return full_inference_e2e_with_model(full_model, file_path, patch_size, stride, batch_size=batch_size, gpu=gpu, version=version, image_size=image_size, x_size=x_size, y_size=y_size, n_labels=n_labels, weights_data=weights_data, loader=loader, c=c)
 
 

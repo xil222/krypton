@@ -25,7 +25,7 @@ SECRET_KEY = 'x8hl*kq$0=@lvaseno!7b55_1@xo$uz8&gj)!ab%=-#*$k-p-a'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['supun.ucsd.edu']
 
 
 # Application definition

@@ -18,7 +18,7 @@ from imagenet_classes import class_names
 
 class ResNet18(nn.Module):
 
-    def __init__(self, beta=1.0, gpu=True, n_labels=1000, weights_data=None):
+    def __init__(self, dataset, beta=1.0, gpu=True, n_labels=1000, weights_data=None):
         super(ResNet18, self).__init__()
         self.initialized = False
         
@@ -88,11 +88,13 @@ class ResNet18(nn.Module):
         self.fc = nn.Linear(512, n_labels)
         self.classifier = nn.Softmax(dim=1)
         
-        self.weights_data = weights_data
-        self.__initialize_weights(gpu)
+
+        self.dataset = dataset
         self.gpu = gpu
         self.beta = beta
-
+        self.weights_data = weights_data
+        self.__initialize_weights(gpu)
+        
         #used for pytorch based impl.
         self.cache = {}
         #used for cuda impl.
@@ -887,6 +889,15 @@ class ResNet18(nn.Module):
                 i += 1
             else:
                 i += 1
+        
+        if self.dataset == 'oct':
+            weights_data = load_dict_from_hdf5(dir_path + "/oct_resnet18_ptch.h5", gpu)
+            self.fc.weight.data = weights_data['fc:w']
+            self.fc.bias.data = weights_data['fc:b']
+        elif self.dataset == 'chest':
+            weights_data = load_dict_from_hdf5(dir_path + "/chest_resnet18_ptch.h5", gpu)
+            self.fc.weight.data = weights_data['fc:w']
+            self.fc.bias.data = weights_data['fc:b']            
                 
                 
 if __name__ == '__main__':

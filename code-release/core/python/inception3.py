@@ -17,11 +17,12 @@ from imagenet_classes import class_names
 
 class Inception3(nn.Module):
 
-    def __init__(    self, beta=1.0, gpu=True, n_labels=1000, weights_data=None):
+    def __init__(self, dataset, beta=1.0, gpu=True, n_labels=1000, weights_data=None):
         super(Inception3, self).__init__()
 
         self.gpu = gpu
         self.beta = beta
+        self.dataset = dataset
 
         # layer1
         self.conv1_op = nn.Sequential(nn.Conv2d(3, 32, kernel_size=3, stride=2),
@@ -579,6 +580,15 @@ class Inception3(nn.Module):
         self.fc.weight.data = values[count]
         count += 1
         self.fc.bias.data = values[count]
+        
+        if self.dataset == 'oct':
+            weights_data = load_dict_from_hdf5(dir_path + "/oct_inception3_ptch.h5", gpu)
+            self.fc.weight.data = weights_data['482.fc.weight']
+            self.fc.bias.data = weights_data['483.fc.bias']
+        if self.dataset == 'chest':
+            weights_data = load_dict_from_hdf5(dir_path + "/chest_inception3_ptch.h5", gpu)
+            self.fc.weight.data = weights_data['482.fc.weight']
+            self.fc.bias.data = weights_data['483.fc.bias']            
         
     
     def __get_tensor(self, name, batch_size, channels, p_height, p_width, k_size, stride, in_size, out_size, truncate=True):
