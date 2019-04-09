@@ -99,7 +99,7 @@ We assume $f$ is from a roster of well-known deep CNNs; we currently support VGG
 \vspace{-2mm}
 \includegraphics[width=\textwidth]{images/cnn_simplified}
 \vspace{-6mm}
-\caption{\red{Simplified illustration of the key layers of a typical CNN. The highlighted cells (dark/red background) show how a small local spatial context in the first input propagates through subsequent layers. (a) Convolution layer (for simplicity sake, bias addition is not shown). (b) ReLU Non-linearity layer. (c) Pooling layer (max pooling). Notation is explained in Table~\ref{table:preliminaries_symbols}.}}
+\caption{Simplified illustration of the key layers of a typical CNN. The highlighted cells (dark/red background) show how a small local spatial context in the first input propagates through subsequent layers. (a) Convolution layer (for simplicity sake, bias addition is not shown). (b) ReLU Non-linearity layer. (c) Pooling layer (max pooling). Notation is explained in Table~\ref{table:preliminaries_symbols}.}
 \vspace{-2mm}
 \label{fig:cnn_simplified}
 \end{figure*}
@@ -189,7 +189,7 @@ Overall, both Convolution and Pooling layers have a similar dataflow along the w
 
 \vspace{2mm}
 \noindent \textbf{Relationship between Input and Output Dimensions.}
-For Convolution and Pooling layers, $W_{\mathcal{O}:l}$ and $H_{\mathcal{O}:l}$ are determined solely by $W_{\mathcal{I}:l}$ and $H_{\mathcal{I}:l}$, $W_{\mathcal{K}:l}$ and $H_{\mathcal{K}:l}$, and two other parameters that are specific to that layer: \textit{stride} $S_{:l}$ and \textit{padding} $P_{:l}$. Stride is the number of pixels by which the filter kernel is moved at a time; it can differ along the width and height dimensions: $S_{x:l}$ and $S_{y:l}$, respectively. But in practice, most CNNs have $S_{x:l} = S_{y:l}$. Typically, $S_{x:l} \leq W_{\mathcal{K}:l}$ and $S_{y:l} \leq H_{\mathcal{K}:l}$. In Figure~\ref{fig:cnn_simplified}, the Convolution layer has $S_{x:l} = S_{y:l} = 1$, while the Pooling layer has $S_{x:l} = S_{y:l} = 2$. For some layers, to help control the dimensions of the output to be the same as the input, one ``pads'' the input with zeros along the width and height dimensions. \textit{Padding} $P_{:l}$ captures how much such padding extends these dimensions; once again, the padding values can differ along the width and height dimensions: $P_{x:l}$ and $P_{y:l}$. In Figure~\ref{fig:cnn_simplified} (a), the Convolution layer has $P_{x:l} = P_{y:l} = 1$. Given all these parameters, the width (similarly height) of the output tensor is given by the following formula:
+For Convolution and Pooling layers, $W_{\mathcal{O}:l}$ and $H_{\mathcal{O}:l}$ are determined by $W_{\mathcal{I}:l}$ and $H_{\mathcal{I}:l}$, $W_{\mathcal{K}:l}$ and $H_{\mathcal{K}:l}$, and two other parameters that are specific to that layer: \textit{stride} $S_{:l}$ and \textit{padding} $P_{:l}$. Stride is the number of pixels by which the filter kernel is moved at a time; it can differ along the width and height dimensions: $S_{x:l}$ and $S_{y:l}$, respectively. In practice, most CNNs have $S_{x:l} = S_{y:l}$. Typically, $S_{x:l} \leq W_{\mathcal{K}:l}$ and $S_{y:l} \leq H_{\mathcal{K}:l}$. In Figure~\ref{fig:cnn_simplified}, the Convolution layer has $S_{x:l} = S_{y:l} = 1$, while the Pooling layer has $S_{x:l} = S_{y:l} = 2$. For some layers, to help control the dimensions of the output to be the same as the input, one ``pads'' the input with zeros along the width and height dimensions. \textit{Padding} $P_{:l}$ captures how much such padding extends these dimensions; once again, padding values can differ along the width and height dimensions: $P_{x:l}$ and $P_{y:l}$. In Figure~\ref{fig:cnn_simplified} (a), the Convolution layer has $P_{x:l} = P_{y:l} = 1$. Given these parameters, width (similarly height) of the output tensor is given by the following formula:
 
 \vspace{-4mm}
 \begin{align}
@@ -198,6 +198,7 @@ W_{\mathcal{O}:l} = (W_{\mathcal{I}:l} - W_{\mathcal{K}:l} + 1 + 2\times P_{x:l}
 % ^lH_{\mathcal{O}} = (^lH_{\mathcal{I}} - ^lH_\mathcal{K} + 1 + 2\times ^lP_y)/^lS_y
 \end{split}
 \end{align}
+\vspace{-8mm}
 
 \vspace{2mm}
 \noindent \textbf{Computational Cost of Inference.}

@@ -1,6 +1,6 @@
 %!TEX root = <main.tex>
 \section{Experimental Evaluation}
-We integrated our optimization techniques with the popular deep learning framework PyTorch to create a tool we call \system. \red{Due to space constraints, implementation details of this integration are deferred to Appendix~\ref{sec:pytorch_integration}.} We now evaluate the speedups yielded by \system~ for OBE for different deep CNNs and datasets. We then drill into the contributions of each of our optimization techniques.
+We integrated our optimization techniques with the popular deep learning framework PyTorch to create a tool we call \system. Due to space constraints, implementation details of this integration are deferred to Appendix~\ref{sec:pytorch_integration}. We now evaluate the speedups yielded by \system~ for OBE for different deep CNNs and datasets. We then drill into the contributions of each of our optimization techniques.
 
 \vspace{2mm}
 \noindent \textbf{Datasets.}
@@ -80,7 +80,7 @@ We vary the patch size and set the stride to $4$. Figure~\ref{fig:5_2_1_edited} 
 
 
 \vspace{2mm}
-\noindent \textbf{Memory Overhead.} \red{We compare our batched incremental inference against full re-inference on GPU. Our approach actually \textit{reduces} memory footprint by 58\%. Due to space constraints, we explain this result further in Appendix~\ref{sec:mem_overhead}.}
+\noindent \textbf{Memory Overhead.} We compare our batched incremental inference against full re-inference on GPU. Our approach actually \textit{reduces} memory footprint by 58\%. Due to space constraints, we explain this result further in Appendix~\ref{sec:mem_overhead}.
 
 % \vspace{-2mm}
 % \subsection{\red{Other approaches for CNN prediction explanation and faster inference}}
@@ -97,4 +97,4 @@ We vary the patch size and set the stride to $4$. Figure~\ref{fig:5_2_1_edited} 
 \subsection{Summary and Discussion}
 Overall, our experiments show that \system~ can substantially accelerate OBE, with up to $16$X speedups on GPU and $34.5$X speedups on CPU. The benefits of our optimizations depend on the CNN's architectural properties. Our approximate inference optimizations also depend on the dataset's properties due to their tunable parameters, which \system ~can tune automatically. Finally, \system ~sees higher speedups on CPU than GPU but the runtimes are much lower on GPU. Overall, our optimizations in \system ~help reduce waiting times for OBE users by improving utilization of existing resources rather than forcing users to buy more resources.
 
-\red{While we focused on OBE in this paper to understand the benefits of IVM-based optimizations for CNNs, our ideas may be applicable to many other visual recognition tasks as well. For instance,~\cite{cavigelli2017cbinfer,buckler2018eva} exploit temporal locality in video, since successive frames do not differ much. One could integrate our ideas with theirs to devise new approximate IVM optimizations for CNNs. Going further, ``IVM-friendliness'' can be baked into the very model selection process that crafts the CNN architecture so that the model is both accurate and amenable to fast post-hoc explanations~\cite{motamedi2018resource}. However, such extensions require new techniques to batch update patches of arbitrary sizes and shapes, which requires deeper changes to \system. Thus, we leave them to future work.}
+While we focused on OBE in this paper to understand the benefits of IVM-based optimizations for CNNs, our ideas may be applicable to many other visual recognition tasks as well. For instance,~\cite{cavigelli2017cbinfer,buckler2018eva} exploit temporal locality in video, since successive frames do not differ much. One could integrate our ideas with theirs to devise new approximate IVM optimizations for CNNs. Going further, ``IVM-friendliness'' can be baked into the very model selection process that crafts the CNN architecture so that the model is both accurate and amenable to fast post-hoc explanations~\cite{motamedi2018resource}. However, such extensions require new techniques to batch update patches of arbitrary sizes and shapes, which requires deeper changes to \system. Thus, we leave them to future work.

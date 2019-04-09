@@ -1,18 +1,16 @@
 %!TEX root = <main.tex>
 \documentclass[10pt, sigconf]{acmart}
+\copyrightyear{2019} 
+\acmYear{2019} 
+\setcopyright{acmcopyright}
+\acmConference[SIGMOD '19]{2019 International Conference on Management of Data}{June 30-July 5, 2019}{Amsterdam, Netherlands}
+\acmBooktitle{2019 International Conference on Management of Data (SIGMOD '19), June 30-July 5, 2019, Amsterdam, Netherlands}
+\acmPrice{15.00}
+\acmDOI{10.1145/3299869.3319874}
+\acmISBN{978-1-4503-5643-5/19/06}
 
-% Copyright
-%\setcopyright{none}
-%\setcopyright{acmcopyright}
-%\setcopyright{acmlicensed}
-% \setcopyright{rightsretained}
-%\setcopyright{usgov}
-%\setcopyright{usgovmixed}
-%\setcopyright{cagov}
-%\setcopyright{cagovmixed}
-%\settopmatter{printacmref=false}
-%\renewcommand\footnotetextcopyrightpermission[1]{} % removes footnote with 
-%\pagestyle{plain} % removes running headers
+\settopmatter{printacmref=true}
+\fancyhead{}
 
 \usepackage[font=small,labelfont=bf]{caption}
 \usepackage{graphicx,xspace,verbatim,comment}
@@ -64,21 +62,21 @@
 
 \DeclareMathOperator*{\argmin}{arg\,min}
 
-
 \begin{document}
+
 \emergencystretch 1em
 
 \title{Incremental and Approximate Inference for\\Faster Occlusion-based Deep CNN Explanations}
 
-% \author{Supun Nakandala, Arun Kumar, and Yannis Papakonstantinou}
-% \affiliation{
-%   \institution{University of California, San Diego}
-% }
-% \email{{snakanda,arunkk,yannis}@eng.ucsd.edu}
+\author{Supun Nakandala, Arun Kumar, and Yannis Papakonstantinou}
+\affiliation{
+  \institution{University of California, San Diego}
+}
+\email{{snakanda,arunkk,yannis}@eng.ucsd.edu}
 
 
 \begin{abstract}
-Deep Convolutional Neural Networks (CNNs) now match human accuracy in many image prediction tasks, resulting in a growing adoption in e-commerce, radiology, and other domains. Naturally, ``explaining'' CNN predictions is a key concern for many users. Since the internal workings of CNNs are unintuitive for most users, \textit{occlusion-based explanations} (OBE) are popular for understanding which parts of a image matter most for a prediction. One occludes a region of the image using a patch and moves it around to produce a \textit{heat map} of changes to the prediction probability. Alas, this approach is computationally expensive due to the large number of re-inference requests produced, which wastes time and raises resource costs. We tackle this issue by casting the OBE task as a new instance of the classical incremental view maintenance problem. We create a novel and comprehensive algebraic framework for incremental CNN inference combining materialized views with multi-query optimization to reduce computational costs. We then present two novel approximate inference optimizations that exploit the semantics of CNNs and the OBE task to further reduce runtimes. We prototype our ideas in Python to create a tool we call \textsc{Krypton} that supports both CPUs and GPUs. Experiments with real data and CNNs show that \textsc{Krypton} reduces runtimes by up to $5$X (resp.~$35$X) to produce exact (resp.~high-quality approximate) results without raising resource requirements.
+Deep Convolutional Neural Networks (CNNs) now match human accuracy in many image prediction tasks, resulting in a growing adoption in e-commerce, radiology, and other domains. Naturally, ``explaining'' CNN predictions is a key concern for many users. Since the internal workings of CNNs are unintuitive for most users, \textit{occlusion-based explanations} (OBE) are popular for understanding which parts of an image matter most for a prediction. One occludes a region of the image using a patch and moves it around to produce a \textit{heat map} of changes to the prediction probability. Alas, this approach is computationally expensive due to the large number of re-inference requests produced, which wastes time and raises resource costs. We tackle this issue by casting the OBE task as a new instance of the classical incremental view maintenance problem. We create a novel and comprehensive algebraic framework for incremental CNN inference combining materialized views with multi-query optimization to reduce computational costs. We then present two novel approximate inference optimizations that exploit the semantics of CNNs and the OBE task to further reduce runtimes. We prototype our ideas in Python to create a tool we call \textsc{Krypton} that supports both CPUs and GPUs. Experiments with real data and CNNs show that \textsc{Krypton} reduces runtimes by up to $5$X (resp.~$35$X) to produce exact (resp.~high-quality approximate) results without raising resource requirements.
 \end{abstract}
 
 \maketitle
@@ -98,9 +96,9 @@ Deep Convolutional Neural Networks (CNNs) now match human accuracy in many image
 
 \vspace{2mm}
 \noindent \textbf{Methods for Explaining CNN Predictions.}
-\red{Perturbation-based and gradient-based are the two main kinds of methods. Perturbation-based methods observe the output of the CNN by modifying regions of the input image~\cite{zeiler2014visualizing,zintgraf2017visualizing,ribeiro2016should}. OBE belongs to this category.}
+Perturbation-based and gradient-based are the two main kinds of methods. Perturbation-based methods observe the output of the CNN by modifying regions of the input image~\cite{zeiler2014visualizing,zintgraf2017visualizing,ribeiro2016should}. OBE belongs to this category.
 % Another recently introduced perturbation based method is the \textit{Prediction Difference Analysis} method \cite{zintgraf2017visualizing}, which modifies individual pixel values which can be considered as a special case of OBE with a patch size of one with different values.}
-\red{Gradient-based methods generate a sensitivity heatmap by computing the partial derivatives of model outputs with respect to every input pixel~\cite{simonyan2013deep,selvaraju2017grad,sundararajan2017axiomatic}. The recently proposed ``Integrated Gradients'' (IGD) method belongs into this category~\cite{sundararajan2017axiomatic}. Empirically, we found that OBE produces higher quality heatmaps with better localized regions of interest compared to IGD, while being competitive on runtime (see Appendix \ref{sec:igd} for details). In practice, however, OBE is usually the method of choice for domain scientific users, especially in radiology~\cite{jung2017deep,miller2017explanation}, since it is easy to understand for non-technical users and typically produces high-quality and well-localized heatmaps.}
+Gradient-based methods generate a sensitivity heatmap by computing the partial derivatives of model outputs with respect to every input pixel~\cite{simonyan2013deep,selvaraju2017grad,sundararajan2017axiomatic}. The recently proposed ``Integrated Gradients'' (IGD) method belongs into this category~\cite{sundararajan2017axiomatic}. Empirically, we found that OBE produces higher quality heatmaps with better localized regions of interest compared to IGD, while being competitive on runtime (see Appendix \ref{sec:igd} for details). In practice, however, OBE is usually the method of choice for domain scientific users, especially in radiology~\cite{jung2017deep,miller2017explanation}, since it is easy to understand for non-technical users and typically produces high-quality and well-localized heatmaps.
 
 
 % Even though gradient approaches require only a single forward inference and a single backpropagation to generate the sensitivity heat map, the output may not be very intuitive and hard to understand because the salient pixels tend to spread over a very large area of the input image.
@@ -108,8 +106,8 @@ Deep Convolutional Neural Networks (CNNs) now match human accuracy in many image
 
 \vspace{2mm}
 \noindent \textbf{Faster CNN Inference.} 
-\red{EVA$^2$ \cite{buckler2018eva} is a custom software-hardware integrated stack for exploiting temporal redundancy across video frames. While one can map OBE to a video, EVA$^2$ will still perform motion estimation computations on whole frames and not exploit spatial redundancy across frames as our batched IVM does. Since our optimizations are at the logical level, they are also applicable to any compute hardware.}
-CBinfer performs change-based approximate CNN inference to accelerate real-time object recognition on video~\cite{cavigelli2017cbinfer}. Similarly, NoScope accelerates object classification on video streams using model cascades~\cite{kang2017noscope}. Our focus is on accelerating the OBE workload for images, not video streams. Our IVM and approximate inference optimizations exploit specific semantic properties of OBE, not general object recognition. Overall, both of these tools are orthogonal to our focus.
+EVA$^2$ \cite{buckler2018eva} is a custom software-hardware integrated stack for exploiting temporal redundancy in video frames. While one can map OBE to a video, EVA$^2$ will still perform motion estimation computations on whole frames and not exploit spatial redundancy across frames as our batched IVM does. Since our optimizations are at the logical level, they are also applicable to any compute hardware.
+CBinfer performs change-based approximate CNN inference to accelerate real-time object recognition on video~\cite{cavigelli2017cbinfer}. Similarly, NoScope accelerates object classification on video streams using model cascades~\cite{kang2017noscope}. Our focus is on accelerating the OBE workload for images, not video streams. Our IVM and approximate inference optimizations exploit the semantic properties of OBE, not general object recognition. Both of these tools are orthogonal to our focus.
 
 
 \vspace{2mm}
