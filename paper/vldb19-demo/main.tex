@@ -103,7 +103,7 @@ Second, and equally importantly, incremental inference is the foundation for our
 \subsection{Approximate Inference}
 The \textit{approximate inference} optimization in \system~allows users to tolerate some degradation in visual quality of the heatmaps produced to reduce runtimes further in a tunable manner.
 We draw from the concept of \textit{projective field} from neuroscience and exploit the internal semantics of how CNNs work to reduce runtimes.
-The projective field of a CNN neuron is the slice of the output tensor that is connected to it~\cite{basiccnnoperations}.
+The projective field of a CNN neuron is the slice of the output tensor that is connected to it.
 This notion essentially captures the \textit{growth of the size} of the modified patches through the layers of a CNN.
 Due to the overlapping nature of how convolution filter kernels operate, the projective field of a modified patch in the input image will grow at every layer.
 It can be shown that in the projective field, the change in the pixels that are radially further away from the center of the patch will be marginal.
@@ -140,7 +140,7 @@ We will present a demonstration of \system ~with three real-world image datasets
 \system~currently supports three popular CNN architectures: VGG16, ResNet18, and Inception3. Altogether, the audience will be able to interact with our system on nine different settings.
 
 \subsection{Walkthrough}
-Each participant will be first made familiar with CNN models and OBE method in general using a supporting slide deck.
+Each participant will be first made familiar with CNN models and OBE method using a supporting slide deck.
 We will briefly cover important aspects such as different operators inside a CNN, the dataflow inside a CNN, and also the OBE approach for explaining CNN predictions.
 This brief introduction will give the participants the necessary background to understand the \system~system and appreciate its optimizations.
 After the introduction, participants will be demonstrated four scenarios of using \system.
@@ -195,14 +195,15 @@ They will be able to select images from three different datasets: OCT images, Ch
 
 \noindent \textbf{CNN Explanations.} Perturbation-based and gradient-based are the two main kinds of CNN explanation methods. Perturbation-based methods observe the output of the CNN by modifying regions of the input image~\cite{zeiler2014visualizing}. OBE belongs to this category.
 Gradient-based methods generate a sensitivity heatmap by computing the partial derivatives of model outputs with respect to every input pixel~\cite{simonyan2013deep}.
-In practice, however, OBE is usually the method of choice for domain scientific users, especially in radiology~\cite{jung2017deep,miller2017explanation}, since it is easy to understand for non-technical users and typically produces high-quality and well-localized heatmaps.
-Also to the best of our knowledge, ours is the first work to address the CNN explainability problem from an end-to-end systems standpoint.
+However, OBE is usually the method of choice for domain scientific users, especially in radiology~\cite{jung2017deep,miller2017explanation}, since it is easy to understand for non-technical users and typically produces high-quality and well-localized heatmaps.
+Also to the best of our knowledge, ours is the first work to address the CNN explainability problem from a systems standpoint.
 
 \vspace{2mm}
 \noindent \textbf{Faster CNN Inference.} There are several approaches proposed in the literature for accelerating CNN inference.
 EVA$^2$ \cite{buckler2018eva} is a custom software-hardware integrated stack for exploiting temporal redundancy across video frames. Since our optimizations are at the logical level, they are also applicable to any compute hardware.
 CBinfer performs change-based approximate CNN inference to accelerate real-time object recognition on video~\cite{cavigelli2017cbinfer}. Our focus is on accelerating the OBE workload for images, not video streams. Our IVM and approximate inference optimizations exploit specific semantic properties of OBE, not general object recognition. Overall, both of these tools are orthogonal to our focus.
 
+\paragraph*{Acknowledgments} This work was supported in part by a Hellman Fellowship and by the NIDDK of the NIH under award number R01DK114945. The content is solely the responsibility of the authors and does not necessarily represent the official views of the NIH. We thank NVIDIA Corporation for the donation of the Titan Xp GPU used for this work.
 
 \balance
 
