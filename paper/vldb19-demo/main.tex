@@ -12,9 +12,9 @@
 
 \vldbTitle{Demonstration of Krypton: Optimized CNN Inference for Occlusion-based Deep CNN Explanations}
 \vldbAuthors{Allen Ordookhanians et. al.}
-\vldbDOI{https://doi.org/10.14778/xxxxxxx.xxxxxxx}
+\vldbDOI{https://doi.org/10.14778/3352063.3352093}
 \vldbVolume{12}
-\vldbNumber{xxx}
+\vldbNumber{12}
 \vldbYear{2019}
 
 \begin{document}
@@ -22,11 +22,21 @@
 \title{Demonstration of Krypton: Optimized CNN Inference for Occlusion-based Deep CNN Explanations}
 
 
-\numberofauthors{1}
+\numberofauthors{3}
 \author{
-\alignauthor Allen Ordookhanians\hspace{10mm}Xin Li\hspace{10mm}Supun Nakandala\hspace{10mm}Arun Kumar\\
-\affaddr{\vspace{2mm}University of California, San Diego}
-\email{\{aordookh, xli222, snakanda, arunkk\}@eng.ucsd.edu}
+\alignauthor Allen Ordookhanians\\
+\affaddr{University of California\\San Diego}
+\email{aordookh@eng.ucsd.edu}
+\alignauthor Xin Li\\
+\affaddr{University of California\\ San Diego}
+\email{xli222@eng.ucsd.edu}
+\alignauthor Supun Nakandala\\
+\affaddr{University of California\\ San Diego}
+\email{snakanda@eng.ucsd.edu}
+\and
+\alignauthor Arun Kumar\\
+\affaddr{University of California\\ San Diego}
+\email{arunkk@eng.ucsd.edu}
 }
 
 \date{15 March 2019}
@@ -57,9 +67,10 @@ Alas, OBE is highly expensive computationally. Deep CNN inference is already exp
 
 
 \begin{figure*}[t]\label{img:ui}
-\includegraphics[width=\textwidth]{images/ui_actual_compressed.pdf}
+\centering
+\includegraphics[width=0.9\textwidth]{images/ui_actual_compressed.pdf}
 \caption{\system~user interface. Users can load an input image, select a CNN model, and interactively diagnose the prediction by occluding parts of the full image or part of the image using the cropping tool. \system~generates a sensitivity heatmap (right image) and iteratively refines it as the user progresses. NB: This figure is best viewed in color, as is standard in the visual computing literature.}
-\vspace{-2mm}
+% \vspace{-2mm}
 \end{figure*}
 
 In this work we use a database-inspired lens to formalize, optimize, and accelerate OBE. We start with a simple but crucial observation: \textit{the occluded images are not disjoint but share most of their pixels; so, most of CNN re-inference computations are redundant.} This observation leads us to connect OBE with two classical data management concerns: \textit{incremental view maintenance} (IVM) \cite{chirkova2012materialized} and \textit{multi-query optimization} (MQO) \cite{sellis1988multiple}. Instead of treating a CNN as a ``blackbox,'' we open it up and formalize \textit{CNN layers} as ``queries.'' Just like how a relational query converts relations to other relations, a CNN layer converts \textit{tensors} (multidimensional arrays) to other tensors. So, we reimagine OBE as \textit{a set of tensor transformation queries} with incrementally updated inputs. With this fresh database-inspired view, we introduce several \textit{novel CNN-specific query optimization techniques} to accelerate OBE.
@@ -128,6 +139,7 @@ Figure \ref{fig:runtime_estimation} shows the cost models generated for ResNet18
 
 \begin{figure}
 \includegraphics[width=\columnwidth]{images/runtime_estimation.pdf}
+\vspace{-2mm}
 \caption{Runtime estimation using linear regression cost model (occlusion patch size = 16 and execution mode is exact).}
 \label{fig:runtime_estimation}
 \vspace{-2mm}
@@ -135,9 +147,11 @@ Figure \ref{fig:runtime_estimation} shows the cost models generated for ResNet18
 
 
 \section{Demonstration}\label{demonstration}
+\vspace{-2mm}
 \subsection{Datasets and CNN models}
 We will present a demonstration of \system ~with three real-world image datasets: 1) identifying diabetic retinopathy from retinal images, 2) identifying pneumonia from chest X-ray images, and 3) identifying objects from natural images in the ImageNet dataset.
 \system~currently supports three popular CNN architectures: VGG16, ResNet18, and Inception3. Altogether, the audience will be able to interact with our system on nine different settings.
+
 
 \subsection{Walkthrough}
 Each participant will be first made familiar with CNN models and OBE method using a supporting slide deck.
@@ -191,6 +205,7 @@ Cropping operation is supported with all of the above three scenarios.
 After going through the above four scenarios, participants will then be given the opportunity to use the system by themselves.
 They will be able to select images from three different datasets: OCT images, Chest X-Ray images, and natural images from ImageNet dataset and will have the opportunity to \textit{interactively diagnose CNN predictions}.
 
+\vspace{-2mm}
 \section{Related Work}
 
 \noindent \textbf{CNN Explanations.} Perturbation-based and gradient-based are the two main kinds of CNN explanation methods. Perturbation-based methods observe the output of the CNN by modifying regions of the input image~\cite{zeiler2014visualizing}. OBE belongs to this category.
@@ -203,10 +218,12 @@ Also to the best of our knowledge, ours is the first work to address the CNN exp
 EVA$^2$ \cite{buckler2018eva} is a custom software-hardware integrated stack for exploiting temporal redundancy across video frames. Since our optimizations are at the logical level, they are also applicable to any compute hardware.
 CBinfer performs change-based approximate CNN inference to accelerate real-time object recognition on video~\cite{cavigelli2017cbinfer}. Our focus is on accelerating the OBE workload for images, not video streams. Our IVM and approximate inference optimizations exploit specific semantic properties of OBE, not general object recognition. Overall, both of these tools are orthogonal to our focus.
 
-\paragraph*{Acknowledgments} This work was supported in part by a Hellman Fellowship and by the NIDDK of the NIH under award number R01DK114945. The content is solely the responsibility of the authors and does not necessarily represent the official views of the NIH. We thank NVIDIA Corporation for the donation of the Titan Xp GPU used for this work.
+\vspace{-2mm}
+\paragraph*{Acknowledgments} This work was supported by a Hellman Fellowship and by the NIDDK of the NIH under award number R01DK114945. The content is solely the responsibility of the authors and does not necessarily represent the official views of the NIH. We thank NVIDIA Corporation for the donation of the Titan Xp GPU used for this work.
 
-\balance
+% \balance
 
+\vspace{-1mm}
 \bibliographystyle{abbrv}
 \bibliography{main}
 
