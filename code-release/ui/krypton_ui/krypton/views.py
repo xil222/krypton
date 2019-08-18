@@ -52,7 +52,6 @@ def selectedRegion(request):
 
 	url = photo.file.url
 	curr_path = prev_path + url
-
 	im = Image.open(curr_path)
 	width, height = im.size
 
@@ -140,11 +139,10 @@ def selectedRegion(request):
 
 
 	end_time = time.time()
-
 	heatmap_path = './media/photos/heatmap_' + ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(20)) + '.png'
 	low_prob = np.min(heatmap)
 	high_prob = np.max(heatmap)
-
+	print('heatmap_path ' + heatmap_path)
 	plt.imsave(heatmap_path, heatmap, cmap=plt.cm.jet_r)
 	img = Image.open(heatmap_path)
  	img = img.resize((w,h))

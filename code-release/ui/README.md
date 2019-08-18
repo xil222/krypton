@@ -22,6 +22,7 @@
    cd /krypton/code-release/ui and run ./dependency.sh
 5. cd /krypton/code-release/core then make
 6. cd /krypton/code-release and run ./download_cnn_weights.sh
+7. Repeat steps 6,7 in steps for developing on mac
 
 ## To run the environment
 steps 1 same
