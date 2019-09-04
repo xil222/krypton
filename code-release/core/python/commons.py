@@ -88,11 +88,14 @@ def inc_inference_with_model(inc_model, file_path, patch_size, stride, batch_siz
                                  x_size=224, y_size=224, gpu=True, version='v1', n_labels=1000, weights_data=None,
                                  loader=None, c=0.4, g=None):
     if loader == None:
+        #resize and convert to tensor
         loader = transforms.Compose([transforms.Resize([image_size, image_size]), transforms.ToTensor()])
     orig_image = Image.open(file_path).convert('RGB')
+    #what does squeeze do?
     orig_image = loader(orig_image).unsqueeze(0)
 
     if gpu:
+        #prepare for CUDA device
         orig_image = orig_image.cuda()
     else:
         version = 'v2' #running plain PyTorch
@@ -110,19 +113,27 @@ def inc_inference_with_model(inc_model, file_path, patch_size, stride, batch_siz
     image_patches = torch.FloatTensor(3, patch_size, patch_size).fill_(c).repeat(batch_size, 1, 1, 1)
 
     patch_positions = __generate_positions(x_output_width, y_output_width)
-
+    
+    #find the total number of batches given num_samples and number of images per batch
     num_batches = int(math.ceil(total_number * 1.0 / batch_size))
 
     if gpu:
         inc_model = inc_model.cuda()
-
+    #run the model while materializing each operation at each state instead of applying to input itself
     temp = inc_model.forward_materialized(orig_image).cpu().data.numpy()
+    #position of largest point in temp (after making predictions, so essentially index of predicted)
     logit_index = np.argmax(temp)
+    #the actual probability of selected max item
     prob = np.max(temp)
-
+    
+    #generates a tensor filled with zeros of size [batch_size, 2]
     locations = torch.zeros([batch_size, 2], dtype=torch.int32)
+    
+    #iterate through the set of batches
     for i in range(num_batches):
+        #iterate again through the batches themselves
         for j in range(batch_size):
+            
             index = j * num_batches + i
             if index >= total_number:
                 break
