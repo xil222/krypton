@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 
+
 pip install -r requirements.txt
 apt-get install python-cffi -y
 cd core && make && cd ..
