@@ -6,7 +6,7 @@ spec:
   containers:
   - name: krypton
    
-    image: scnakandala/krypton
+    image: scnakandala/krypton:latest
     imagePullPolicy: Always
     command: ["sleep", "infinity"]
     resources:
