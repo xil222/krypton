@@ -16,7 +16,6 @@ import torch
 from PIL import Image
 from scipy import ndimage
 from torch.autograd import Variable
-from torchvision import transforms
 
 from matplotlib.figure import Figure
 
